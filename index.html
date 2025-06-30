@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Palermo Game Setup</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<h1>Palermo Game Setup</h1>
+
+	<div id="setup">
+		<label>Number of players (min 5):</label>
+		<input type="number" id="numPlayers" min="5" value="5">
+		<button onclick="startRoleSelection()">Next</button>
+	</div>
+
+	<div id="roleSelection" style="display:none;"></div>
+	<div id="nameInput" style="display:none;"></div>
+	<div id="result" style="display:none;"></div>
+
+	<div id="nightPhase" style="display:none;">
+		<h3>Η νύχτα πέφτει στο Παλέρμο...</h3>
+		<div id="nightText" style="margin-top:20px; font-style:italic;"></div>
+	</div>
+
+	<div id="dayPhase" style="display:none;">
+		<h3>Ψηφοφορία - Ποιος θα αποχωρήσει;</h3>
+		<div id="votingArea"></div>
+	</div>
+
+	<script src="script.js"></script>
+</body>
+</html>
