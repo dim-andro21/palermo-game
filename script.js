@@ -6,6 +6,7 @@ let eliminatedPlayer = null;
 let discussionDuration = 0;
 let discussionTimerInterval = null;
 let discussionTimerRemaining = 0;
+let selectedTrack = "track1";
 
 
 class Player {
@@ -36,6 +37,12 @@ let currentPlayerIndex = 0;
 
 // Save selected setting when starting game
 function startRoleSelection() {
+
+	const trackSelect = document.getElementById("trackSelect");
+	if (trackSelect) {
+		selectedTrack = trackSelect.value;
+	}
+
 	// Save discussion setting
 	const select = document.getElementById("discussionTime");
 	if (select) {
@@ -213,16 +220,22 @@ function startNight() {
 	const nightTextDiv = document.getElementById("nightText");
 	nightTextDiv.innerHTML = "";
 
-	// Έλεγχος για παρουσία ρόλων
 	const hasSnitch = chosenRoles.includes("Snitch");
 
-	// Δημιουργία αφήγησης
 	const scriptLines = [
 		"Μια νύχτα πέφτει στο Παλέρμο κι όλοι κλείνουν τα μάτια τους...",
 		"Οι 2 δολοφόνοι ανοίγουν τα μάτια τους και γνωρίζουν ο ένας τον άλλον",
 		"Αφού γνωριστούν, κλείνουν τα μάτια τους",
 		"Ο φανερός δολοφόνος σηκώνει το χέρι του κι ο αστυνομικός ανοίγει τα μάτια του",
 		"Τώρα που ο αστυνομικός έχει δει τον φανερό δολοφόνο, κλείνει τα μάτια του"
+	];
+
+	const audioLines = [
+		"line1.mp3",
+		"line2.mp3",
+		"line3.mp3",
+		"line4.mp3",
+		"line5.mp3"
 	];
 
 	if (hasSnitch) {
@@ -232,27 +245,51 @@ function startNight() {
 			"Αφού πλέον γνωρίζει ποιους πρέπει να καλύψει, κλείνει τα μάτια του",
 			"Οι 2 δολοφόνοι κατεβάζουν τα χέρια τους"
 		);
+
+		audioLines.push(
+			"line6.mp3",
+			"line7.mp3",
+			"line8.mp3",
+			"line9.mp3"
+		);
 	} else {
 		scriptLines.push("Ο δολοφόνος κατεβάζει το χέρι του");
+		audioLines.push("line10.mp3");
 	}
 
 	scriptLines.push("Μια μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...");
+	audioLines.push("line11.mp3");
 
 	let index = 0;
 
-	const interval = setInterval(() => {
+	function nextLine() {
 		if (index >= scriptLines.length) {
-			clearInterval(interval);
 			setTimeout(() => {
 				startDay();
-			}, 500);
+			}, 1000);
 			return;
 		}
 
 		nightTextDiv.innerHTML += scriptLines[index] + "<br>";
-		index++;
-	}, 2000);
+
+		const audio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
+		audio.load();
+		audio.oncanplaythrough = () => {
+			audio.play();
+		};
+
+		setTimeout(() => {
+			index++;
+			nextLine();
+		}, 7000);
+	}
+
+	nextLine();
 }
+
+
+
+
 
 
 function startDay() {
@@ -486,11 +523,15 @@ function startSecondNight() {
 		"Οι 2 δολοφόνοι ανοίγουν τα μάτια τους και δείχνουν στον παίκτη εκτός παιχνιδιού ποιον παίκτη θέλουν να σκοτώσουν."
 	];
 
+	const audioLines = [
+		"night2_1.mp3",
+		"night2_2.mp3"
+	];
+
 	let index = 0;
 
-	const interval = setInterval(() => {
+	function nextLine() {
 		if (index >= scriptLines.length) {
-			clearInterval(interval);
 			setTimeout(() => {
 				showKillChoiceMenu();
 			}, 1000);
@@ -498,9 +539,22 @@ function startSecondNight() {
 		}
 
 		nightTextDiv.innerHTML += scriptLines[index] + "<br>";
-		index++;
-	}, 2000);
+
+		const audio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
+		audio.load();
+		audio.oncanplaythrough = () => {
+			audio.play();
+		};
+
+		setTimeout(() => {
+			index++;
+			nextLine();
+		}, 7000);
+	}
+
+	nextLine();
 }
+
 
 function showKillChoiceMenu() {
 	document.getElementById("nightPhase").style.display = "none";
