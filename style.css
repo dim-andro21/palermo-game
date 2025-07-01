@@ -20,7 +20,7 @@ body::after {
     left: 50%;
     transform: translate(-50%, -50%);
     width: min(95vw, 95vh);
-    height: min(98vw, 98vh);
+    height: min(95vw, 95vh);
     border-radius: 50%;
     background: radial-gradient(circle at 60% 50%, #ffffffcc 0%, #ffffff22 60%, transparent 100%);
     mask-image: radial-gradient(circle at 65% 50%, transparent 40%, black 41%);
