@@ -347,31 +347,33 @@ function renderVotingInterface() {
 
 		const nameSpan = document.createElement("span");
 		nameSpan.innerHTML = `<strong>${p.name}</strong> - Ψήφοι: <span id="votes-${index}">${p.votes}</span> `;
+
 		if (!p.isAlive) {
 			nameSpan.style.opacity = "0.5";
 			container.appendChild(nameSpan);
 		} else {
 			container.appendChild(nameSpan);
 
+			// ✅ Responsive κουμπιά μέσα σε wrapper
+			const buttonWrapper = document.createElement("div");
+			buttonWrapper.className = "vote-row";
+
 			const addBtn = document.createElement("button");
 			addBtn.textContent = "+ Ψήφος";
 			addBtn.onclick = () => {
 				const alive = players.filter(p => p.isAlive).length;
-				if (totalVotes >= alive) return; // αποφυγή υπερψήφισης
+				if (totalVotes >= alive) return;
 
 				p.votes++;
 				totalVotes++;
 				updateVotesDisplay(index, p.votes);
 
 				if (totalVotes === alive) {
-					// Απενεργοποιούμε όλα τα + κουμπιά
 					disableAllAddButtons();
 				}
 
 				checkIfVotingComplete();
 			};
-
-			container.appendChild(addBtn);
 
 			const removeBtn = document.createElement("button");
 			removeBtn.textContent = "− Ψήφος";
@@ -380,22 +382,24 @@ function renderVotingInterface() {
 					p.votes--;
 					totalVotes--;
 					updateVotesDisplay(index, p.votes);
-					cancelCountdown(); // ακύρωση αν μειώθηκε ψήφος
+					cancelCountdown();
 				}
 			};
-			container.appendChild(removeBtn);
+
+			buttonWrapper.appendChild(addBtn);
+			buttonWrapper.appendChild(removeBtn);
+			container.appendChild(buttonWrapper);
 		}
 
 		votingDiv.appendChild(container);
 	});
 
-
-	// Περιοχή για αντίστροφη μέτρηση
 	const countdown = document.createElement("div");
 	countdown.id = "voteCountdown";
 	countdown.style.marginTop = "20px";
 	votingDiv.appendChild(countdown);
 }
+
 
 
 function updateVotesDisplay(index, votes) {

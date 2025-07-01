@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond&family=Neucha&display=swap');
 
 html, body {
     margin: 0;
@@ -7,15 +7,19 @@ html, body {
 }
 
 body {
-    font-family: 'Raleway', sans-serif;
-    background: linear-gradient(to bottom, #1b0035 0%, #13032d 100%);
-    color: #f4f4f4;
+    font-family: 'Neucha', cursive;
+    font-size: 20px;
+    color: #e4e4ff;
+    text-shadow: 1px 1px 3px #000000aa;
+    background: linear-gradient(to bottom, #200b5b 0%, #030008 100%);
     padding: 20px;
     text-align: center;
     transition: background 1s ease-in-out;
     min-height: 100vh;
     position: relative;
 }
+
+
 
 /* 🌙 Μισοφέγγαρο */
 body::after {
@@ -28,7 +32,7 @@ body::after {
     height: min(95vw, 95vh);
     border-radius: 50%;
     background: radial-gradient(circle at 60% 50%, #ffffffcc 0%, #ffffff22 60%, transparent 100%);
-    mask-image: radial-gradient(circle at 65% 50%, transparent 40%, black 41%);
+    mask-image: radial-gradient(circle at 68% 50%, transparent 44%, black 41%);
     -webkit-mask-image: radial-gradient(circle at 68% 50%, transparent 44%, black 41%);
     z-index: -1;
     opacity: 0.9;
@@ -42,11 +46,23 @@ body::after {
     100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
 }
 
+/* 🎭 Τίτλοι */
+h1, h2 {
+    font-family: 'EB Garamond', serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 6px #000000aa;
+    transition: filter 0.3s ease;
+}
+h1:hover, h2:hover {
+    filter: brightness(1.2);
+}
+
 /* 🟨 Κουμπιά */
 button {
     background-color: #222;
-    color: #ffd700;
-    border: 2px solid #ffd700;
+    color: #72a6fa;
+    border: 2px solid #72a6fa;
     padding: 10px 20px;
     margin: 8px;
     cursor: pointer;
@@ -56,9 +72,11 @@ button {
 }
 
 button:hover {
-    background-color: #ffd700;
+    background-color: #72a6fa;
     color: #111;
+    box-shadow: 0 0 12px #72a6fa88;
 }
+
 
 input, select {
     padding: 8px;
@@ -68,7 +86,7 @@ input, select {
     font-size: 14px;
 }
 
-/* 🎭 Εμφάνιση σταδιακή */
+/* ✨ Εμφάνιση στοιχείων */
 #nightPhase, #dayPhase, #result, #nameInput, #roleSelection, #setup, #settingsMenu, #creditsPage {
     animation: fadeIn 0.8s ease-in-out;
 }
@@ -88,7 +106,7 @@ input, select {
     to { opacity: 1; }
 }
 
-/* 🧑‍🎤 Κάρτα ρόλου */
+/* 🎭 Κάρτα ρόλου */
 .role-card {
     background: rgba(0, 0, 0, 0.7);
     border: 2px solid #ffd700;
