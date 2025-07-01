@@ -856,21 +856,19 @@ function setBackground(phase) {
     const body = document.body;
     switch (phase) {
         case "night":
-            body.style.backgroundImage = "url('https://i.imgur.com/MHRa4Er.jpg')"; // νύχτα πόλης
-            body.style.backgroundSize = "cover";
-            body.style.backgroundPosition = "center";
+            // Μένει ως έχει
             break;
         case "day":
-            body.style.backgroundImage = "url('https://i.imgur.com/XAPdgb1.jpg')"; // μέρα / misty
-            body.style.backgroundSize = "cover";
-            body.style.backgroundPosition = "center";
+            // Δεν αλλάζουμε τίποτα — κρατάμε το ίδιο background
             break;
         default:
+            // Αν θέλεις, βάλε ενα fallback χρώμα
             body.style.backgroundImage = "none";
             body.style.backgroundColor = "#111";
             break;
     }
 }
+
 
 // 4. Προσθήκη εικονιδίου στον ρόλο (μέσα στο showRole και revealRestartedRole)
 // Παράδειγμα μόνο:

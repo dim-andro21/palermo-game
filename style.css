@@ -19,8 +19,8 @@ body::after {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 90vh;
-    height: 90vh;
+    width: min(80vw, 80vh);
+    height: min(80vw, 80vh);
     border-radius: 50%;
     background: radial-gradient(circle at 60% 50%, #ffffffcc 0%, #ffffff22 60%, transparent 100%);
     mask-image: radial-gradient(circle at 65% 50%, transparent 40%, black 41%);
@@ -84,7 +84,7 @@ input, select {
 }
 
 /*  */
-/*  να δω αν χρειαζεται οντως αυτο μετα*/
+/*  να δω αν χρειαζεται οντως αυτο*/
 /* Ρόλος σε κάρτα */
 .role-card {
     background: rgba(0, 0, 0, 0.7);
