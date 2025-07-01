@@ -2,6 +2,8 @@
 
 let totalVotes = 0;
 let countdownTimeout = null;
+let eliminatedPlayer = null;
+
 
 class Player {
 	constructor(name) {
@@ -37,9 +39,27 @@ function startRoleSelection() {
 	document.getElementById("setup").style.display = "none";
 
 	const roleDiv = document.getElementById("roleSelection");
-	roleDiv.innerHTML = "<h3>Select " + (numPlayers - 4) + " extra roles:</h3>";
+	roleDiv.innerHTML = `
+		<h3>Έχεις επιλέξει:</h3>
+		<ul id="chosenRolesList">
+			<li>Citizen ×2</li>
+			<li>Hidden Killer</li>
+			<li>Known Killer</li>
+		</ul>
+		<h3>Επίλεξε ${numPlayers - 4} επιπλέον ρόλους:</h3>
+	`;
 
+	// Input για πολλαπλούς Citizen
+	roleDiv.innerHTML += `
+		<label>
+			Citizen
+			<input type="number" id="extraCitizenCount" value="0" min="0" max="${numPlayers - 4}" onchange="updateCitizenSelection()">
+		</label><br>
+	`;
+
+	// Checkboxes για άλλους προαιρετικούς ρόλους (χωρίς δολοφόνους)
 	for (let i = 3; i < roleNames.length; i++) {
+		if (roleNames[i] === "Citizen") continue; // Citizen τον βάζουμε μόνο με αριθμό
 		roleDiv.innerHTML += `
 			<label>
 				<input type="checkbox" value="${roleNames[i]}" onchange="updateRoleSelection(this)">
@@ -50,24 +70,35 @@ function startRoleSelection() {
 	roleDiv.innerHTML += `<br><button onclick="startNameInput()">Continue</button>`;
 	roleDiv.style.display = "block";
 
-	chosenRoles = [...requiredRoles];
+	chosenRoles = [...requiredRoles]; // Βάση 4 απαραίτητων ρόλων
+	updateChosenRolesList();
 }
 
+
 function updateRoleSelection(checkbox) {
+	const extraAllowed = numPlayers - 4;
+
 	if (checkbox.checked) {
-		if (chosenRoles.length < numPlayers) {
-			chosenRoles.push(checkbox.value);
-		} else {
+		const role = checkbox.value;
+		const currentCount = chosenRoles.length;
+
+		if (currentCount >= numPlayers) {
 			checkbox.checked = false;
-			alert("You have already selected enough roles!");
+			alert("Έχεις ήδη επιλέξει τον μέγιστο αριθμό ρόλων.");
+			return;
 		}
+
+		chosenRoles.push(role);
 	} else {
 		const index = chosenRoles.indexOf(checkbox.value);
 		if (index !== -1) {
 			chosenRoles.splice(index, 1);
 		}
 	}
+
+	updateChosenRolesList();
 }
+
 
 function startNameInput() {
 	if (chosenRoles.length !== numPlayers) {
@@ -167,39 +198,50 @@ function startNight() {
 	document.getElementById("result").style.display = "none";
 	document.getElementById("nightPhase").style.display = "block";
 
+	const nightTextDiv = document.getElementById("nightText");
+	nightTextDiv.innerHTML = "";
+
+	// Έλεγχος για παρουσία ρόλων
+	const hasSnitch = chosenRoles.includes("Snitch");
+
+	// Δημιουργία αφήγησης
 	const scriptLines = [
 		"Μια νύχτα πέφτει στο Παλέρμο κι όλοι κλείνουν τα μάτια τους...",
 		"Οι 2 δολοφόνοι ανοίγουν τα μάτια τους και γνωρίζουν ο ένας τον άλλον",
 		"Αφού γνωριστούν, κλείνουν τα μάτια τους",
 		"Ο φανερός δολοφόνος σηκώνει το χέρι του κι ο αστυνομικός ανοίγει τα μάτια του",
-		"Τώρα που ο αστυνομικός έχει δει τον φανερό δολοφόνο, κλείνει τα μάτια του",
-		"Στη συνέχεια σηκώνει το χέρι του και ο κρυφός δολοφόνος",
-		"Ο ρουφιάνος ανοίγει τα μάτια του και βλέπει τους 2 δολοφόνους",
-		"Αφού πλέον γνωρίζει ποιους πρέπει να καλύψει, κλείνει τα μάτια του",
-		"Οι 2 δολοφόνοι κατεβάζουν τα χέρια τους",
-		"Μια μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...",
+		"Τώρα που ο αστυνομικός έχει δει τον φανερό δολοφόνο, κλείνει τα μάτια του"
 	];
 
-	const nightTextDiv = document.getElementById("nightText");
-	nightTextDiv.innerHTML = "";
+	if (hasSnitch) {
+		scriptLines.push(
+			"Στη συνέχεια σηκώνει το χέρι του και ο κρυφός δολοφόνος",
+			"Ο ρουφιάνος ανοίγει τα μάτια του και βλέπει τους 2 δολοφόνους",
+			"Αφού πλέον γνωρίζει ποιους πρέπει να καλύψει, κλείνει τα μάτια του",
+			"Οι 2 δολοφόνοι κατεβάζουν τα χέρια τους"
+		);
+	} else {
+		scriptLines.push("Ο δολοφόνος κατεβάζει το χέρι του");
+	}
+
+	scriptLines.push("Μια μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...");
 
 	let index = 0;
 
 	const interval = setInterval(() => {
 		if (index >= scriptLines.length) {
 			clearInterval(interval);
+			setTimeout(() => {
+				startDay();
+			}, 500);
 			return;
 		}
 
 		nightTextDiv.innerHTML += scriptLines[index] + "<br>";
 		index++;
 	}, 2000);
-
-    // Μετά από την τελευταία γραμμή αφήγησης, ξεκινάει η μέρα
-    setTimeout(() => {
-	    startDay();
-    }, scriptLines.length * 2000 + 500); // λίγο delay για ομαλή μετάβαση
 }
+
 
 function startDay() {
 	document.getElementById("nightPhase").style.display = "none";
@@ -217,39 +259,53 @@ function renderVotingInterface() {
 	totalVotes = 0;
 
 	players.forEach((p, index) => {
-		if (!p.isAlive) return;
-
 		const container = document.createElement("div");
 		container.style.marginBottom = "10px";
 
 		const nameSpan = document.createElement("span");
 		nameSpan.innerHTML = `<strong>${p.name}</strong> - Ψήφοι: <span id="votes-${index}">${p.votes}</span> `;
-		container.appendChild(nameSpan);
+		if (!p.isAlive) {
+			nameSpan.style.opacity = "0.5";
+			container.appendChild(nameSpan);
+		} else {
+			container.appendChild(nameSpan);
 
-		const addBtn = document.createElement("button");
-		addBtn.textContent = "+ Ψήφος";
-		addBtn.onclick = () => {
-			p.votes++;
-			totalVotes++;
-			updateVotesDisplay(index, p.votes);
-			checkIfVotingComplete();
-		};
-		container.appendChild(addBtn);
+			const addBtn = document.createElement("button");
+			addBtn.textContent = "+ Ψήφος";
+			addBtn.onclick = () => {
+				const alive = players.filter(p => p.isAlive).length;
+				if (totalVotes >= alive) return; // αποφυγή υπερψήφισης
 
-		const removeBtn = document.createElement("button");
-		removeBtn.textContent = "− Ψήφος";
-		removeBtn.onclick = () => {
-			if (p.votes > 0) {
-				p.votes--;
-				totalVotes--;
+				p.votes++;
+				totalVotes++;
 				updateVotesDisplay(index, p.votes);
-				cancelCountdown(); // ακύρωση αν μειώθηκε ψήφος
-			}
-		};
-		container.appendChild(removeBtn);
+
+				if (totalVotes === alive) {
+					// Απενεργοποιούμε όλα τα + κουμπιά
+					disableAllAddButtons();
+				}
+
+				checkIfVotingComplete();
+			};
+
+			container.appendChild(addBtn);
+
+			const removeBtn = document.createElement("button");
+			removeBtn.textContent = "− Ψήφος";
+			removeBtn.onclick = () => {
+				if (p.votes > 0) {
+					p.votes--;
+					totalVotes--;
+					updateVotesDisplay(index, p.votes);
+					cancelCountdown(); // ακύρωση αν μειώθηκε ψήφος
+				}
+			};
+			container.appendChild(removeBtn);
+		}
 
 		votingDiv.appendChild(container);
 	});
+
 
 	// Περιοχή για αντίστροφη μέτρηση
 	const countdown = document.createElement("div");
@@ -297,12 +353,19 @@ function cancelCountdown() {
 	clearInterval(countdownTimeout);
 	const countdownDiv = document.getElementById("voteCountdown");
 	countdownDiv.innerHTML = "";
+
+	// Επανενεργοποίηση + Ψήφος αν είχαμε φτάσει το όριο
+	const buttons = document.querySelectorAll("button");
+	buttons.forEach(btn => {
+		if (btn.textContent === "+ Ψήφος") {
+			btn.disabled = false;
+		}
+	});
 }
 
 function finishVoting() {
 	const votingDiv = document.getElementById("votingArea");
 
-	// Εύρεση παίκτη με τις περισσότερες ψήφους
 	let maxVotes = 0;
 	let candidates = [];
 
@@ -320,8 +383,300 @@ function finishVoting() {
 	if (candidates.length === 1) {
 		const eliminated = candidates[0];
 		eliminated.isAlive = false;
+		eliminatedPlayer = eliminated;
 		votingDiv.innerHTML = `<p>Ο παίκτης <strong>${eliminated.name}</strong> αποχωρεί από το παιχνίδι!</p>`;
 	} else {
-		votingDiv.innerHTML = `<p>Υπάρχει ισοψηφία! Κανείς δεν αποχωρεί προς το παρόν.</p>`;
+		// Τυχαία επιλογή από τους ισοψηφούντες
+		const randomIndex = Math.floor(Math.random() * candidates.length);
+		const eliminated = candidates[randomIndex];
+		eliminated.isAlive = false;
+		eliminatedPlayer = eliminated;
+		votingDiv.innerHTML = `<p>Υπήρξε ισοψηφία! Ο παίκτης <strong>${eliminated.name}</strong> επιλέχθηκε τυχαία και αποχωρεί από το παιχνίδι.</p>`;
 	}
+
+
+	setTimeout(() => {
+		if (checkForGameEnd()) return;
+		startSecondNight();
+	}, 2000);
+}
+
+function startSecondNight() {
+	document.getElementById("dayPhase").style.display = "none";
+	document.getElementById("nightPhase").style.display = "block";
+
+	const nightTextDiv = document.getElementById("nightText");
+	nightTextDiv.innerHTML = "";
+
+	const scriptLines = [
+		"Μια νύχτα πέφτει στο Παλέρμο κι όλοι κλείνουν τα μάτια τους...",
+		"Οι 2 δολοφόνοι ανοίγουν τα μάτια τους και δείχνουν στον παίκτη εκτός παιχνιδιού ποιον παίκτη θέλουν να σκοτώσουν."
+	];
+
+	let index = 0;
+
+	const interval = setInterval(() => {
+		if (index >= scriptLines.length) {
+			clearInterval(interval);
+			setTimeout(() => {
+				showKillChoiceMenu();
+			}, 1000);
+			return;
+		}
+
+		nightTextDiv.innerHTML += scriptLines[index] + "<br>";
+		index++;
+	}, 2000);
+}
+
+function showKillChoiceMenu() {
+	document.getElementById("nightPhase").style.display = "none";
+	document.getElementById("nightKillChoice").style.display = "block";
+
+	const container = document.getElementById("killSelectionArea");
+	container.innerHTML = "<p>Επέλεξε παίκτη για να σκοτωθεί:</p>";
+
+	players.forEach((p, index) => {
+		const btn = document.createElement("button");
+		btn.textContent = p.name;
+
+		if (!p.isAlive || p === eliminatedPlayer) {
+			btn.disabled = true;
+			btn.style.opacity = "0.5";
+		} else {
+			btn.onclick = () => {
+				let seconds = 3;
+				const countdownDiv = document.getElementById("voteCountdown");
+				countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds}...`;
+
+				const cancelBtn = document.createElement("button");
+				cancelBtn.textContent = "Ακύρωση";
+				cancelBtn.onclick = () => {
+					clearInterval(countdownTimeout);
+					countdownDiv.innerHTML = "";
+				};
+				countdownDiv.appendChild(cancelBtn);
+
+				countdownTimeout = setInterval(() => {
+					seconds--;
+					if (seconds === 0) {
+						clearInterval(countdownTimeout);
+						p.isAlive = false;
+						document.getElementById("nightKillChoice").style.display = "none";
+
+						document.getElementById("nightPhase").style.display = "block";
+						const nightTextDiv = document.getElementById("nightText");
+						nightTextDiv.innerHTML = "<br><em>Οι δολοφόνοι αποφάσισαν ποιον θέλουν να σκοτώσουν.</em><br>";
+						setTimeout(() => {
+							nightTextDiv.innerHTML += "Μια νέα μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...";
+							setTimeout(() => {
+								if (checkForGameEnd()) return;
+								startDay();
+							}, 2000);
+						}, 1500);
+					} else {
+						countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds}...`;
+						countdownDiv.appendChild(cancelBtn);
+					}
+				}, 1000);
+			};
+		}
+
+		container.appendChild(btn);
+		container.appendChild(document.createElement("br"));
+	});
+
+	const countdownDiv = document.createElement("div");
+	countdownDiv.id = "voteCountdown";
+	countdownDiv.style.marginTop = "20px";
+	container.appendChild(countdownDiv);
+}
+
+function checkForGameEnd() {
+	const alivePlayers = players.filter(p => p.isAlive);
+	if (alivePlayers.length === 0) return false; // ασφαλιστική δικλείδα
+
+	const allBad = alivePlayers.every(p => p.role === "Hidden Killer" || p.role === "Known Killer");
+	const allGood = alivePlayers.every(p => p.role !== "Hidden Killer" && p.role !== "Known Killer");
+
+	if (allBad) {
+		showEndMessage("Οι κακοί κέρδισαν!");
+		return true;
+	}
+	if (allGood) {
+		showEndMessage("Οι καλοί κέρδισαν!");
+		return true;
+	}
+
+	return false;
+}
+
+function showEndMessage(message) {
+	const nightDiv = document.getElementById("nightPhase");
+	const dayDiv = document.getElementById("dayPhase");
+	const resultDiv = document.getElementById("result");
+
+	nightDiv.style.display = "none";
+	dayDiv.style.display = "none";
+	resultDiv.style.display = "block";
+
+	resultDiv.innerHTML = `<h2>${message}</h2>`;
+
+	setTimeout(() => {
+		resultDiv.innerHTML += `
+			<br><br>
+			<button onclick="restartSameNames()">Νέο παιχνίδι με ίδια ονόματα</button>
+			<button onclick="restartNewNames()">Νέο παιχνίδι με νέα ονόματα</button>
+		`;
+	}, 3000);
+}
+
+function restartSameNames() {
+	// Ανακατεύουμε ξανά τους ρόλους
+	chosenRoles = shuffleArray([...chosenRoles]);
+
+	// Ξαναδίνουμε ρόλους στους υπάρχοντες παίκτες
+	players.forEach((p, i) => {
+		p.assignRole(chosenRoles[i]);
+	});
+
+	currentPlayerIndex = 0;
+
+	// Κρύβουμε το αποτέλεσμα
+	document.getElementById("result").style.display = "none";
+
+	// Επανεκκίνηση με ίδιο name input, αλλά χωρίς αλλαγή ονομάτων
+	showNextPlayerRole();
+}
+
+function showNextPlayerRole() {
+	const nameDiv = document.getElementById("nameInput");
+	nameDiv.style.display = "block";
+
+	const player = players[currentPlayerIndex];
+
+	nameDiv.innerHTML = `
+		<h3>Player ${currentPlayerIndex + 1} - Επιβεβαίωσε ή άλλαξε το όνομά σου:</h3>
+		<input type="text" id="playerName" value="${player.name}"><br><br>
+		<button onclick="revealRestartedRole()">Δες τον νέο ρόλο σου</button>
+		<div id="roleReveal" style="margin-top:15px; font-weight:bold;"></div>
+	`;
+}
+
+function revealRestartedRole() {
+	const nameInput = document.getElementById("playerName");
+	const name = nameInput.value.trim();
+
+	if (!name) {
+		alert("Παρακαλώ εισάγετε όνομα!");
+		return;
+	}
+
+	const lowerName = name.toLowerCase();
+	const nameExists = players.some((p, i) =>
+		i !== currentPlayerIndex && p.name.toLowerCase() === lowerName
+	);
+
+	if (nameExists) {
+		alert("Αυτό το όνομα χρησιμοποιείται ήδη. Διάλεξε άλλο.");
+		return;
+	}
+
+	const player = players[currentPlayerIndex];
+	player.name = name;
+
+	const role = player.role;
+
+	const roleDiv = document.getElementById("roleReveal");
+
+	const isLast = currentPlayerIndex === numPlayers - 1;
+	const nextButtonLabel = isLast ? "Start Game" : "Επόμενος παίκτης";
+
+	roleDiv.innerHTML = `Ο νέος ρόλος σου είναι: <strong>${role}</strong><br><br>
+		<button onclick="nextRestartedPlayer()">${nextButtonLabel}</button>`;
+
+	nameInput.disabled = true;
+}
+
+function restartNewNames() {
+	location.reload();
+}
+
+function nextRestartedPlayer() {
+	currentPlayerIndex++;
+
+	if (currentPlayerIndex >= numPlayers) {
+		document.getElementById("nameInput").style.display = "none";
+		showResults();
+	} else {
+		showNextPlayerRole();
+	}
+}
+
+function disableAllAddButtons() {
+	const buttons = document.querySelectorAll("button");
+	buttons.forEach(btn => {
+		if (btn.textContent === "+ Ψήφος") {
+			btn.disabled = true;
+		}
+	});
+}
+
+function updateChosenRolesList() {
+	const list = document.getElementById("chosenRolesList");
+	const counts = {};
+
+	// Μέτρησε τις εμφανίσεις κάθε ρόλου
+	chosenRoles.forEach(role => {
+		if (!counts[role]) counts[role] = 0;
+		counts[role]++;
+	});
+
+	list.innerHTML = "";
+	for (const role in counts) {
+		const count = counts[role];
+		const label = count > 1 ? `${role} ×${count}` : role;
+		list.innerHTML += `<li>${label}</li>`;
+	}
+}
+
+function updateCitizenSelection() {
+	const input = document.getElementById("extraCitizenCount");
+	let count = parseInt(input.value);
+
+	if (isNaN(count) || count < 0) count = 0;
+
+	// Υπολογίζουμε πόσους extra ρόλους έχουμε ήδη επιλέξει εκτός Citizen
+	const nonCitizenExtras = chosenRoles.slice(4).filter(role => role !== "Citizen").length;
+
+	const maxExtraCitizens = numPlayers - 4 - nonCitizenExtras;
+
+	// Κόβουμε αν ο χρήστης έβαλε παραπάνω από το επιτρεπτό
+	if (count > maxExtraCitizens) {
+		count = maxExtraCitizens;
+		input.value = count;
+	}
+
+	// Αφαιρούμε όλους τους Citizen που είναι πέρα από τους 2 αρχικούς
+	chosenRoles = chosenRoles.filter((role, index) => {
+		// κρατάμε όλους εκτός των Citizen πέρα από τους δύο πρώτους
+		if (role === "Citizen") {
+			// κρατάμε τους 2 πρώτους Citizen (index < 2 για αρχικούς)
+			const citizenIndex = chosenRoles
+				.map((r, i) => ({ r, i }))
+				.filter(obj => obj.r === "Citizen")
+				.map(obj => obj.i);
+			return citizenIndex.indexOf(index) < 2;
+		}
+		return true;
+	});
+
+	// Προσθέτουμε όσους χρειάζεται
+	const currentCitizens = chosenRoles.filter(r => r === "Citizen").length;
+	const extraNeeded = 2 + count - currentCitizens;
+	for (let i = 0; i < extraNeeded; i++) {
+		chosenRoles.push("Citizen");
+	}
+
+	updateChosenRolesList();
 }
