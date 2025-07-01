@@ -3,6 +3,9 @@
 let totalVotes = 0;
 let countdownTimeout = null;
 let eliminatedPlayer = null;
+let discussionDuration = 0;
+let discussionTimerInterval = null;
+let discussionTimerRemaining = 0;
 
 
 class Player {
@@ -31,7 +34,14 @@ let players = [];
 
 let currentPlayerIndex = 0;
 
+// Save selected setting when starting game
 function startRoleSelection() {
+	// Save discussion setting
+	const select = document.getElementById("discussionTime");
+	if (select) {
+		discussionDuration = parseInt(select.value);
+	}
+
 	numPlayers = parseInt(document.getElementById("numPlayers").value);
 	if (numPlayers < 5) {
 		alert("You need at least 5 players!");
@@ -249,10 +259,53 @@ function startDay() {
 	document.getElementById("nightPhase").style.display = "none";
 	document.getElementById("dayPhase").style.display = "block";
 
-	players.forEach(p => p.votes = 0); // μηδενισμός ψήφων
+	players.forEach(p => p.votes = 0); // reset votes
 
 	renderVotingInterface();
+	startDiscussionTimer();
 }
+
+function startDiscussionTimer() {
+	const countdownDiv = document.getElementById("voteCountdown");
+
+	if (discussionDuration === 0) return;
+
+	discussionTimerRemaining = discussionDuration;
+	clearInterval(discussionTimerInterval);
+
+	countdownDiv.innerHTML = `Χρόνος συζήτησης: ${formatTime(discussionTimerRemaining)}`;
+
+	discussionTimerInterval = setInterval(() => {
+		discussionTimerRemaining--;
+
+		if (discussionTimerRemaining <= 0) {
+			clearInterval(discussionTimerInterval);
+
+			// Εμφάνιση μηνύματος και καθυστέρηση 5 δευτ. πριν το έξτρα λεπτό
+			countdownDiv.innerHTML = "Ο χρόνος συζήτησης τελείωσε! Έχετε 1 λεπτό για να ψηφίσετε.";
+
+			setTimeout(() => {
+				let votingTimeLeft = 60;
+
+				discussionTimerInterval = setInterval(() => {
+					votingTimeLeft--;
+
+					if (votingTimeLeft <= 0) {
+						clearInterval(discussionTimerInterval);
+						countdownDiv.innerHTML = "Η ψηφοφορία ολοκληρώνεται!";
+						disableAllAddButtons();
+						startCountdown();
+					} else {
+						countdownDiv.innerHTML = `Ψηφοφορία: Απομένει ${votingTimeLeft} δευτ.`;
+					}
+				}, 1000);
+			}, 5000); // 5 δευτερόλεπτα παύση
+		} else {
+			countdownDiv.innerHTML = `Χρόνος συζήτησης: ${formatTime(discussionTimerRemaining)}`;
+		}
+	}, 1000);
+}
+
 
 function renderVotingInterface() {
 	const votingDiv = document.getElementById("votingArea");
@@ -330,6 +383,9 @@ function checkIfVotingComplete() {
 }
 
 function startCountdown() {
+	clearInterval(countdownTimeout);
+	clearInterval(discussionTimerInterval); // <-- Σταματάμε το μεγάλο χρονόμετρο
+
 	const countdownDiv = document.getElementById("voteCountdown");
 	let seconds = 3;
 	countdownDiv.innerHTML = `Η ψηφοφορία ολοκληρώνεται σε ${seconds}... `;
@@ -343,6 +399,7 @@ function startCountdown() {
 		seconds--;
 		if (seconds === 0) {
 			clearInterval(countdownTimeout);
+			countdownDiv.innerHTML = "";
 			finishVoting();
 		} else {
 			countdownDiv.innerHTML = `Η ψηφοφορία ολοκληρώνεται σε ${seconds}... `;
@@ -350,6 +407,7 @@ function startCountdown() {
 		}
 	}, 1000);
 }
+
 
 function cancelCountdown() {
 	clearInterval(countdownTimeout);
@@ -535,7 +593,17 @@ function showEndMessage(message) {
 	dayDiv.style.display = "none";
 	resultDiv.style.display = "block";
 
-	resultDiv.innerHTML = `<h2>${message}</h2>`;
+	let playerListHTML = "<h3>Ρόλοι όλων των παικτών:</h3><ul>";
+	players.forEach(p => {
+		const status = p.isAlive ? "(ζωντανός)" : "(νεκρός)";
+		playerListHTML += `<li><strong>${p.name}</strong>: ${p.role} ${status}</li>`;
+	});
+	playerListHTML += "</ul>";
+
+	resultDiv.innerHTML = `
+		<h2>${message}</h2>
+		${playerListHTML}
+	`;
 
 	setTimeout(() => {
 		resultDiv.innerHTML += `
@@ -545,6 +613,7 @@ function showEndMessage(message) {
 		`;
 	}, 3000);
 }
+
 
 function restartSameNames() {
 	// Ανακατεύουμε ξανά τους ρόλους
@@ -704,5 +773,34 @@ function eliminatePlayer(player, source = "ψηφοφορίας") {
 		player.isAlive = false;
 		return true; // Πέθανε
 	}
+}
+
+function openNewGame() {
+	document.getElementById("mainMenu").style.display = "none";
+	document.getElementById("setup").style.display = "block";
+	document.getElementById("pageTitle").textContent = "ΠΑΛΕΡΜΟ";
+}
+
+function openSettings() {
+	document.getElementById("mainMenu").style.display = "none";
+	document.getElementById("settingsMenu").style.display = "block";
+}
+
+function openCredits() {
+	document.getElementById("mainMenu").style.display = "none";
+	document.getElementById("creditsPage").style.display = "block";
+}
+
+function backToMainMenu() {
+	document.getElementById("settingsMenu").style.display = "none";
+	document.getElementById("creditsPage").style.display = "none";
+	document.getElementById("mainMenu").style.display = "block";
+	document.getElementById("pageTitle").textContent = "Palermo Game";
+}
+
+function formatTime(seconds) {
+	const min = Math.floor(seconds / 60);
+	const sec = seconds % 60;
+	return `${min}:${sec.toString().padStart(2, '0')}`;
 }
 
