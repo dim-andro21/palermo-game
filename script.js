@@ -11,12 +11,14 @@ class Player {
 		this.role = "";
 		this.isAlive = true;
 		this.votes = 0;
+		this.lives = 1; // default: 1 ζωή
 	}
 
 	assignRole(role) {
 		this.role = role;
 		this.isAlive = true;
 		this.votes = 0;
+		this.lives = (role === "Bulletproof") ? 2 : 1;
 	}
 }
 
@@ -380,26 +382,39 @@ function finishVoting() {
 		}
 	});
 
-	if (candidates.length === 1) {
-		const eliminated = candidates[0];
-		eliminated.isAlive = false;
-		eliminatedPlayer = eliminated;
-		votingDiv.innerHTML = `<p>Ο παίκτης <strong>${eliminated.name}</strong> αποχωρεί από το παιχνίδι!</p>`;
-	} else {
-		// Τυχαία επιλογή από τους ισοψηφούντες
-		const randomIndex = Math.floor(Math.random() * candidates.length);
-		const eliminated = candidates[randomIndex];
-		eliminated.isAlive = false;
-		eliminatedPlayer = eliminated;
-		votingDiv.innerHTML = `<p>Υπήρξε ισοψηφία! Ο παίκτης <strong>${eliminated.name}</strong> επιλέχθηκε τυχαία και αποχωρεί από το παιχνίδι.</p>`;
-	}
+	let eliminated;
+	let didDie;
 
+	if (candidates.length === 1) {
+		eliminated = candidates[0];
+		didDie = eliminatePlayer(eliminated);
+		eliminatedPlayer = didDie ? eliminated : null;
+
+		if (didDie) {
+			votingDiv.innerHTML = `<p>Ο παίκτης <strong>${eliminated.name}</strong> αποχωρεί από το παιχνίδι!</p>`;
+		} else {
+			votingDiv.innerHTML = `<p>Ο παίκτης <strong>${eliminated.name}</strong> ήταν Αλεξίσφαιρος και επέζησε από την απόπειρα ψηφοφορίας! Του απομένει άλλη μία ζωή.</p>`;
+		}
+	} else {
+		// Ισοψηφία - επιλέγεται τυχαία
+		const randomIndex = Math.floor(Math.random() * candidates.length);
+		eliminated = candidates[randomIndex];
+		didDie = eliminatePlayer(eliminated);
+		eliminatedPlayer = didDie ? eliminated : null;
+
+		if (didDie) {
+			votingDiv.innerHTML = `<p>Υπήρξε ισοψηφία! Ο παίκτης <strong>${eliminated.name}</strong> επιλέχθηκε τυχαία και αποχωρεί από το παιχνίδι.</p>`;
+		} else {
+			votingDiv.innerHTML = `<p>Υπήρξε ισοψηφία! Ο παίκτης <strong>${eliminated.name}</strong> επιλέχθηκε τυχαία, αλλά ήταν Αλεξίσφαιρος και επέζησε από την απόπειρα ψηφοφορίας! Του απομένει άλλη μία ζωή.</p>`;
+		}
+	}
 
 	setTimeout(() => {
 		if (checkForGameEnd()) return;
 		startSecondNight();
 	}, 2000);
 }
+
 
 function startSecondNight() {
 	document.getElementById("dayPhase").style.display = "none";
@@ -461,7 +476,7 @@ function showKillChoiceMenu() {
 					seconds--;
 					if (seconds === 0) {
 						clearInterval(countdownTimeout);
-						p.isAlive = false;
+						eliminatePlayer(p, "δολοφονίας");
 						document.getElementById("nightKillChoice").style.display = "none";
 
 						document.getElementById("nightPhase").style.display = "block";
@@ -680,3 +695,14 @@ function updateCitizenSelection() {
 
 	updateChosenRolesList();
 }
+
+function eliminatePlayer(player, source = "ψηφοφορίας") {
+	if (player.lives > 1) {
+		player.lives--;
+		return false; // Δεν πέθανε
+	} else {
+		player.isAlive = false;
+		return true; // Πέθανε
+	}
+}
+
