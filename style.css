@@ -2,23 +2,42 @@
 
 body {
     font-family: 'Raleway', sans-serif;
-    background-color: #111;
-    /* background-color: #16151c; */
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    background: linear-gradient(to bottom, #1b0035 0%, #13032d 100%);
     color: #f4f4f4;
     padding: 20px;
     text-align: center;
-    transition: background-image 1s ease-in-out, background-color 1s ease-in-out;
+    transition: background 1s ease-in-out;
     min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
 }
 
-h1, h2, h3 {
-    color: #ffd700;
-    letter-spacing: 1px;
+/* Μισοφέγγαρο μεγάλης κλίμακας */
+body::after {
+    content: "";
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vh;
+    height: 90vh;
+    border-radius: 50%;
+    background: radial-gradient(circle at 60% 50%, #ffffffcc 0%, #ffffff22 60%, transparent 100%);
+    mask-image: radial-gradient(circle at 65% 50%, transparent 40%, black 41%);
+    -webkit-mask-image: radial-gradient(circle at 68% 50%, transparent 44%, black 41%);
+    z-index: -1;
+    opacity: 0.9;
+    pointer-events: none;
+    animation: moonGlow 6s ease-in-out infinite alternate;
+    box-shadow: 0 0 120px #ffffff44;
 }
 
+@keyframes moonGlow {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+}
+
+/* Κουμπιά */
 button {
     background-color: #222;
     color: #ffd700;
@@ -44,6 +63,7 @@ input, select {
     font-size: 14px;
 }
 
+/* Εμφάνιση σταδιακή */
 #nightPhase, #dayPhase, #result, #nameInput, #roleSelection, #setup, #settingsMenu, #creditsPage {
     animation: fadeIn 0.8s ease-in-out;
 }
@@ -62,6 +82,35 @@ input, select {
 @keyframes fadeInLine {
     to { opacity: 1; }
 }
+
+/*  */
+/*  να δω αν χρειαζεται οντως αυτο μετα*/
+/* Ρόλος σε κάρτα */
+.role-card {
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #ffd700;
+    border-radius: 20px;
+    padding: 40px 20px;
+    margin: 40px auto;
+    max-width: 400px;
+    color: #fff;
+    animation: fadeIn 1s ease-in-out;
+    box-shadow: 0 0 20px #ffd700aa;
+}
+
+.role-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px #fff;
+}
+
+.role-text {
+    font-size: 22px;
+    line-height: 1.5;
+}
+/*  */
+/*  */
+/*  */
 
 strong {
     color: #fff;
