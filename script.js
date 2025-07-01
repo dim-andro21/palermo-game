@@ -172,8 +172,8 @@ function showRole() {
 	const isLast = currentPlayerIndex === numPlayers - 1;
 	const nextButtonLabel = isLast ? "Start Game" : "Επόμενος παίκτης";
 
-	roleDiv.innerHTML = `Ο ρόλος σου είναι: <strong>${role}</strong><br><br>
-		<button onclick="nextPlayer()">${nextButtonLabel}</button>`;
+	roleDiv.innerHTML = `Ο ρόλος σου είναι: <strong>${getRoleIcon(role)} ${role}</strong><br><br>
+	<button onclick="nextPlayer()">${nextButtonLabel}</button>`;
 
 	nameInput.disabled = true;
 }
@@ -213,78 +213,69 @@ function shuffleArray(array) {
 	return array;
 }
 
+// 2. Επέκταση startNight ώστε να αλλάζει background
 function startNight() {
-	document.getElementById("result").style.display = "none";
-	document.getElementById("nightPhase").style.display = "block";
+    setBackground("night");
+    document.getElementById("result").style.display = "none";
+    document.getElementById("nightPhase").style.display = "block";
 
-	const nightTextDiv = document.getElementById("nightText");
-	nightTextDiv.innerHTML = "";
+    const nightTextDiv = document.getElementById("nightText");
+    nightTextDiv.innerHTML = "";
+    nightTextDiv.style.opacity = 0;
 
-	const hasSnitch = chosenRoles.includes("Snitch");
+    const hasSnitch = chosenRoles.includes("Snitch");
 
-	const scriptLines = [
-		"Μια νύχτα πέφτει στο Παλέρμο κι όλοι κλείνουν τα μάτια τους...",
-		"Οι 2 δολοφόνοι ανοίγουν τα μάτια τους και γνωρίζουν ο ένας τον άλλον",
-		"Αφού γνωριστούν, κλείνουν τα μάτια τους",
-		"Ο φανερός δολοφόνος σηκώνει το χέρι του κι ο αστυνομικός ανοίγει τα μάτια του",
-		"Τώρα που ο αστυνομικός έχει δει τον φανερό δολοφόνο, κλείνει τα μάτια του"
-	];
+    const scriptLines = [
+        "Μια νύχτα πέφτει στο Παλέρμο κι όλοι κλείνουν τα μάτια τους...",
+        "Οι 2 δολοφόνοι ανοίγουν τα μάτια τους και γνωρίζουν ο ένας τον άλλον",
+        "Αφού γνωριστούν, κλείνουν τα μάτια τους",
+        "Ο φανερός δολοφόνος σηκώνει το χέρι του κι ο αστυνομικός ανοίγει τα μάτια του",
+        "Τώρα που ο αστυνομικός έχει δει τον φανερό δολοφόνο, κλείνει τα μάτια του"
+    ];
 
-	const audioLines = [
-		"line1.mp3",
-		"line2.mp3",
-		"line3.mp3",
-		"line4.mp3",
-		"line5.mp3"
-	];
+    const audioLines = [
+        "line1.mp3", "line2.mp3", "line3.mp3", "line4.mp3", "line5.mp3"
+    ];
 
-	if (hasSnitch) {
-		scriptLines.push(
-			"Στη συνέχεια σηκώνει το χέρι του και ο κρυφός δολοφόνος",
-			"Ο ρουφιάνος ανοίγει τα μάτια του και βλέπει τους 2 δολοφόνους",
-			"Αφού πλέον γνωρίζει ποιους πρέπει να καλύψει, κλείνει τα μάτια του",
-			"Οι 2 δολοφόνοι κατεβάζουν τα χέρια τους"
-		);
+    if (hasSnitch) {
+        scriptLines.push(
+            "Στη συνέχεια σηκώνει το χέρι του και ο κρυφός δολοφόνος",
+            "Ο ρουφιάνος ανοίγει τα μάτια του και βλέπει τους 2 δολοφόνους",
+            "Αφού πλέον γνωρίζει ποιους πρέπει να καλύψει, κλείνει τα μάτια του",
+            "Οι 2 δολοφόνοι κατεβάζουν τα χέρια τους"
+        );
+        audioLines.push("line6.mp3", "line7.mp3", "line8.mp3", "line9.mp3");
+    } else {
+        scriptLines.push("Ο δολοφόνος κατεβάζει το χέρι του");
+        audioLines.push("line10.mp3");
+    }
 
-		audioLines.push(
-			"line6.mp3",
-			"line7.mp3",
-			"line8.mp3",
-			"line9.mp3"
-		);
-	} else {
-		scriptLines.push("Ο δολοφόνος κατεβάζει το χέρι του");
-		audioLines.push("line10.mp3");
-	}
+    scriptLines.push("Μια μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...");
+    audioLines.push("line11.mp3");
 
-	scriptLines.push("Μια μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...");
-	audioLines.push("line11.mp3");
+    let index = 0;
 
-	let index = 0;
+    function nextLine() {
+        if (index >= scriptLines.length) {
+            setTimeout(() => {
+                startDay();
+            }, 1000);
+            return;
+        }
 
-	function nextLine() {
-		if (index >= scriptLines.length) {
-			setTimeout(() => {
-				startDay();
-			}, 1000);
-			return;
-		}
+        nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
+        const audio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
+        audio.load();
+        audio.oncanplaythrough = () => audio.play();
 
-		nightTextDiv.innerHTML += scriptLines[index] + "<br>";
+        nightTextDiv.style.opacity = 1;
+        setTimeout(() => {
+            index++;
+            nextLine();
+        }, 8000);
+    }
 
-		const audio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
-		audio.load();
-		audio.oncanplaythrough = () => {
-			audio.play();
-		};
-
-		setTimeout(() => {
-			index++;
-			nextLine();
-		}, 7000);
-	}
-
-	nextLine();
+    nextLine();
 }
 
 
@@ -292,14 +283,14 @@ function startNight() {
 
 
 
+// 3. Επέκταση startDay για αλλαγή background
 function startDay() {
-	document.getElementById("nightPhase").style.display = "none";
-	document.getElementById("dayPhase").style.display = "block";
-
-	players.forEach(p => p.votes = 0); // reset votes
-
-	renderVotingInterface();
-	startDiscussionTimer();
+    setBackground("day");
+    document.getElementById("nightPhase").style.display = "none";
+    document.getElementById("dayPhase").style.display = "block";
+    players.forEach(p => p.votes = 0);
+    renderVotingInterface();
+    startDiscussionTimer();
 }
 
 function startDiscussionTimer() {
@@ -730,8 +721,8 @@ function revealRestartedRole() {
 	const isLast = currentPlayerIndex === numPlayers - 1;
 	const nextButtonLabel = isLast ? "Start Game" : "Επόμενος παίκτης";
 
-	roleDiv.innerHTML = `Ο νέος ρόλος σου είναι: <strong>${role}</strong><br><br>
-		<button onclick="nextRestartedPlayer()">${nextButtonLabel}</button>`;
+	roleDiv.innerHTML = `Ο νέος ρόλος σου είναι: <strong>${getRoleIcon(role)} ${role}</strong><br><br>
+	<button onclick="nextRestartedPlayer()">${nextButtonLabel}</button>`;
 
 	nameInput.disabled = true;
 }
@@ -858,3 +849,39 @@ function formatTime(seconds) {
 	return `${min}:${sec.toString().padStart(2, '0')}`;
 }
 
+// === Εφαρμογή Εφέ και Background ανά Φάση ===
+
+// 1. Δυναμική αλλαγή φόντου ανά φάση
+function setBackground(phase) {
+    const body = document.body;
+    switch (phase) {
+        case "night":
+            body.style.backgroundImage = "url('https://i.imgur.com/MHRa4Er.jpg')"; // νύχτα πόλης
+            body.style.backgroundSize = "cover";
+            body.style.backgroundPosition = "center";
+            break;
+        case "day":
+            body.style.backgroundImage = "url('https://i.imgur.com/XAPdgb1.jpg')"; // μέρα / misty
+            body.style.backgroundSize = "cover";
+            body.style.backgroundPosition = "center";
+            break;
+        default:
+            body.style.backgroundImage = "none";
+            body.style.backgroundColor = "#111";
+            break;
+    }
+}
+
+// 4. Προσθήκη εικονιδίου στον ρόλο (μέσα στο showRole και revealRestartedRole)
+// Παράδειγμα μόνο:
+function getRoleIcon(role) {
+    const map = {
+        "Citizen": "🧑",
+        "Hidden Killer": "🕵️",
+        "Known Killer": "🔪",
+        "Police officer": "👮",
+        "Snitch": "👀",
+        "Bulletproof": "🛡️"
+    };
+    return map[role] || "❓";
+}
