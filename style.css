@@ -1,5 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap');
 
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
 body {
     font-family: 'Raleway', sans-serif;
     background: linear-gradient(to bottom, #1b0035 0%, #13032d 100%);
@@ -9,10 +15,9 @@ body {
     transition: background 1s ease-in-out;
     min-height: 100vh;
     position: relative;
-    overflow-x: hidden;
 }
 
-/* Μισοφέγγαρο μεγάλης κλίμακας */
+/* 🌙 Μισοφέγγαρο */
 body::after {
     content: "";
     position: fixed;
@@ -37,7 +42,7 @@ body::after {
     100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
 }
 
-/* Κουμπιά */
+/* 🟨 Κουμπιά */
 button {
     background-color: #222;
     color: #ffd700;
@@ -63,7 +68,7 @@ input, select {
     font-size: 14px;
 }
 
-/* Εμφάνιση σταδιακή */
+/* 🎭 Εμφάνιση σταδιακή */
 #nightPhase, #dayPhase, #result, #nameInput, #roleSelection, #setup, #settingsMenu, #creditsPage {
     animation: fadeIn 0.8s ease-in-out;
 }
@@ -83,9 +88,7 @@ input, select {
     to { opacity: 1; }
 }
 
-/*  */
-/*  να δω αν χρειαζεται οντως αυτο*/
-/* Ρόλος σε κάρτα */
+/* 🧑‍🎤 Κάρτα ρόλου */
 .role-card {
     background: rgba(0, 0, 0, 0.7);
     border: 2px solid #ffd700;
@@ -108,11 +111,23 @@ input, select {
     font-size: 22px;
     line-height: 1.5;
 }
-/*  */
-/*  */
-/*  */
 
 strong {
     color: #fff;
     font-weight: bold;
+}
+
+/* 📱 Responsive ψήφοι */
+@media (max-width: 600px) {
+  .vote-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .vote-row button {
+    width: 80%;
+    max-width: 300px;
+  }
 }
