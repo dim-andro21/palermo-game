@@ -198,8 +198,14 @@ strong {
     gap: 6px;
   }
 
-  .vote-row button {
-    width: 80%;
-    max-width: 300px;
-  }
+    .vote-row button {
+        width: 90%;
+        max-width: 360px;
+    }
 }
+
+.vote-label {
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+

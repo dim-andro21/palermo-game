@@ -373,6 +373,7 @@ function renderVotingInterface() {
 		container.style.marginBottom = "10px";
 
 		const label = document.createElement("div");
+		label.className = "vote-label";
 		label.innerHTML = `<strong>${p.name}</strong> – Ψήφοι: <span id="votes-${index}">${p.votes}</span>`;
 		container.appendChild(label);
 
