@@ -369,21 +369,17 @@ function renderVotingInterface() {
 	totalVotes = 0;
 
 	players.forEach((p, index) => {
-		const container = document.createElement("div");
-		container.style.marginBottom = "10px";
+		const row = document.createElement("div");
+		row.className = "vote-row";
 
 		const nameSpan = document.createElement("span");
-		nameSpan.innerHTML = `<strong>${p.name}</strong> - Ψήφοι: <span id="votes-${index}">${p.votes}</span> `;
+		nameSpan.innerHTML = `<strong>${p.name}</strong> – Ψήφοι: <span id="votes-${index}">${p.votes}</span>`;
 
 		if (!p.isAlive) {
 			nameSpan.style.opacity = "0.5";
-			container.appendChild(nameSpan);
+			row.appendChild(nameSpan);
 		} else {
-			container.appendChild(nameSpan);
-
-			// ✅ Responsive κουμπιά μέσα σε wrapper
-			const buttonWrapper = document.createElement("div");
-			buttonWrapper.className = "vote-row";
+			row.appendChild(nameSpan);
 
 			const addBtn = document.createElement("button");
 			addBtn.textContent = "+ Ψήφος";
@@ -413,12 +409,11 @@ function renderVotingInterface() {
 				}
 			};
 
-			buttonWrapper.appendChild(addBtn);
-			buttonWrapper.appendChild(removeBtn);
-			container.appendChild(buttonWrapper);
+			row.appendChild(addBtn);
+			row.appendChild(removeBtn);
 		}
 
-		votingDiv.appendChild(container);
+		votingDiv.appendChild(row);
 	});
 
 	const countdown = document.createElement("div");
@@ -426,6 +421,7 @@ function renderVotingInterface() {
 	countdown.style.marginTop = "20px";
 	votingDiv.appendChild(countdown);
 }
+
 
 
 

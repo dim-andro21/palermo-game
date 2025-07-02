@@ -100,10 +100,6 @@ input:disabled {
     transition: opacity 0.3s ease;
 }
 
-
-
-
-
 /* ✨ Εμφάνιση στοιχείων */
 #nightPhase, #dayPhase, #result, #nameInput, #roleSelection, #setup, #settingsMenu, #creditsPage {
     animation: fadeIn 0.8s ease-in-out;
@@ -189,7 +185,7 @@ strong {
     text-align: center;
     max-height: 90vh;        /* δεν επιτρέπει scroll */
     overflow: hidden;
-    padding: 5px 5px;
+    padding: 10px 15px;
     font-size: clamp(14px, 2.5vw, 20px);
     line-height: 1.4;
 }
@@ -217,3 +213,25 @@ strong {
   }
 }
 
+@media (max-width: 600px) {
+  .vote-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-size: 14px;
+  }
+
+  .vote-row span {
+    font-size: 13px;
+    text-align: left;
+  }
+
+  .vote-row button {
+    padding: 5px 10px;
+    font-size: 13px;
+    min-width: unset;
+    flex: none;
+  }
+}
