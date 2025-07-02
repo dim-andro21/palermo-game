@@ -371,7 +371,6 @@ function renderVotingInterface() {
 	players.forEach((p, index) => {
 		const container = document.createElement("div");
 		container.className = "vote-row";
-		container.style.marginBottom = "10px";
 
 		// Ετικέτα με όνομα και ψήφους
 		const label = document.createElement("div");

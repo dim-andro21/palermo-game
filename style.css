@@ -196,24 +196,24 @@ strong {
         display: flex;                 /* Κάνει το περιεχόμενο flexbox */
         flex-direction: column;       /* Στοιχίζει τα στοιχεία κάθετα (όνομα πάνω, κουμπιά κάτω) */
         align-items: center;          /* Κεντράρει τα παιδιά οριζόντια */
-        margin-bottom: 1px;          /* Απόσταση μεταξύ παικτών (κάθετης ψήφου) */
+        margin-bottom: 15px;          /* Απόσταση μεταξύ παικτών (κάθετης ψήφου) */
     }
 
     .vote-label {
         font-size: 15px;
         margin-bottom: 0px;
         text-align: center;
-        line-height: 1.2; /* προαιρετικό: πιο κοντά το κείμενο με το επόμενο στοιχείο */
+        line-height: 0.8; /* προαιρετικό: πιο κοντά το κείμενο με το επόμενο στοιχείο */
     }
 
     .vote-buttons {
         display: flex;                /* Τα κουμπιά εμφανίζονται σε γραμμή */
-        gap: 2px;                    /* Απόσταση μεταξύ κουμπιών */
+        gap: 10px;                    /* Απόσταση μεταξύ κουμπιών */
         justify-content: center;     /* Κεντράρει τα κουμπιά μέσα στη γραμμή */
     }
 
     .vote-buttons button {
-        min-width: 150px;
+        min-width: 145px;
         font-size: 15px;
         padding: 9px 20px;
         margin: 0; /* ➕ πρόσθεσε αυτό */
