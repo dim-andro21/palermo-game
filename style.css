@@ -4,7 +4,9 @@ html, body {
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    height: 100%;
 }
+
 
 body {
     font-family: 'Neucha', cursive;
@@ -12,7 +14,10 @@ body {
     color: #e4e4ff;
     text-shadow: 1px 1px 3px #000000aa;
     background: linear-gradient(to bottom, #130b5b 0%, #030008 100%);
-    padding: 20px;
+    padding-top: calc(20px + env(safe-area-inset-top));
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    padding-left: calc(20px + env(safe-area-inset-left));
+    padding-right: calc(20px + env(safe-area-inset-right));
     text-align: center;
     transition: background 1s ease-in-out;
     min-height: 100vh;
