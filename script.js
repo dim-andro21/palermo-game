@@ -369,18 +369,14 @@ function renderVotingInterface() {
 	totalVotes = 0;
 
 	players.forEach((p, index) => {
-		const row = document.createElement("div");
-		row.className = "vote-row";
+		const container = document.createElement("div");
+		container.style.marginBottom = "10px";
 
-		const nameSpan = document.createElement("span");
-		nameSpan.innerHTML = `<strong>${p.name}</strong> – Ψήφοι: <span id="votes-${index}">${p.votes}</span>`;
+		const label = document.createElement("div");
+		label.innerHTML = `<strong>${p.name}</strong> – Ψήφοι: <span id="votes-${index}">${p.votes}</span>`;
+		container.appendChild(label);
 
-		if (!p.isAlive) {
-			nameSpan.style.opacity = "0.5";
-			row.appendChild(nameSpan);
-		} else {
-			row.appendChild(nameSpan);
-
+		if (p.isAlive) {
 			const addBtn = document.createElement("button");
 			addBtn.textContent = "+ Ψήφος";
 			addBtn.onclick = () => {
@@ -409,11 +405,15 @@ function renderVotingInterface() {
 				}
 			};
 
-			row.appendChild(addBtn);
-			row.appendChild(removeBtn);
+			const buttonRow = document.createElement("div");
+			buttonRow.className = "vote-row";
+			buttonRow.appendChild(addBtn);
+			buttonRow.appendChild(removeBtn);
+
+			container.appendChild(buttonRow);
 		}
 
-		votingDiv.appendChild(row);
+		votingDiv.appendChild(container);
 	});
 
 	const countdown = document.createElement("div");
@@ -421,8 +421,6 @@ function renderVotingInterface() {
 	countdown.style.marginTop = "20px";
 	votingDiv.appendChild(countdown);
 }
-
-
 
 
 function updateVotesDisplay(index, votes) {
