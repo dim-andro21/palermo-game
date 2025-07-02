@@ -1,12 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=EB+Garamond&family=Neucha&display=swap');
 
 html, body {
-  overflow: hidden !important;  /* ⛔ απενεργοποιεί το scroll παντού */
+  margin: 0;
+  padding: 0;
   height: 100%;
-  overscroll-behavior: none;    /* ⛔ αποτρέπει "elastic scroll" (σε iOS/Android) */
-  position: fixed;              /* ⛔ εμποδίζει scroll στο viewport */
-  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
+
 
 
 body {
@@ -18,7 +19,7 @@ body {
     padding: 20px;
     text-align: center;
     transition: background 1s ease-in-out;
-    min-height: 100vh;
+    min-height: 100%;
     position: relative;
 }
 
