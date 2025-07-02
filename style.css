@@ -19,8 +19,6 @@ body {
     position: relative;
 }
 
-
-
 /* 🌙 Μισοφέγγαρο */
 body::after {
     content: "";
@@ -181,4 +179,16 @@ strong {
         opacity: 1;
         transform: scale(1);
     }
+}
+
+#nightText {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    max-height: 90vh;        /* δεν επιτρέπει scroll */
+    overflow: hidden;
+    padding: 10px 15px;
+    font-size: clamp(14px, 2.5vw, 20px);
+    line-height: 1.4;
 }
