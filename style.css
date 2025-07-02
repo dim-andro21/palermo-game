@@ -190,29 +190,30 @@ strong {
     line-height: 1.4;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 600px) { /* Εφαρμόζεται μόνο σε οθόνες έως 600px πλάτος (δηλ. κινητά) */
+
   .vote-row {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 12px;
+    display: flex;                 /* Κάνει το περιεχόμενο flexbox */
+    flex-direction: column;       /* Στοιχίζει τα στοιχεία κάθετα (όνομα πάνω, κουμπιά κάτω) */
+    align-items: center;          /* Κεντράρει τα παιδιά οριζόντια */
+    margin-bottom: 12px;          /* Απόσταση μεταξύ παικτών (κάθετης ψήφου) */
   }
 
   .vote-label {
-    font-size: 14px;
-    margin-bottom: 6px;
-    text-align: center;
+    font-size: 15px;              /* Μέγεθος γραμματοσειράς για όνομα + ψήφοι */
+    margin-bottom: 2px;           /* Απόσταση ανάμεσα στο όνομα και τα κουμπιά */
+    text-align: center;           /* Το κείμενο είναι κεντραρισμένο */
   }
 
   .vote-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
+    display: flex;                /* Τα κουμπιά εμφανίζονται σε γραμμή */
+    gap: 4px;                    /* Απόσταση μεταξύ κουμπιών */
+    justify-content: center;     /* Κεντράρει τα κουμπιά μέσα στη γραμμή */
   }
 
   .vote-buttons button {
-    min-width: 120px;
-    font-size: 14px;
-    padding: 8px 12px;
+    min-width: 120px;            /* Ελάχιστο μήκος κουμπιού */
+    font-size: 15px;             /* Μέγεθος γραμματοσειράς των κουμπιών */
+    padding: 9px 15px;           /* Εσωτερικό περιθώριο (κάθετο 8px, οριζόντιο 12px) */
   }
 }
