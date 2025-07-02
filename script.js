@@ -7,7 +7,29 @@ let discussionDuration = 0;
 let discussionTimerInterval = null;
 let discussionTimerRemaining = 0;
 let selectedTrack = "track1";
+let wakeLock = null;
 
+async function requestWakeLock() {
+	try {
+		if ('wakeLock' in navigator) {
+			wakeLock = await navigator.wakeLock.request('screen');
+			console.log("🔒 Wake Lock ενεργό");
+			wakeLock.addEventListener('release', () => {
+				console.log("🔓 Wake Lock αποδεσμεύτηκε");
+			});
+		}
+	} catch (err) {
+		console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+	}
+}
+
+function releaseWakeLock() {
+	if (wakeLock) {
+		wakeLock.release();
+		wakeLock = null;
+		console.log("🔓 Wake Lock απενεργοποιήθηκε");
+	}
+}
 
 class Player {
 	constructor(name) {
@@ -37,6 +59,8 @@ let currentPlayerIndex = 0;
 
 // Save selected setting when starting game
 function startRoleSelection() {
+
+	requestWakeLock(); // 👉 Ενεργοποιεί Wake Lock από εδώ και πέρα
 
 	const trackSelect = document.getElementById("trackSelect");
 	if (trackSelect) {
@@ -172,8 +196,11 @@ function showRole() {
 	const isLast = currentPlayerIndex === numPlayers - 1;
 	const nextButtonLabel = isLast ? "Start Game" : "Επόμενος παίκτης";
 
-	roleDiv.innerHTML = `Ο ρόλος σου είναι: <strong>${getRoleIcon(role)} ${role}</strong><br><br>
-	<button onclick="nextPlayer()">${nextButtonLabel}</button>`;
+	roleDiv.innerHTML = `
+    <div class="fade-in-role">
+        Ο ρόλος σου είναι: <strong>${getRoleIcon(role)} ${role}</strong><br><br>
+        <button onclick="nextPlayer()">${nextButtonLabel}</button>
+    </div>`;
 
 	nameInput.disabled = true;
 }
@@ -634,6 +661,8 @@ function checkForGameEnd() {
 }
 
 function showEndMessage(message) {
+	releaseWakeLock(); // 👉 Η οθόνη επιτρέπεται να σβήσει τώρα
+
 	const nightDiv = document.getElementById("nightPhase");
 	const dayDiv = document.getElementById("dayPhase");
 	const resultDiv = document.getElementById("result");
@@ -665,6 +694,8 @@ function showEndMessage(message) {
 
 
 function restartSameNames() {
+	requestWakeLock(); // Ξανά ενεργοποίηση Wake Lock σε νέα παρτίδα
+
 	// Ανακατεύουμε ξανά τους ρόλους
 	chosenRoles = shuffleArray([...chosenRoles]);
 
@@ -787,8 +818,11 @@ function showRole() {
 	const isLast = currentPlayerIndex === numPlayers - 1;
 	const nextButtonLabel = isLast ? "Start Game" : "Επόμενος παίκτης";
 
-	roleDiv.innerHTML = `Ο ρόλος σου είναι: <strong>${getRoleIcon(role)} ${role}</strong><br><br>
-	<button onclick="nextPlayer()">${nextButtonLabel}</button>`;
+	roleDiv.innerHTML = `
+    <div class="fade-in-role">
+        Ο ρόλος σου είναι: <strong>${getRoleIcon(role)} ${role}</strong><br><br>
+        <button onclick="nextPlayer()">${nextButtonLabel}</button>
+    </div>`;
 
 	nameInput.disabled = true;
 
@@ -908,6 +942,8 @@ function openCredits() {
 }
 
 function backToMainMenu() {
+	releaseWakeLock(); // 👉 Απενεργοποιούμε την προστασία οθόνης
+
 	document.getElementById("settingsMenu").style.display = "none";
 	document.getElementById("creditsPage").style.display = "none";
 	document.getElementById("mainMenu").style.display = "block";
