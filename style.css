@@ -71,6 +71,15 @@ button {
     transition: all 0.3s ease;
 }
 
+button:disabled {
+    background-color: #1a1a1a;
+    color: #72a6fa88;
+    border: 2px solid #72a6fa88;
+    cursor: default;
+    opacity: 0.6;
+}
+
+
 button:hover {
     background-color: #72a6fa;
     color: #111;
@@ -82,9 +91,20 @@ input, select {
     padding: 8px;
     margin: 5px;
     border-radius: 6px;
-    border: 1px solid #ccc;
+    border: 1px solid #72a6fa;
     font-size: 14px;
+    background-color: #222;
+    color: #f0f0f0;
 }
+
+input:disabled {
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+}
+
+
+
+
 
 /* ✨ Εμφάνιση στοιχείων */
 #nightPhase, #dayPhase, #result, #nameInput, #roleSelection, #setup, #settingsMenu, #creditsPage {

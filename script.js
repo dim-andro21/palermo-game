@@ -699,9 +699,17 @@ function showNextPlayerRole() {
 function revealRestartedRole() {
 	const nameInput = document.getElementById("playerName");
 	const name = nameInput.value.trim();
+	const button = document.querySelector("#nameInput button");
 
 	if (!name) {
-		alert("Παρακαλώ εισάγετε όνομα!");
+		if (button) {
+			button.disabled = true;
+			button.textContent = "Εισάγετε όνομα πρώτα!";
+			setTimeout(() => {
+				button.disabled = false;
+				button.textContent = "Δες τον νέο ρόλο σου";
+			}, 2000);
+		}
 		return;
 	}
 
@@ -711,7 +719,14 @@ function revealRestartedRole() {
 	);
 
 	if (nameExists) {
-		alert("Αυτό το όνομα χρησιμοποιείται ήδη. Διάλεξε άλλο.");
+		if (button) {
+			button.disabled = true;
+			button.textContent = "Όνομα ήδη χρησιμοποιείται!";
+			setTimeout(() => {
+				button.disabled = false;
+				button.textContent = "Δες τον νέο ρόλο σου";
+			}, 2000);
+		}
 		return;
 	}
 
@@ -721,7 +736,6 @@ function revealRestartedRole() {
 	const role = player.role;
 
 	const roleDiv = document.getElementById("roleReveal");
-
 	const isLast = currentPlayerIndex === numPlayers - 1;
 	const nextButtonLabel = isLast ? "Start Game" : "Επόμενος παίκτης";
 
@@ -729,7 +743,60 @@ function revealRestartedRole() {
 	<button onclick="nextRestartedPlayer()">${nextButtonLabel}</button>`;
 
 	nameInput.disabled = true;
+	if (button) button.disabled = true;
 }
+
+
+function showRole() {
+	const nameInput = document.getElementById("playerName");
+	const name = nameInput.value.trim();
+	const button = document.querySelector("#nameInput button");
+
+	if (!name) {
+		if (button) {
+			button.disabled = true;
+			button.textContent = "Εισάγετε όνομα πρώτα!";
+			setTimeout(() => {
+				button.disabled = false;
+				button.textContent = "Δες τον ρόλο σου";
+			}, 2000);
+		}
+		return;
+	}
+
+	const lowerName = name.toLowerCase();
+	const nameExists = players.some(p => p.name.toLowerCase() === lowerName);
+	if (nameExists) {
+		if (button) {
+			button.disabled = true;
+			button.textContent = "Όνομα ήδη χρησιμοποιείται!";
+			setTimeout(() => {
+				button.disabled = false;
+				button.textContent = "Δες τον ρόλο σου";
+			}, 2000);
+		}
+		return;
+	}
+
+	const role = chosenRoles[currentPlayerIndex];
+	const player = new Player(name);
+	player.assignRole(role);
+	players.push(player);
+
+	const roleDiv = document.getElementById("roleReveal");
+	const isLast = currentPlayerIndex === numPlayers - 1;
+	const nextButtonLabel = isLast ? "Start Game" : "Επόμενος παίκτης";
+
+	roleDiv.innerHTML = `Ο ρόλος σου είναι: <strong>${getRoleIcon(role)} ${role}</strong><br><br>
+	<button onclick="nextPlayer()">${nextButtonLabel}</button>`;
+
+	nameInput.disabled = true;
+
+	if (button) {
+		button.disabled = true;
+	}
+}
+
 
 function restartNewNames() {
 	location.reload();
