@@ -224,7 +224,7 @@ function nextPlayer() {
 function showResults() {
 	const resultDiv = document.getElementById("result");
 	resultDiv.innerHTML = "<h3>Όλοι οι παίκτες έχουν καταχωρηθεί.</h3><p>Μπορείτε τώρα να ξεκινήσετε το παιχνίδι!</p>";
-	resultDiv.innerHTML += `<br><button onclick="startNight()">Ξεκίνα Νύχτα</button>`;
+	resultDiv.innerHTML += `<br><button onclick="startNight()">Η Νύχτα Πέφτει...</button>`;
 	resultDiv.style.display = "block";
 }
 
@@ -450,7 +450,7 @@ function startCountdown() {
 
 	const countdownDiv = document.getElementById("voteCountdown");
 	let seconds = 3;
-	countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds}... `;
+	countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds} `;
 
 	const cancelButton = document.createElement("button");
 	cancelButton.textContent = "Ακύρωση";
@@ -465,7 +465,7 @@ function startCountdown() {
 			countdownDiv.innerHTML = "";
 			finishVoting();
 		} else {
-			countdownDiv.innerHTML = `Ολοκλήρωση σε σε ${seconds}... `;
+			countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds} `;
 			countdownDiv.appendChild(cancelButton);
 		}
 	}, 1000);
@@ -588,7 +588,11 @@ function showKillChoiceMenu() {
 	document.getElementById("nightKillChoice").style.display = "block";
 
 	const container = document.getElementById("killSelectionArea");
-	container.innerHTML = "<p>Επέλεξε παίκτη για να σκοτωθεί:</p>";
+	container.innerHTML = "";
+	container.style.display = "grid";                 // ➕ Grid layout
+	container.style.gridTemplateColumns = "1fr 1fr";  // ➕ Δύο στήλες ίσου πλάτους
+	container.style.gap = "10px";                     // ➕ Απόσταση ανάμεσα στα κουμπιά
+	container.style.justifyItems = "center";          // ➕ Κεντράρισμα περιεχομένου
 
 	players.forEach((p, index) => {
 		const btn = document.createElement("button");
@@ -618,8 +622,8 @@ function showKillChoiceMenu() {
 						clearInterval(countdownTimeout);
 						eliminatePlayer(p, "δολοφονίας");
 						document.getElementById("nightKillChoice").style.display = "none";
-
 						document.getElementById("nightPhase").style.display = "block";
+
 						const nightTextDiv = document.getElementById("nightText");
 						nightTextDiv.innerHTML = "<br><em>Οι δολοφόνοι αποφάσισαν ποιον θέλουν να σκοτώσουν.</em><br>";
 						setTimeout(() => {
@@ -638,14 +642,15 @@ function showKillChoiceMenu() {
 		}
 
 		container.appendChild(btn);
-		container.appendChild(document.createElement("br"));
 	});
 
 	const countdownDiv = document.createElement("div");
 	countdownDiv.id = "voteCountdown";
+	countdownDiv.style.gridColumn = "1 / -1"; // ➕ Το countdown πιάνει όλο το πλάτος
 	countdownDiv.style.marginTop = "20px";
 	container.appendChild(countdownDiv);
 }
+
 
 function checkForGameEnd() {
 	const alivePlayers = players.filter(p => p.isAlive);
