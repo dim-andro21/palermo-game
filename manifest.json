@@ -1,0 +1,21 @@
+{
+  "name": "Παλέρμο",
+  "short_name": "Παλέρμο",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f0f3c",
+  "theme_color": "#0f0f3c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "palermo_icon_192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "palermo_icon_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
