@@ -118,6 +118,7 @@ input:disabled {
     opacity: 0;
     animation: fadeInLine 1.5s forwards;
     margin-bottom: 10px;
+    font-size: clamp(14px, 2.5vw, 18px); /* responsive γραμματοσειρά */
 }
 
 @keyframes fadeInLine {
