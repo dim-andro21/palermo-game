@@ -100,19 +100,20 @@ function startRoleSelection() {
 	// Input για πολλαπλούς Citizen
 	roleDiv.innerHTML += `
 		<label>
-			Citizen
+			Πολίτης
 			<input type="number" id="extraCitizenCount" value="0" min="0" max="${numPlayers - 4}" onchange="updateCitizenSelection()">
 		</label><br>
 	`;
 
+
 	// Checkboxes για άλλους προαιρετικούς ρόλους (χωρίς δολοφόνους)
 	for (let i = 3; i < roleNames.length; i++) {
 		if (roleNames[i] === "Citizen") continue; // Citizen τον βάζουμε μόνο με αριθμό
-		roleDiv.innerHTML += `
-			<label>
-				<input type="checkbox" value="${roleNames[i]}" onchange="updateRoleSelection(this)">
-				${roleNames[i]}
-			</label><br>`;
+			roleDiv.innerHTML += `
+				<label>
+					<input type="checkbox" value="${roleNames[i]}" onchange="updateRoleSelection(this)">
+					${translateRole(roleNames[i])}
+				</label><br>`;
 	}
 
 	roleDiv.innerHTML += `<br><button onclick="startNameInput()">Continue</button>`;
@@ -169,7 +170,7 @@ function renderNameInputStep() {
 	const playerNumber = currentPlayerIndex + 1;
 
 	nameDiv.innerHTML = `
-		<h3>Player ${playerNumber} - Enter your name:</h3>
+		<h3>Παίκτη ${playerNumber} - Γράψε το όνομα σου:</h3>
 		<input type="text" id="playerName" maxlength="15"><br><br>
 		<button onclick="showRole()">Δες τον ρόλο σου</button>
 		<div id="roleReveal" style="margin-top:15px; font-weight:bold;"></div>
@@ -203,7 +204,7 @@ function showRole() {
 
 	roleDiv.innerHTML = `
     <div class="fade-in-role">
-        Ο ρόλος σου είναι: <strong>${getRoleIcon(role)} ${role}</strong><br><br>
+		Ο ρόλος σου είναι: <strong>${getRoleIcon(role)} ${translateRole(role)}</strong>
         <button onclick="nextPlayer()">${nextButtonLabel}</button>
     </div>`;
 
@@ -685,7 +686,7 @@ function showEndMessage(message) {
 	let playerListHTML = "<h3>Ρόλοι όλων των παικτών:</h3><ul>";
 	players.forEach(p => {
 		const status = p.isAlive ? "(ζωντανός)" : "(νεκρός)";
-		playerListHTML += `<li><strong>${p.name}</strong>: ${p.role} ${status}</li>`;
+		playerListHTML += `<li><strong>${p.name}</strong>: ${translateRole(p.role)} ${status}</li>`;
 	});
 	playerListHTML += "</ul>";
 
@@ -831,7 +832,7 @@ function showRole() {
 
 	roleDiv.innerHTML = `
     <div class="fade-in-role">
-        Ο ρόλος σου είναι: <strong>${getRoleIcon(role)} ${role}</strong><br><br>
+		Ο νέος ρόλος σου είναι: <strong>${getRoleIcon(role)} ${translateRole(role)}</strong>
         <button onclick="nextPlayer()">${nextButtonLabel}</button>
     </div>`;
 
@@ -880,7 +881,8 @@ function updateChosenRolesList() {
 	list.innerHTML = "";
 	for (const role in counts) {
 		const count = counts[role];
-		const label = count > 1 ? `${role} ×${count}` : role;
+		const translated = translateRole(role);
+		const label = count > 1 ? `${translated} ×${count}` : translated;
 		list.innerHTML += `<li>${label}</li>`;
 	}
 }
@@ -1006,4 +1008,16 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js')
     .then(() => console.log('✅ Service Worker Registered'))
     .catch(err => console.error('❌ Service Worker registration failed:', err));
+}
+
+function translateRole(role) {
+	const translations = {
+		"Citizen": "Πολίτης",
+		"Hidden Killer": "Κρυφός Δολοφόνος",
+		"Known Killer": "Φανερός Δολοφόνος",
+		"Police officer": "Αστυνομικός",
+		"Snitch": "Ρουφιάνος",
+		"Bulletproof": "Αλεξίσφαιρος"
+	};
+	return translations[role] || role;
 }
