@@ -79,6 +79,11 @@ function startRoleSelection() {
 		return;
 	}
 
+	if (numPlayers > 10) {
+		alert("Μέγιστος αριθμός παικτών: 10.");
+		return;
+	}
+
 	document.getElementById("setup").style.display = "none";
 
 	const roleDiv = document.getElementById("roleSelection");
@@ -445,12 +450,13 @@ function startCountdown() {
 
 	const countdownDiv = document.getElementById("voteCountdown");
 	let seconds = 3;
-	countdownDiv.innerHTML = `Η ψηφοφορία ολοκληρώνεται σε ${seconds}... `;
+	countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds}... `;
 
-	const cancelBtn = document.createElement("button");
-	cancelBtn.textContent = "Ακύρωση";
-	cancelBtn.onclick = cancelCountdown;
-	countdownDiv.appendChild(cancelBtn);
+	const cancelButton = document.createElement("button");
+	cancelButton.textContent = "Ακύρωση";
+	cancelButton.className = "cancel-vote-button";
+	cancelButton.onclick = cancelCountdown;  // ✅ Σωστό όνομα μεταβλητής
+	countdownDiv.appendChild(cancelButton);
 
 	countdownTimeout = setInterval(() => {
 		seconds--;
@@ -459,11 +465,12 @@ function startCountdown() {
 			countdownDiv.innerHTML = "";
 			finishVoting();
 		} else {
-			countdownDiv.innerHTML = `Η ψηφοφορία ολοκληρώνεται σε ${seconds}... `;
-			countdownDiv.appendChild(cancelBtn);
+			countdownDiv.innerHTML = `Ολοκλήρωση σε σε ${seconds}... `;
+			countdownDiv.appendChild(cancelButton);
 		}
 	}, 1000);
 }
+
 
 
 function cancelCountdown() {
@@ -598,6 +605,7 @@ function showKillChoiceMenu() {
 
 				const cancelBtn = document.createElement("button");
 				cancelBtn.textContent = "Ακύρωση";
+				cancelBtn.className = "cancel-vote-button";
 				cancelBtn.onclick = () => {
 					clearInterval(countdownTimeout);
 					countdownDiv.innerHTML = "";

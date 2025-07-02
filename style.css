@@ -55,6 +55,7 @@ h1, h2 {
     letter-spacing: 1px;
     text-shadow: 2px 2px 6px #000000aa;
     transition: filter 0.3s ease;
+    margin-top: 12px; 
 }
 h1:hover, h2:hover {
     filter: brightness(1.2);
@@ -139,7 +140,7 @@ input:disabled {
 }
 
 .role-icon {
-    font-size: 60px;
+    font-size: 70px;
     margin-bottom: 20px;
     text-shadow: 0 0 10px #fff;
 }
@@ -200,7 +201,7 @@ strong {
         display: flex;                 /* Κάνει το περιεχόμενο flexbox */
         flex-direction: column;       /* Στοιχίζει τα στοιχεία κάθετα (όνομα πάνω, κουμπιά κάτω) */
         align-items: center;          /* Κεντράρει τα παιδιά οριζόντια */
-        margin-bottom: 15px;          /* Απόσταση μεταξύ παικτών (κάθετης ψήφου) */
+        margin-bottom: 11px;          /* Απόσταση μεταξύ παικτών (κάθετης ψήφου) */
     }
 
     .vote-label {
@@ -218,8 +219,18 @@ strong {
 
     .vote-buttons button {
         min-width: 145px;
-        font-size: 15px;
-        padding: 9px 20px;
+        font-size: 13px;
+        padding: 6px 15px;
         margin: 0; /* ➕ πρόσθεσε αυτό */
     }
 }
+
+.cancel-vote-button {
+    font-size: 12px;
+    padding: 5px 9px;
+    margin: 8px auto;
+    min-width: unset;
+    max-width: 150px;
+    display: inline-block;
+}
+
