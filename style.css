@@ -189,7 +189,7 @@ strong {
     text-align: center;
     max-height: 90vh;        /* δεν επιτρέπει scroll */
     overflow: hidden;
-    padding: 10px 15px;
+    padding: 5px 5px;
     font-size: clamp(14px, 2.5vw, 20px);
     line-height: 1.4;
 }
@@ -207,6 +207,13 @@ strong {
     width: auto;
     min-width: 80px;
     flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .vote-row button {
+    font-size: 14px;
+    padding: 6px 12px;
   }
 }
 
