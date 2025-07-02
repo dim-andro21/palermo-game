@@ -370,13 +370,16 @@ function renderVotingInterface() {
 
 	players.forEach((p, index) => {
 		const container = document.createElement("div");
+		container.className = "vote-row";
 		container.style.marginBottom = "10px";
 
+		// Ετικέτα με όνομα και ψήφους
 		const label = document.createElement("div");
 		label.className = "vote-label";
 		label.innerHTML = `<strong>${p.name}</strong> – Ψήφοι: <span id="votes-${index}">${p.votes}</span>`;
 		container.appendChild(label);
 
+		// Αν είναι ζωντανός ο παίκτης, προσθέτουμε κουμπιά
 		if (p.isAlive) {
 			const addBtn = document.createElement("button");
 			addBtn.textContent = "+ Ψήφος";
@@ -407,7 +410,7 @@ function renderVotingInterface() {
 			};
 
 			const buttonRow = document.createElement("div");
-			buttonRow.className = "vote-row";
+			buttonRow.className = "vote-buttons";
 			buttonRow.appendChild(addBtn);
 			buttonRow.appendChild(removeBtn);
 
@@ -422,6 +425,7 @@ function renderVotingInterface() {
 	countdown.style.marginTop = "20px";
 	votingDiv.appendChild(countdown);
 }
+
 
 
 function updateVotesDisplay(index, votes) {
