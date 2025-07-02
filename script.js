@@ -364,7 +364,7 @@ function startDiscussionTimer() {
 
 function renderVotingInterface() {
 	const votingDiv = document.getElementById("votingArea");
-	votingDiv.innerHTML = "<p>Πατήστε [+ Ψήφος] ή [− Ψήφος] για κάθε παίκτη.</p>";
+	// votingDiv.innerHTML = "<p>Πατήστε [+ Ψήφος] ή [− Ψήφος] για κάθε παίκτη.</p>";
 
 	totalVotes = 0;
 
