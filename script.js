@@ -945,7 +945,7 @@ function backToMainMenu() {
 	document.getElementById("settingsMenu").style.display = "none";
 	document.getElementById("creditsPage").style.display = "none";
 	document.getElementById("mainMenu").style.display = "block";
-	document.getElementById("pageTitle").textContent = "Palermo123 Game";
+	document.getElementById("pageTitle").textContent = "Palermo1234 Game";
 }
 
 function formatTime(seconds) {
