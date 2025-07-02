@@ -141,7 +141,7 @@ function renderNameInputStep() {
 
 	nameDiv.innerHTML = `
 		<h3>Player ${playerNumber} - Enter your name:</h3>
-		<input type="text" id="playerName"><br><br>
+		<input type="text" id="playerName" maxlength="15"><br><br>
 		<button onclick="showRole()">Δες τον ρόλο σου</button>
 		<div id="roleReveal" style="margin-top:15px; font-weight:bold;"></div>
 	`;
@@ -690,7 +690,7 @@ function showNextPlayerRole() {
 
 	nameDiv.innerHTML = `
 		<h3>Player ${currentPlayerIndex + 1} - Επιβεβαίωσε ή άλλαξε το όνομά σου:</h3>
-		<input type="text" id="playerName" value="${player.name}"><br><br>
+		<input type="text" id="playerName" value="${player.name}" maxlength="15"><br><br>
 		<button onclick="revealRestartedRole()">Δες τον νέο ρόλο σου</button>
 		<div id="roleReveal" style="margin-top:15px; font-weight:bold;"></div>
 	`;

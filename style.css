@@ -11,7 +11,7 @@ body {
     font-size: 20px;
     color: #e4e4ff;
     text-shadow: 1px 1px 3px #000000aa;
-    background: linear-gradient(to bottom, #200b5b 0%, #030008 100%);
+    background: linear-gradient(to bottom, #130b5b 0%, #030008 100%);
     padding: 20px;
     text-align: center;
     transition: background 1s ease-in-out;
