@@ -192,28 +192,30 @@ strong {
 
 @media (max-width: 600px) { /* Εφαρμόζεται μόνο σε οθόνες έως 600px πλάτος (δηλ. κινητά) */
 
-  .vote-row {
-    display: flex;                 /* Κάνει το περιεχόμενο flexbox */
-    flex-direction: column;       /* Στοιχίζει τα στοιχεία κάθετα (όνομα πάνω, κουμπιά κάτω) */
-    align-items: center;          /* Κεντράρει τα παιδιά οριζόντια */
-    margin-bottom: 1px;          /* Απόσταση μεταξύ παικτών (κάθετης ψήφου) */
-  }
+    .vote-row {
+        display: flex;                 /* Κάνει το περιεχόμενο flexbox */
+        flex-direction: column;       /* Στοιχίζει τα στοιχεία κάθετα (όνομα πάνω, κουμπιά κάτω) */
+        align-items: center;          /* Κεντράρει τα παιδιά οριζόντια */
+        margin-bottom: 1px;          /* Απόσταση μεταξύ παικτών (κάθετης ψήφου) */
+    }
 
-  .vote-label {
-    font-size: 15px;              /* Μέγεθος γραμματοσειράς για όνομα + ψήφοι */
-    margin-bottom: 0px;           /* Απόσταση ανάμεσα στο όνομα και τα κουμπιά */
-    text-align: center;           /* Το κείμενο είναι κεντραρισμένο */
-  }
+    .vote-label {
+        font-size: 15px;
+        margin-bottom: 0px;
+        text-align: center;
+        line-height: 1.2; /* προαιρετικό: πιο κοντά το κείμενο με το επόμενο στοιχείο */
+    }
 
-  .vote-buttons {
-    display: flex;                /* Τα κουμπιά εμφανίζονται σε γραμμή */
-    gap: 2px;                    /* Απόσταση μεταξύ κουμπιών */
-    justify-content: center;     /* Κεντράρει τα κουμπιά μέσα στη γραμμή */
-  }
+    .vote-buttons {
+        display: flex;                /* Τα κουμπιά εμφανίζονται σε γραμμή */
+        gap: 2px;                    /* Απόσταση μεταξύ κουμπιών */
+        justify-content: center;     /* Κεντράρει τα κουμπιά μέσα στη γραμμή */
+    }
 
-  .vote-buttons button {
-    min-width: 150px;            /* Ελάχιστο μήκος κουμπιού */
-    font-size: 15px;             /* Μέγεθος γραμματοσειράς των κουμπιών */
-    padding: 9px 20px;           /* Εσωτερικό περιθώριο (κάθετο 8px, οριζόντιο 12px) */
-  }
+    .vote-buttons button {
+        min-width: 150px;
+        font-size: 15px;
+        padding: 9px 20px;
+        margin: 0; /* ➕ πρόσθεσε αυτό */
+    }
 }
