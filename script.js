@@ -417,7 +417,12 @@ function renderVotingInterface() {
 		// Ετικέτα με όνομα και ψήφους
 		const label = document.createElement("div");
 		label.className = "vote-label";
-		label.innerHTML = `<strong>${p.name}</strong> – Ψήφοι: <span id="votes-${index}">${p.votes}</span>`;
+		if (!p.isAlive) {
+			label.classList.add("dead-player");
+			label.innerHTML = `<strong>${p.name}</strong><span class="dead-icon">🪦</span>`;
+		} else {
+			label.innerHTML = `<strong>${p.name}</strong> – Ψήφοι: <span id="votes-${index}">${p.votes}</span>`;
+		}
 		container.appendChild(label);
 
 		// Αν είναι ζωντανός ο παίκτης, προσθέτουμε κουμπιά
@@ -602,7 +607,7 @@ function startSecondNight() {
 			return;
 		}
 
-		nightTextDiv.innerHTML += scriptLines[index] + "<br>";
+		nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
 
 		const audio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
 		audio.load();

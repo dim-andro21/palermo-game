@@ -242,3 +242,15 @@ strong {
 	opacity: 0;
 	transition: opacity 0.4s ease-in-out;
 }
+
+.dead-player {
+    opacity: 0.4;
+    filter: grayscale(100%);
+    color: #aaa;
+}
+
+.dead-icon {
+    font-size: 22px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
