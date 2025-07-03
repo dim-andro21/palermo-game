@@ -40,7 +40,7 @@ function vibrate(duration = 100) {
 }
 
 const vibrationPresets = {
-	short: [80],
+	short: [70],
 	doublePulse: [60, 40, 60],
 	victory: [100, 50, 150],
 	error: [150, 30, 80]
