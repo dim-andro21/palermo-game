@@ -119,7 +119,7 @@ input:disabled {
     opacity: 0;
     animation: fadeInLine 1.5s forwards;
     margin-bottom: 10px;
-    font-size: clamp(14px, 2.5vw, 18px); /* responsive γραμματοσειρά */
+    /* font-size: clamp(14px, 2.5vw, 18px); responsive γραμματοσειρά */
 }
 
 @keyframes fadeInLine {
@@ -188,13 +188,11 @@ strong {
     flex-direction: column;
     justify-content: center;
     text-align: center;
-    max-height: 90vh;
+    max-height: 90vh;        /* δεν επιτρέπει scroll */
     overflow: hidden;
-    padding: 10px 5vw; /* ➕ πιο "responsive" padding αντί για 15px */
-    font-size: clamp(18px, 4vw, 28px); /* ➕ μεγαλύτερο range */
-    line-height: 1.5;
-    max-width: 900px;       /* ➕ ώστε να μην ξεχειλώνει σε τεράστιες οθόνες */
-    margin: 0 auto;         /* ➕ για κεντράρισμα */
+    padding: 8px 2vw;
+    font-size: clamp(14px, 3.5vw, 20px);
+    line-height: 1.3;
 }
 
 @media (max-width: 600px) { /* Εφαρμόζεται μόνο σε οθόνες έως 600px πλάτος (δηλ. κινητά) */
