@@ -8,7 +8,7 @@ let discussionTimerInterval = null;
 let discussionTimerRemaining = 0;
 let selectedTrack = "track1";
 let wakeLock = null;
-let defaultVibrationType = "short";
+let defaultVibrationType = "error";
 
 
 async function requestWakeLock() {
