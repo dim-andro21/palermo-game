@@ -8,6 +8,8 @@ let discussionTimerInterval = null;
 let discussionTimerRemaining = 0;
 let selectedTrack = "track1";
 let wakeLock = null;
+let defaultVibrationType = "short";
+
 
 async function requestWakeLock() {
 	try {
@@ -36,6 +38,20 @@ function vibrate(duration = 100) {
 		navigator.vibrate(duration);
 	}
 }
+
+const vibrationPresets = {
+	short: [80],
+	doublePulse: [60, 40, 60],
+	victory: [100, 50, 150],
+	error: [150, 30, 80]
+};
+
+function vibratePattern(type = defaultVibrationType) {
+	if (navigator.vibrate && vibrationPresets[type]) {
+		navigator.vibrate(vibrationPresets[type]);
+	}
+}
+
 
 
 class Player {
@@ -1047,3 +1063,9 @@ function translateRole(role) {
 	};
 	return translations[role] || role;
 }
+
+window.addEventListener("DOMContentLoaded", () => {
+	document.querySelectorAll("button").forEach(btn => {
+		btn.addEventListener("click", () => vibratePattern(), { passive: true });
+	});
+});
