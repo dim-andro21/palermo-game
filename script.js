@@ -642,7 +642,7 @@ function showKillChoiceMenu() {
 			btn.onclick = () => {
 				let seconds = 3;
 				const countdownDiv = document.getElementById("voteCountdown");
-				countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds}...`;
+				countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds} `;
 
 				const cancelBtn = document.createElement("button");
 				cancelBtn.textContent = "Ακύρωση";
@@ -671,7 +671,7 @@ function showKillChoiceMenu() {
 							}, 2000);
 						}, 1500);
 					} else {
-						countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds}...`;
+						countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds} `;
 						countdownDiv.appendChild(cancelBtn);
 					}
 				}, 1000);

@@ -190,8 +190,8 @@ strong {
     text-align: center;
     max-height: 90vh;        /* δεν επιτρέπει scroll */
     overflow: hidden;
-    padding: 10px 15px;
-    font-size: clamp(14px, 2.5vw, 20px);
+    padding: 5px 7px;
+    font-size: clamp(15px, 2.5vw, 20px);
     line-height: 1.4;
 }
 
