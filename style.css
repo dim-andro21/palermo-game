@@ -188,11 +188,13 @@ strong {
     flex-direction: column;
     justify-content: center;
     text-align: center;
-    max-height: 90vh;        /* δεν επιτρέπει scroll */
+    max-height: 90vh;
     overflow: hidden;
-    padding: 5px 7px;
-    font-size: clamp(15px, 2.5vw, 20px);
-    line-height: 1.4;
+    padding: 10px 5vw; /* ➕ πιο "responsive" padding αντί για 15px */
+    font-size: clamp(18px, 4vw, 28px); /* ➕ μεγαλύτερο range */
+    line-height: 1.5;
+    max-width: 900px;       /* ➕ ώστε να μην ξεχειλώνει σε τεράστιες οθόνες */
+    margin: 0 auto;         /* ➕ για κεντράρισμα */
 }
 
 @media (max-width: 600px) { /* Εφαρμόζεται μόνο σε οθόνες έως 600px πλάτος (δηλ. κινητά) */
