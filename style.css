@@ -191,8 +191,8 @@ strong {
     max-height: 90vh;
     overflow: hidden;
     padding: 8px 0.8vw;
-    font-size: clamp(15px, 4vw, 30px);
-    line-height: 0.9;
+    font-size: clamp(16px, 4vw, 30px);
+    line-height: 1;
     max-width: 1000px;
     margin: 0 auto;
 }
