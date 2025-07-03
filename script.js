@@ -167,28 +167,43 @@ function startNameInput() {
 
 function renderNameInputStep() {
 	const nameDiv = document.getElementById("nameInput");
-	const playerNumber = currentPlayerIndex + 1;
-
 	nameDiv.innerHTML = `
-		<h3>Παίκτη ${playerNumber} - Γράψε το όνομα σου:</h3>
+		<h3 id="playerHeader">Παίκτη ${currentPlayerIndex + 1} - Γράψε το όνομα σου:</h3>
 		<input type="text" id="playerName" maxlength="15"><br><br>
 		<button onclick="showRole()">Δες τον ρόλο σου</button>
 		<div id="roleReveal" style="margin-top:15px; font-weight:bold;"></div>
 	`;
 }
 
+
 function showRole() {
 	const nameInput = document.getElementById("playerName");
 	const name = nameInput.value.trim();
+	const button = document.querySelector("#nameInput button");
+
 	if (!name) {
-		alert("Please enter a name!");
+		if (button) {
+			button.disabled = true;
+			button.textContent = "Εισάγετε όνομα πρώτα!";
+			setTimeout(() => {
+				button.disabled = false;
+				button.textContent = "Δες τον ρόλο σου";
+			}, 2000);
+		}
 		return;
 	}
 
 	const lowerName = name.toLowerCase();
 	const nameExists = players.some(p => p.name.toLowerCase() === lowerName);
 	if (nameExists) {
-		alert("This name has already been used. Please choose a different name.");
+		if (button) {
+			button.disabled = true;
+			button.textContent = "Όνομα ήδη χρησιμοποιείται!";
+			setTimeout(() => {
+				button.disabled = false;
+				button.textContent = "Δες τον ρόλο σου";
+			}, 2000);
+		}
 		return;
 	}
 
@@ -198,28 +213,50 @@ function showRole() {
 	players.push(player);
 
 	const roleDiv = document.getElementById("roleReveal");
-
 	const isLast = currentPlayerIndex === numPlayers - 1;
-	const nextButtonLabel = isLast ? "Start Game" : "Επόμενος παίκτης";
+	const nextButtonLabel = isLast ? "Ολοκλήρωση" : "Επόμενος παίκτης";
 
 	roleDiv.innerHTML = `
-    <div class="fade-in-role">
-		Ο ρόλος σου είναι: <strong>${getRoleIcon(role)} ${translateRole(role)}</strong>
-        <button onclick="nextPlayer()">${nextButtonLabel}</button>
-    </div>`;
+	<div class="fade-in-role role-card">
+		<div class="role-icon">${getRoleIcon(role)}</div>
+		<div class="role-text">Ο ρόλος σου είναι: <br><strong>${translateRole(role)}</strong></div>
+		<br><button onclick="nextPlayer()">${nextButtonLabel}</button>
+	</div>`;
+
 
 	nameInput.disabled = true;
+
+	if (button) {
+		button.disabled = true;
+	}
 }
 
 function nextPlayer() {
-	currentPlayerIndex++;
+	const roleDiv = document.getElementById("roleReveal");
+	roleDiv.classList.add("fade-out");
 
-	if (currentPlayerIndex >= numPlayers) {
-		document.getElementById("nameInput").style.display = "none";
-		showResults();
-	} else {
-		renderNameInputStep();
-	}
+	setTimeout(() => {
+		currentPlayerIndex++;
+
+		if (currentPlayerIndex >= numPlayers) {
+			document.getElementById("nameInput").style.display = "none";
+			showResults();
+		} else {
+			// Αλλάζουμε μόνο το κείμενο και καθαρίζουμε
+			document.getElementById("playerHeader").textContent = `Παίκτη ${currentPlayerIndex + 1} - Γράψε το όνομα σου:`;
+			const input = document.getElementById("playerName");
+			input.value = "";
+			input.disabled = false;
+
+			const button = document.querySelector("#nameInput button");
+			button.disabled = false;
+			button.textContent = "Δες τον ρόλο σου";
+
+			const roleDiv = document.getElementById("roleReveal");
+			roleDiv.classList.remove("fade-out");
+			roleDiv.innerHTML = "";
+		}
+	}, 400);
 }
 
 function showResults() {
@@ -228,7 +265,6 @@ function showResults() {
 	resultDiv.innerHTML += `<br><button onclick="startNight()">Η Νύχτα Πέφτει...</button>`;
 	resultDiv.style.display = "block";
 }
-
 
 
 function shuffleArray(array) {
@@ -782,82 +818,50 @@ function revealRestartedRole() {
 	const isLast = currentPlayerIndex === numPlayers - 1;
 	const nextButtonLabel = isLast ? "Start Game" : "Επόμενος παίκτης";
 
-	roleDiv.innerHTML = `Ο νέος ρόλος σου είναι: <strong>${getRoleIcon(role)} ${role}</strong><br><br>
-	<button onclick="nextRestartedPlayer()">${nextButtonLabel}</button>`;
+	roleDiv.innerHTML = `
+		<div class="fade-in-role role-card">
+			<div class="role-icon">${getRoleIcon(role)}</div>
+			<div class="role-text">Ο ρόλος σου είναι: <br><strong>${translateRole(role)}</strong></div>
+			<br><button onclick="nextRestartedPlayer()">${nextButtonLabel}</button>
+		</div>`;
 
 	nameInput.disabled = true;
 	if (button) button.disabled = true;
 }
-
-
-function showRole() {
-	const nameInput = document.getElementById("playerName");
-	const name = nameInput.value.trim();
-	const button = document.querySelector("#nameInput button");
-
-	if (!name) {
-		if (button) {
-			button.disabled = true;
-			button.textContent = "Εισάγετε όνομα πρώτα!";
-			setTimeout(() => {
-				button.disabled = false;
-				button.textContent = "Δες τον ρόλο σου";
-			}, 2000);
-		}
-		return;
-	}
-
-	const lowerName = name.toLowerCase();
-	const nameExists = players.some(p => p.name.toLowerCase() === lowerName);
-	if (nameExists) {
-		if (button) {
-			button.disabled = true;
-			button.textContent = "Όνομα ήδη χρησιμοποιείται!";
-			setTimeout(() => {
-				button.disabled = false;
-				button.textContent = "Δες τον ρόλο σου";
-			}, 2000);
-		}
-		return;
-	}
-
-	const role = chosenRoles[currentPlayerIndex];
-	const player = new Player(name);
-	player.assignRole(role);
-	players.push(player);
-
-	const roleDiv = document.getElementById("roleReveal");
-	const isLast = currentPlayerIndex === numPlayers - 1;
-	const nextButtonLabel = isLast ? "Start Game" : "Επόμενος παίκτης";
-
-	roleDiv.innerHTML = `
-    <div class="fade-in-role">
-		Ο νέος ρόλος σου είναι: <strong>${getRoleIcon(role)} ${translateRole(role)}</strong>
-        <button onclick="nextPlayer()">${nextButtonLabel}</button>
-    </div>`;
-
-	nameInput.disabled = true;
-
-	if (button) {
-		button.disabled = true;
-	}
-}
-
 
 function restartNewNames() {
 	location.reload();
 }
 
 function nextRestartedPlayer() {
-	currentPlayerIndex++;
+	const roleDiv = document.getElementById("roleReveal");
+	roleDiv.classList.add("fade-out");
 
-	if (currentPlayerIndex >= numPlayers) {
-		document.getElementById("nameInput").style.display = "none";
-		showResults();
-	} else {
-		showNextPlayerRole();
-	}
+	setTimeout(() => {
+		currentPlayerIndex++;
+
+		if (currentPlayerIndex >= numPlayers) {
+			document.getElementById("nameInput").style.display = "none";
+			showResults();
+		} else {
+			const player = players[currentPlayerIndex];
+
+			document.getElementById("playerHeader").textContent = `Player ${currentPlayerIndex + 1} - Επιβεβαίωσε ή άλλαξε το όνομά σου:`;
+
+			const nameInput = document.getElementById("playerName");
+			nameInput.value = player.name;
+			nameInput.disabled = false;
+
+			const button = document.querySelector("#nameInput button");
+			button.disabled = false;
+			button.textContent = "Δες τον νέο ρόλο σου";
+
+			roleDiv.classList.remove("fade-out");
+			roleDiv.innerHTML = "";
+		}
+	}, 400);
 }
+
 
 function disableAllAddButtons() {
 	const buttons = document.querySelectorAll("button");
@@ -994,8 +998,8 @@ function setBackground(phase) {
 // Παράδειγμα μόνο:
 function getRoleIcon(role) {
     const map = {
-        "Citizen": "🧑",
-        "Hidden Killer": "🕵️",
+        "Citizen": "🧍‍♂️",
+        "Hidden Killer": "🗡️",
         "Known Killer": "🔪",
         "Police officer": "👮",
         "Snitch": "👀",

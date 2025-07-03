@@ -55,7 +55,7 @@ h1, h2 {
     letter-spacing: 1px;
     text-shadow: 2px 2px 6px #000000aa;
     transition: filter 0.3s ease;
-    margin-top: 11px; 
+    margin-top: 10px; 
 }
 h1:hover, h2:hover {
     filter: brightness(1.2);
@@ -129,24 +129,24 @@ input:disabled {
 /* 🎭 Κάρτα ρόλου */
 .role-card {
     background: rgba(0, 0, 0, 0.7);
-    border: 2px solid #ffd700;
+    border: 2px solid #72a6fa;
     border-radius: 20px;
     padding: 40px 20px;
     margin: 40px auto;
     max-width: 400px;
     color: #fff;
     animation: fadeIn 1s ease-in-out;
-    box-shadow: 0 0 20px #ffd700aa;
+    box-shadow: 0 0 20px #6fa4f8;
 }
 
 .role-icon {
-    font-size: 70px;
-    margin-bottom: 20px;
+    font-size: 90px;
+    margin-bottom: 10px;
     text-shadow: 0 0 10px #fff;
 }
 
 .role-text {
-    font-size: 22px;
+    font-size: 24px;
     line-height: 1.5;
 }
 
@@ -234,3 +234,7 @@ strong {
     display: inline-block;
 }
 
+.fade-out {
+	opacity: 0;
+	transition: opacity 0.4s ease-in-out;
+}
