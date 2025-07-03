@@ -31,6 +31,13 @@ function releaseWakeLock() {
 	}
 }
 
+function vibrate(duration = 100) {
+	if (navigator.vibrate) {
+		navigator.vibrate(duration);
+	}
+}
+
+
 class Player {
 	constructor(name) {
 		this.name = name;
