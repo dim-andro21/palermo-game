@@ -190,9 +190,9 @@ strong {
     text-align: center;
     max-height: 90vh;
     overflow: hidden;
-    padding: 8px 1vw;
-    font-size: clamp(16px, 3.5vw, 30px);
-    line-height: 1.3;
+    padding: 8px 0.5vw;
+    font-size: clamp(15px, 3.5vw, 30px);
+    line-height: 1.1;
     max-width: 1000px;
     margin: 0 auto;
 }
