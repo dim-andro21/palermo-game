@@ -8,7 +8,7 @@ let discussionTimerInterval = null;
 let discussionTimerRemaining = 0;
 let selectedTrack = "track1";
 let wakeLock = null;
-let defaultVibrationType = "error";
+let defaultVibrationType = "victory";
 
 
 async function requestWakeLock() {
@@ -1064,8 +1064,8 @@ function translateRole(role) {
 	return translations[role] || role;
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-	document.querySelectorAll("button").forEach(btn => {
-		btn.addEventListener("click", () => vibratePattern(), { passive: true });
-	});
+document.body.addEventListener("click", (e) => {
+	if (e.target.tagName === "BUTTON") {
+		vibratePattern();
+	}
 });
