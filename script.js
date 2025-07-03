@@ -702,11 +702,11 @@ function checkForGameEnd() {
 	const allGood = alivePlayers.every(p => p.role !== "Hidden Killer" && p.role !== "Known Killer");
 
 	if (allBad) {
-		showEndMessage("Οι κακοί κέρδισαν!");
+		showEndMessage("ΟΙ ΚΑΚΟΙ ΚΕΡΔΙΣΑΝ!");
 		return true;
 	}
 	if (allGood) {
-		showEndMessage("Οι καλοί κέρδισαν!");
+		showEndMessage("ΟΙ ΚΑΛΟΙ ΚΕΡΔΙΣΑΝ!");
 		return true;
 	}
 
@@ -725,10 +725,19 @@ function showEndMessage(message) {
 	resultDiv.style.display = "block";
 
 	let playerListHTML = "<h3>Ρόλοι όλων των παικτών:</h3><ul>";
-	players.forEach(p => {
-		const status = p.isAlive ? "(ζωντανός)" : "(νεκρός)";
-		playerListHTML += `<li><strong>${p.name}</strong>: ${translateRole(p.role)} ${status}</li>`;
+	players.forEach((p, i) => {
+		const isWinner = message.includes("Οι καλοί") ?
+			(p.role !== "Hidden Killer" && p.role !== "Known Killer") :
+			(p.role === "Hidden Killer" || p.role === "Known Killer");
+
+		const isDead = !p.isAlive;
+		const crown = isWinner ? '<span class="crown-icon">👑</span>' : '';
+		const tombstone = isDead ? `<span class="dead-icon${(isWinner ? ' dimmed-icon' : '')}">🪦</span>` : '';
+
+		const playerClass = isWinner ? "winner-player" : "loser-player";
+		playerListHTML += `<li class="${playerClass}">${crown}<strong>${p.name}</strong>: ${translateRole(p.role)} ${tombstone}</li>`;
 	});
+
 	playerListHTML += "</ul>";
 
 	resultDiv.innerHTML = `
@@ -773,11 +782,12 @@ function showNextPlayerRole() {
 	const player = players[currentPlayerIndex];
 
 	nameDiv.innerHTML = `
-		<h3>Player ${currentPlayerIndex + 1} - Επιβεβαίωσε ή άλλαξε το όνομά σου:</h3>
+		<h3 id="playerHeader">Player ${currentPlayerIndex + 1} - Επιβεβαίωσε ή άλλαξε το όνομά σου:</h3>
 		<input type="text" id="playerName" value="${player.name}" maxlength="15"><br><br>
 		<button onclick="revealRestartedRole()">Δες τον νέο ρόλο σου</button>
 		<div id="roleReveal" style="margin-top:15px; font-weight:bold;"></div>
 	`;
+
 }
 
 function revealRestartedRole() {

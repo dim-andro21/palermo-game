@@ -254,3 +254,33 @@ strong {
     margin-left: 8px;
     vertical-align: middle;
 }
+
+.winner-player {
+    color: #fff;
+    text-shadow: 0 0 6px #ffe169, 0 0 12px #ffc800;
+    font-weight: bold;
+}
+
+.loser-player {
+    opacity: 0.5;
+    filter: grayscale(100%);
+}
+
+.dead-icon {
+    font-size: 20px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.crown-icon {
+    font-size: 20px;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.dimmed-icon {
+    opacity: 0.5;
+    filter: grayscale(100%);
+    text-shadow: none !important;  /* 💡 Απαλείφει λάμψη από parent */
+}
+
