@@ -10,6 +10,31 @@ let selectedTrack = "track1";
 let wakeLock = null;
 let defaultVibrationType = "short";
 
+const musicTracks = [
+    "music/Curse_of_the_worgen.mp3",
+    "music/Wake_up_Ciri.mp3",
+    "music/Revendreth_Sired.mp3",
+    "music/Pride_and_Penance.mp3",
+    "music/Bramble.mp3"
+];
+
+let currentTrackIndex = 0;
+let bgMusic = null;
+
+function playNextMusicTrack() {
+    const track = musicTracks[currentTrackIndex];
+    bgMusic = new Audio(track);
+    bgMusic.volume = 0.05;
+    bgMusic.loop = false;
+
+    bgMusic.addEventListener("ended", () => {
+        currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
+        playNextMusicTrack();
+    });
+
+    bgMusic.play().catch(() => {});
+}
+
 
 async function requestWakeLock() {
 	try {
@@ -65,7 +90,10 @@ function playSFX(filename) {
 	audio.play().catch(() => {});
 }
 
-document.addEventListener("DOMContentLoaded", updateFooterVisibility);
+document.addEventListener("DOMContentLoaded", () => {
+	updateFooterVisibility();
+	playNextMusicTrack(); // 🎵 Ξεκινά η μουσική μόλις φορτώσει η σελίδα
+});
 
 class Player {
 	constructor(name) {
@@ -336,6 +364,19 @@ function shuffleArray(array) {
 }
 
 function startNight() {
+	if (bgMusic) {
+		const fadeDuration = 2000; // 2 δευτερόλεπτα
+		const step = 50;
+		const fadeOutInterval = setInterval(() => {
+			if (bgMusic.volume > 0.05) {
+				bgMusic.volume -= 0.05;
+			} else {
+				clearInterval(fadeOutInterval);
+				bgMusic.pause();
+			}
+		}, step);
+	}
+
 	setBackground("night");
 	document.getElementById("result").style.display = "none";
 	document.getElementById("nightPhase").style.display = "block";
@@ -802,6 +843,8 @@ function checkForGameEnd() {
 
 function showEndMessage(message) {
 	releaseWakeLock(); // 👉 Η οθόνη επιτρέπεται να σβήσει τώρα
+	currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
+	playNextMusicTrack();
 
 	const nightDiv = document.getElementById("nightPhase");
 	const dayDiv = document.getElementById("dayPhase");
@@ -1055,7 +1098,7 @@ function openNewGame() {
     document.getElementById("mainMenu").style.display = "none";
     document.getElementById("setup").style.display = "block";
     document.getElementById("pageTitle").textContent = "ΠΑΛΕΡΜΟ";
-    updateFooterVisibility(); // <-- Πρόσθεσε αυτή τη γραμμή!
+    updateFooterVisibility();
 }
 
 function openSettings() {
