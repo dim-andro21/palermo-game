@@ -197,8 +197,6 @@ strong {
     margin: 0 auto;
 }
 
-
-
 @media (max-width: 600px) { /* Εφαρμόζεται μόνο σε οθόνες έως 600px πλάτος (δηλ. κινητά) */
 
     .vote-row {
@@ -313,3 +311,60 @@ strong {
 #github-footer svg {
     filter: drop-shadow(0 0 8px #1a1b3c77);
 }
+
+.vote-line {
+	display: grid;
+    grid-template-columns: 3fr 15px 140px 60px;
+	align-items: center;
+	gap: 5px;
+	margin-bottom: 2px;
+	max-width: 100%;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+
+.vote-line span {
+	text-align: left;
+	font-size: 16px;
+	overflow-wrap: anywhere;
+}
+
+.vote-add {
+	background-color: #222;
+	color: white;
+	border: 2px solid #045326;
+	border-radius: 6px;
+	cursor: pointer;
+	padding: 6px 10px;
+	font-size: 14px;
+}
+
+.vote-remove {
+	background: #222;
+	border: 2px solid #c44;
+	color: #f88;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 16px;
+	padding: 4px 10px;
+}
+
+.vote-add:hover {
+    background-color: #04632d;
+    color: #111;
+    box-shadow: 0px 0px 15px #04632d;
+}
+
+.vote-remove:hover {
+	background-color: #c44;
+	color: #222;
+	box-shadow: 0 0 10px #c44;
+	border-color: #c44;
+}
+
+.vote-add:disabled, .vote-remove:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+

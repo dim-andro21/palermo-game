@@ -524,66 +524,33 @@ function startDiscussionTimer() {
 
 function renderVotingInterface() {
 	const votingDiv = document.getElementById("votingArea");
-	votingDiv.innerHTML = ""; // Καθαρίζει προηγούμενα μηνύματα!	
-	// // votingDiv.innerHTML = "<p>Πατήστε [+ Ψήφος] ή [− Ψήφος] για κάθε παίκτη.</p>";
+	votingDiv.innerHTML = ""; // Καθαρίζει προηγούμενα μηνύματα
 
 	totalVotes = 0;
 
 	players.forEach((p, index) => {
 		const container = document.createElement("div");
-		container.className = "vote-row";
+		container.className = "vote-line"; // Χρησιμοποιεί grid 4 στηλών
 
-		// Ετικέτα με όνομα και ψήφους
-		const label = document.createElement("div");
-		label.className = "vote-label";
+		let html = "";
+
 		if (!p.isAlive) {
-			label.classList.add("dead-player");
-			label.innerHTML = `<strong>${p.name}</strong><span class="dead-icon">🪦</span>`;
+			html += `
+				<span class="dead-player"><strong>${p.name}</strong> 🪦</span>
+				<span></span>
+				<span></span>
+				<span></span>
+			`;
 		} else {
-			label.innerHTML = `<strong>${p.name}</strong> – Ψήφοι: <span id="votes-${index}">${p.votes}</span>`;
-		}
-		container.appendChild(label);
-
-		// Αν είναι ζωντανός ο παίκτης, προσθέτουμε κουμπιά
-		if (p.isAlive) {
-			const addBtn = document.createElement("button");
-			addBtn.textContent = "+ Ψήφος";
-			addBtn.onclick = () => {
-				const alive = players.filter(p => p.isAlive).length;
-				if (totalVotes >= alive) return;
-
-				p.votes++;
-				totalVotes++;
-				playSFX("vote.mp3");
-				updateVotesDisplay(index, p.votes);
-
-				if (totalVotes === alive) {
-					disableAllAddButtons();
-				}
-
-				checkIfVotingComplete();
-			};
-
-			const removeBtn = document.createElement("button");
-			removeBtn.textContent = "− Ψήφος";
-			removeBtn.onclick = () => {
-				if (p.votes > 0) {
-					p.votes--;
-					totalVotes--;
-					playSFX("unvote.mp3");
-					updateVotesDisplay(index, p.votes);
-					cancelCountdown();
-				}
-			};
-
-			const buttonRow = document.createElement("div");
-			buttonRow.className = "vote-buttons";
-			buttonRow.appendChild(addBtn);
-			buttonRow.appendChild(removeBtn);
-
-			container.appendChild(buttonRow);
+			html += `
+				<span><strong>${p.name}</strong></span>
+				<span id="votes-${index}">${p.votes}</span>
+				<button class="vote-add" onclick="handleAddVote(${index})">+ Ψήφος</button>
+				<button class="vote-remove" onclick="handleRemoveVote(${index})">−</button>
+			`;
 		}
 
+		container.innerHTML = html;
 		votingDiv.appendChild(container);
 	});
 
@@ -591,6 +558,34 @@ function renderVotingInterface() {
 	countdown.id = "voteCountdown";
 	countdown.style.marginTop = "20px";
 	votingDiv.appendChild(countdown);
+}
+
+
+function handleAddVote(index) {
+	const p = players[index];
+	const alive = players.filter(p => p.isAlive).length;
+	if (totalVotes >= alive) return;
+
+	p.votes++;
+	totalVotes++;
+	playSFX("vote.mp3");
+	updateVotesDisplay(index, p.votes);
+
+	if (totalVotes === alive) {
+		disableAllAddButtons();
+	}
+	checkIfVotingComplete();
+}
+
+function handleRemoveVote(index) {
+	const p = players[index];
+	if (p.votes > 0) {
+		p.votes--;
+		totalVotes--;
+		playSFX("unvote.mp3");
+		updateVotesDisplay(index, p.votes);
+		cancelCountdown();
+	}
 }
 
 
