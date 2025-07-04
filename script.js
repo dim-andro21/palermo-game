@@ -1122,7 +1122,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "5 Ιουλίου 2025 – 02:50"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "5 Ιουλίου 2025 – 02:55"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
