@@ -1122,7 +1122,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "5 Ιουλίου 2025 – 00:44"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "5 Ιουλίου 2025 – 01:22"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
@@ -1224,24 +1224,27 @@ function toggleLovers(checkbox) {
 	updateRemainingRolesText(); // ✅ Ενημερώνουμε τον τίτλο
 }
 
-let pendingExit = false;
-
 let exitPopupShown = false;
 
 window.addEventListener("load", () => {
-	history.pushState({ page: 1 }, "", "");
+	history.pushState({ page: 1 }, "", ""); // βάλε εικονικό state για να χειριστούμε το back
 });
 
-window.addEventListener("popstate", function (e) {
+window.addEventListener("popstate", function () {
 	const mainMenu = document.getElementById("mainMenu");
 	if (mainMenu && mainMenu.style.display !== "none") {
-		return; // Αν είμαστε στο μενού, επιτρέπουμε έξοδο
+		// Είμαστε στο αρχικό μενού: επιτρέπουμε κανονική έξοδο
+		return;
 	}
 
 	if (!exitPopupShown) {
 		showExitConfirm();
 		exitPopupShown = true;
-		history.pushState({ page: 1 }, "", "");
+		history.pushState({ page: 1 }, "", ""); // μπλοκάρουμε προσωρινά την έξοδο
+	} else {
+		// Δεύτερο back = πραγματική έξοδος
+		exitPopupShown = false;
+		window.history.back(); // τώρα φεύγει πραγματικά
 	}
 });
 
@@ -1255,7 +1258,7 @@ function cancelExit() {
 }
 
 function confirmExit() {
+	// Αν ο χρήστης πατήσει "Έξοδος", κάνουμε κανονικό history.back()
 	exitPopupShown = false;
-	window.location.href = "about:blank"; // ή window.close() για android apps
+	window.history.back();
 }
-
