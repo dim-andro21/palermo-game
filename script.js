@@ -1110,6 +1110,12 @@ function openSettings() {
     document.getElementById("mainMenu").style.display = "none";
     document.getElementById("settingsMenu").style.display = "block";
     updateFooterVisibility();
+	const updatedEl = document.getElementById("lastUpdated");
+	if (updatedEl) {
+		const lastUpdate = "5 Ιουλίου 2025 – 00:11"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
+	}
+
 }
 
 function openCredits() {
