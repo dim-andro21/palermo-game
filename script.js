@@ -60,6 +60,11 @@ function updateFooterVisibility() {
     }
 }
 
+function playSFX(filename) {
+	const audio = new Audio(`sfx/${filename}`);
+	audio.play().catch(() => {});
+}
+
 document.addEventListener("DOMContentLoaded", updateFooterVisibility);
 
 class Player {
@@ -499,6 +504,7 @@ function renderVotingInterface() {
 
 				p.votes++;
 				totalVotes++;
+				playSFX("vote.mp3");
 				updateVotesDisplay(index, p.votes);
 
 				if (totalVotes === alive) {
@@ -514,6 +520,7 @@ function renderVotingInterface() {
 				if (p.votes > 0) {
 					p.votes--;
 					totalVotes--;
+					playSFX("unvote.mp3");
 					updateVotesDisplay(index, p.votes);
 					cancelCountdown();
 				}
