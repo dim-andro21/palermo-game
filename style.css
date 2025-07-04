@@ -385,4 +385,5 @@ strong {
 
 #exitToast.hidden {
 	display: none;
+    transition: opacity 0.3s ease;
 }

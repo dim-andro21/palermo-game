@@ -1214,15 +1214,26 @@ document.body.addEventListener("click", (e) => {
 
 function toggleLovers(checkbox) {
 	if (checkbox.checked) {
-		if (chosenRoles.filter(r => r === "Lovers").length < 2) {
-			chosenRoles.push("Lovers", "Lovers");
+		// Πόσοι ρόλοι απομένουν;
+		const remaining = numPlayers - chosenRoles.length;
+
+		if (remaining < 2) {
+			checkbox.checked = false; // ξε-τσεκάρουμε το κουμπί
+			alert("Δεν υπάρχουν αρκετές διαθέσιμες θέσεις για να προσθέσεις τους Ερωτευμένους.");
+			return;
 		}
+
+		// Αν υπάρχει χώρος, πρόσθεσέ τους
+		chosenRoles.push("Lovers", "Lovers");
 	} else {
+		// Αφαίρεση των Lovers
 		chosenRoles = chosenRoles.filter(r => r !== "Lovers");
 	}
+
 	updateChosenRolesList();
-	updateRemainingRolesText(); // ✅ Ενημερώνουμε τον τίτλο
+	updateRemainingRolesText(); // ✅ Ενημέρωση header
 }
+
 
 let exitPopupShown = false;
 let exitPopupTimeout = null;
@@ -1242,7 +1253,7 @@ window.addEventListener("popstate", function () {
 		exitPopupShown = true;
 		history.pushState({ page: 1 }, "", "");
 
-		// Ορίζουμε timeout για ακύρωση μετά από 5 δευτερόλεπτα
+		// Ορίζουμε timeout για ακύρωση μετά από 3 δευτερόλεπτα
 		exitPopupTimeout = setTimeout(() => {
 			hideExitToast();
 			exitPopupShown = false;
