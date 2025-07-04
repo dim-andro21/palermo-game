@@ -315,7 +315,7 @@ strong {
 .vote-line {
 	display: grid;
 	grid-template-columns: 2.5fr 0.2fr 120px auto;
-	gap: 1px;
+	gap: 0.5px;
 	align-items: center;
 	margin-bottom: 2px;
 	max-width: 100%;

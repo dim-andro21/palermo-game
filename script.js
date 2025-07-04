@@ -164,7 +164,7 @@ function startRoleSelection() {
 			<li>Hidden Killer</li>
 			<li>Known Killer</li>
 		</ul>
-		<h3>Επίλεξε ${numPlayers - 4} επιπλέον ρόλους:</h3>
+		<h3 id="extraRolesHeader">Επίλεξε ${numPlayers - 4} επιπλέον ρόλους:</h3>
 	`;
 
 	// Input για πολλαπλούς Citizen
@@ -205,6 +205,14 @@ function startRoleSelection() {
 	chosenRoles = shuffleArray(chosenRoles);
 }
 
+function updateRemainingRolesText() {
+	const header = document.getElementById("extraRolesHeader");
+	if (!header) return;
+
+	const remaining = numPlayers - chosenRoles.length;
+	header.textContent = `Επίλεξε ${remaining} επιπλέον ρόλους:`;
+}
+
 
 function updateRoleSelection(checkbox) {
 	const extraAllowed = numPlayers - 4;
@@ -227,6 +235,7 @@ function updateRoleSelection(checkbox) {
 		}
 	}
 
+	updateRemainingRolesText();
 	updateChosenRolesList();
 }
 
@@ -1078,6 +1087,7 @@ function updateCitizenSelection() {
 		chosenRoles.push("Citizen");
 	}
 
+	updateRemainingRolesText();
 	updateChosenRolesList();
 }
 
@@ -1112,7 +1122,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "5 Ιουλίου 2025 – 00:11"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "5 Ιουλίου 2025 – 00:20"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
