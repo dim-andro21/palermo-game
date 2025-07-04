@@ -1122,7 +1122,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "5 Ιουλίου 2025 – 01:22"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "5 Ιουλίου 2025 – 01:30"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
@@ -1225,40 +1225,43 @@ function toggleLovers(checkbox) {
 }
 
 let exitPopupShown = false;
+let exitPopupTimeout = null;
 
 window.addEventListener("load", () => {
-	history.pushState({ page: 1 }, "", ""); // βάλε εικονικό state για να χειριστούμε το back
+	history.pushState({ page: 1 }, "", "");
 });
 
 window.addEventListener("popstate", function () {
 	const mainMenu = document.getElementById("mainMenu");
 	if (mainMenu && mainMenu.style.display !== "none") {
-		// Είμαστε στο αρχικό μενού: επιτρέπουμε κανονική έξοδο
-		return;
+		return; // στο main menu επιτρέπεται έξοδος
 	}
 
 	if (!exitPopupShown) {
-		showExitConfirm();
+		showExitToast();
 		exitPopupShown = true;
-		history.pushState({ page: 1 }, "", ""); // μπλοκάρουμε προσωρινά την έξοδο
+		history.pushState({ page: 1 }, "", "");
+
+		// Ορίζουμε timeout για ακύρωση μετά από 5 δευτερόλεπτα
+		exitPopupTimeout = setTimeout(() => {
+			hideExitToast();
+			exitPopupShown = false;
+		}, 5000);
 	} else {
-		// Δεύτερο back = πραγματική έξοδος
+		// 2ο swipe: κανονική έξοδος
 		exitPopupShown = false;
-		window.history.back(); // τώρα φεύγει πραγματικά
+		clearTimeout(exitPopupTimeout);
+		hideExitToast();
+		window.history.back();
 	}
 });
 
-function showExitConfirm() {
-	document.getElementById("exitConfirmOverlay").classList.remove("overlay-hidden");
+function showExitToast() {
+	const toast = document.getElementById("exitToast");
+	if (toast) toast.classList.remove("hidden");
 }
 
-function cancelExit() {
-	document.getElementById("exitConfirmOverlay").classList.add("overlay-hidden");
-	exitPopupShown = false;
-}
-
-function confirmExit() {
-	// Αν ο χρήστης πατήσει "Έξοδος", κάνουμε κανονικό history.back()
-	exitPopupShown = false;
-	window.history.back();
+function hideExitToast() {
+	const toast = document.getElementById("exitToast");
+	if (toast) toast.classList.add("hidden");
 }

@@ -368,51 +368,21 @@ strong {
 	cursor: not-allowed;
 }
 
-#exitConfirmOverlay {
+#exitToast {
 	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background-color: rgba(0, 0, 0, 0.5);
-	backdrop-filter: blur(6px);
-	display: flex;
-	align-items: center;
-	justify-content: center;
+	bottom: 40px;
+	left: 50%;
+	transform: translateX(-50%);
+	background-color: rgba(0, 0, 0, 0.85);
+	color: white;
+	padding: 10px 16px;
+	border-radius: 12px;
+	font-size: 15px;
+	box-shadow: 0 0 10px #00000077;
 	z-index: 9999;
+	transition: opacity 0.3s ease;
 }
 
-#exitConfirmOverlay.overlay-hidden {
+#exitToast.hidden {
 	display: none;
-}
-
-.exit-modal {
-	background: #101030;
-	color: white;
-	border: 2px solid #ccc;
-	border-radius: 16px;
-	padding: 30px 20px;
-	max-width: 90%;
-	text-align: center;
-	box-shadow: 0 0 10px #000000aa;
-	font-size: 16px;
-}
-
-.exit-modal button {
-	margin: 10px;
-	padding: 10px 20px;
-	border-radius: 8px;
-	border: none;
-	cursor: pointer;
-	font-size: 16px;
-}
-
-.exit-cancel {
-	background-color: #555;
-	color: white;
-}
-
-.exit-confirm {
-	background-color: #c22;
-	color: white;
 }
