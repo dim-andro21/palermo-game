@@ -373,12 +373,12 @@ strong {
 	bottom: 40px;
 	left: 50%;
 	transform: translateX(-50%);
-	background-color: rgba(0, 0, 0, 0.85);
-	color: white;
+	background-color: #1c1c1c;
+	color: #e4e4ff;
 	padding: 10px 16px;
 	border-radius: 12px;
 	font-size: 15px;
-	box-shadow: 0 0 10px #00000077;
+	box-shadow: 0 0 10px #222;
 	z-index: 9999;
 	transition: opacity 0.3s ease;
 }

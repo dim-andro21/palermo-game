@@ -1122,7 +1122,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "5 Ιουλίου 2025 – 01:30"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "5 Ιουλίου 2025 – 01:36"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
@@ -1246,7 +1246,7 @@ window.addEventListener("popstate", function () {
 		exitPopupTimeout = setTimeout(() => {
 			hideExitToast();
 			exitPopupShown = false;
-		}, 5000);
+		}, 3000);
 	} else {
 		// 2ο swipe: κανονική έξοδος
 		exitPopupShown = false;
