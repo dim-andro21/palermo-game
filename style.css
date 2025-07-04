@@ -314,9 +314,9 @@ strong {
 
 .vote-line {
 	display: grid;
-    grid-template-columns: 3fr 15px 140px 60px;
+	grid-template-columns: 2.5fr 0.2fr 120px auto;
+	gap: 3.5px;
 	align-items: center;
-	gap: 5px;
 	margin-bottom: 2px;
 	max-width: 100%;
 	margin-left: auto;
@@ -336,7 +336,7 @@ strong {
 	border: 2px solid #045326;
 	border-radius: 6px;
 	cursor: pointer;
-	padding: 6px 10px;
+	padding: 6.5px 10px;
 	font-size: 14px;
 }
 
@@ -351,9 +351,9 @@ strong {
 }
 
 .vote-add:hover {
-    background-color: #04632d;
+    background-color: #045326;
     color: #111;
-    box-shadow: 0px 0px 15px #04632d;
+    box-shadow: 0 0 18px 3px #045326;
 }
 
 .vote-remove:hover {
