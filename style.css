@@ -368,3 +368,51 @@ strong {
 	cursor: not-allowed;
 }
 
+#exitConfirmOverlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.5);
+	backdrop-filter: blur(6px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 9999;
+}
+
+#exitConfirmOverlay.overlay-hidden {
+	display: none;
+}
+
+.exit-modal {
+	background: #101030;
+	color: white;
+	border: 2px solid #ccc;
+	border-radius: 16px;
+	padding: 30px 20px;
+	max-width: 90%;
+	text-align: center;
+	box-shadow: 0 0 10px #000000aa;
+	font-size: 16px;
+}
+
+.exit-modal button {
+	margin: 10px;
+	padding: 10px 20px;
+	border-radius: 8px;
+	border: none;
+	cursor: pointer;
+	font-size: 16px;
+}
+
+.exit-cancel {
+	background-color: #555;
+	color: white;
+}
+
+.exit-confirm {
+	background-color: #c22;
+	color: white;
+}

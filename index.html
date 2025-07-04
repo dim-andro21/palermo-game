@@ -75,6 +75,15 @@
 
 	<script src="script.js"></script>
 
+	<div id="exitConfirmOverlay" class="overlay-hidden">
+		<div class="exit-modal">
+			<p>Είσαι σίγουρος/η ότι θέλεις να αποχωρήσεις; Η πρόοδος θα χαθεί.</p>
+			<button onclick="cancelExit()" class="exit-cancel">Ακύρωση</button>
+			<button onclick="confirmExit()" class="exit-confirm">Έξοδος</button>
+		</div>
+	</div>
+
+
 	<footer id="github-footer" style="display:none;">
 	<a href="https://github.com/dim-andro21" target="_blank" rel="noopener">
 		<svg height="28" viewBox="0 0 16 16" width="28" aria-hidden="true" style="vertical-align:middle; margin-right:8px;">

@@ -1223,3 +1223,33 @@ function toggleLovers(checkbox) {
 	updateChosenRolesList();
 	updateRemainingRolesText(); // ✅ Ενημερώνουμε τον τίτλο
 }
+
+let pendingExit = false;
+
+window.addEventListener("beforeunload", function (e) {
+	const mainMenu = document.getElementById("mainMenu");
+	if (mainMenu && mainMenu.style.display !== "none") return;
+
+	// Αν έχουμε ήδη δείξει popup, επιτρέπουμε την έξοδο
+	if (pendingExit) return;
+
+	e.preventDefault();
+	e.returnValue = ""; // Για να εμποδίσει την προεπιλεγμένη έξοδο
+
+	// Αντί για popup του browser, εμφανίζουμε δικό μας
+	showExitConfirm();
+	return "";
+});
+
+function showExitConfirm() {
+	document.getElementById("exitConfirmOverlay").classList.remove("overlay-hidden");
+}
+
+function cancelExit() {
+	document.getElementById("exitConfirmOverlay").classList.add("overlay-hidden");
+}
+
+function confirmExit() {
+	pendingExit = true;
+	window.location.href = "about:blank"; // Ή window.close() αν λειτουργεί
+}
