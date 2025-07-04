@@ -1226,19 +1226,23 @@ function toggleLovers(checkbox) {
 
 let pendingExit = false;
 
-window.addEventListener("beforeunload", function (e) {
+let exitPopupShown = false;
+
+window.addEventListener("load", () => {
+	history.pushState({ page: 1 }, "", "");
+});
+
+window.addEventListener("popstate", function (e) {
 	const mainMenu = document.getElementById("mainMenu");
-	if (mainMenu && mainMenu.style.display !== "none") return;
+	if (mainMenu && mainMenu.style.display !== "none") {
+		return; // Αν είμαστε στο μενού, επιτρέπουμε έξοδο
+	}
 
-	// Αν έχουμε ήδη δείξει popup, επιτρέπουμε την έξοδο
-	if (pendingExit) return;
-
-	e.preventDefault();
-	e.returnValue = ""; // Για να εμποδίσει την προεπιλεγμένη έξοδο
-
-	// Αντί για popup του browser, εμφανίζουμε δικό μας
-	showExitConfirm();
-	return "";
+	if (!exitPopupShown) {
+		showExitConfirm();
+		exitPopupShown = true;
+		history.pushState({ page: 1 }, "", "");
+	}
 });
 
 function showExitConfirm() {
@@ -1247,9 +1251,11 @@ function showExitConfirm() {
 
 function cancelExit() {
 	document.getElementById("exitConfirmOverlay").classList.add("overlay-hidden");
+	exitPopupShown = false;
 }
 
 function confirmExit() {
-	pendingExit = true;
-	window.location.href = "about:blank"; // Ή window.close() αν λειτουργεί
+	exitPopupShown = false;
+	window.location.href = "about:blank"; // ή window.close() για android apps
 }
+
