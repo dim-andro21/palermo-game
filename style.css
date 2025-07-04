@@ -284,3 +284,32 @@ strong {
     text-shadow: none !important;  /* 💡 Απαλείφει λάμψη από parent */
 }
 
+#github-footer {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    padding: 10px 0 8px 0;
+    background: linear-gradient(to top, #030111 30%, transparent 90%);
+    text-align: center;
+    z-index: 2000;
+    user-select: none;
+    pointer-events: auto;
+    /* box-shadow: 0 -2px 18px #000a; */
+}
+#github-footer a {
+    text-decoration: none;
+    color: #e4e4ff;
+    font-family: 'Neucha', cursive;
+    font-weight: bold;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    transition: color 0.2s;
+    opacity: 0.93;
+}
+#github-footer a:hover {
+    color: #72a6fa;
+    opacity: 1;
+}
+#github-footer svg {
+    filter: drop-shadow(0 0 8px #1a1b3c77);
+}

@@ -52,7 +52,15 @@ function vibratePattern(type = defaultVibrationType) {
 	}
 }
 
+function updateFooterVisibility() {
+    const mainMenu = document.getElementById("mainMenu");
+    const footer = document.getElementById("github-footer");
+    if (mainMenu && footer) {
+        footer.style.display = (mainMenu.style.display !== "none") ? "block" : "none";
+    }
+}
 
+document.addEventListener("DOMContentLoaded", updateFooterVisibility);
 
 class Player {
 	constructor(name) {
@@ -981,29 +989,34 @@ function eliminatePlayer(player, source = "ψηφοφορίας") {
 }
 
 function openNewGame() {
-	document.getElementById("mainMenu").style.display = "none";
-	document.getElementById("setup").style.display = "block";
-	document.getElementById("pageTitle").textContent = "ΠΑΛΕΡΜΟ";
+    document.getElementById("mainMenu").style.display = "none";
+    document.getElementById("setup").style.display = "block";
+    document.getElementById("pageTitle").textContent = "ΠΑΛΕΡΜΟ";
+    updateFooterVisibility(); // <-- Πρόσθεσε αυτή τη γραμμή!
 }
 
 function openSettings() {
-	document.getElementById("mainMenu").style.display = "none";
-	document.getElementById("settingsMenu").style.display = "block";
+    document.getElementById("mainMenu").style.display = "none";
+    document.getElementById("settingsMenu").style.display = "block";
+    updateFooterVisibility();
 }
 
 function openCredits() {
-	document.getElementById("mainMenu").style.display = "none";
-	document.getElementById("creditsPage").style.display = "block";
+    document.getElementById("mainMenu").style.display = "none";
+    document.getElementById("creditsPage").style.display = "block";
+    updateFooterVisibility();
 }
 
 function backToMainMenu() {
-	releaseWakeLock(); // 👉 Απενεργοποιούμε την προστασία οθόνης
+    releaseWakeLock(); // 👉 Απενεργοποιούμε την προστασία οθόνης
 
-	document.getElementById("settingsMenu").style.display = "none";
-	document.getElementById("creditsPage").style.display = "none";
-	document.getElementById("mainMenu").style.display = "block";
-	document.getElementById("pageTitle").textContent = "Palermo Game";
+    document.getElementById("settingsMenu").style.display = "none";
+    document.getElementById("creditsPage").style.display = "none";
+    document.getElementById("mainMenu").style.display = "block";
+    document.getElementById("pageTitle").textContent = "Palermo Game";
+    updateFooterVisibility();
 }
+
 
 function formatTime(seconds) {
 	const min = Math.floor(seconds / 60);
