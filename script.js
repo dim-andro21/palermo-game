@@ -372,7 +372,7 @@ function startNight() {
         setTimeout(() => {
             index++;
             nextLine();
-        }, 8000);
+        }, 7500);
     }
 
     nextLine();
@@ -437,7 +437,8 @@ function startDiscussionTimer() {
 
 function renderVotingInterface() {
 	const votingDiv = document.getElementById("votingArea");
-	// votingDiv.innerHTML = "<p>Πατήστε [+ Ψήφος] ή [− Ψήφος] για κάθε παίκτη.</p>";
+	votingDiv.innerHTML = ""; // Καθαρίζει προηγούμενα μηνύματα!	
+	// // votingDiv.innerHTML = "<p>Πατήστε [+ Ψήφος] ή [− Ψήφος] για κάθε παίκτη.</p>";
 
 	totalVotes = 0;
 
@@ -607,7 +608,7 @@ function finishVoting() {
 	setTimeout(() => {
 		if (checkForGameEnd()) return;
 		startSecondNight();
-	}, 2000);
+	}, 4000);
 }
 
 
