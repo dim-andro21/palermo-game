@@ -813,9 +813,9 @@ function showEndMessage(message) {
 
 	let playerListHTML = "<h3>Ρόλοι όλων των παικτών:</h3><ul>";
 	players.forEach((p, i) => {
-		const isWinner = message.includes("Οι καλοί") ?
-			(p.role !== "Hidden Killer" && p.role !== "Known Killer") :
-			(p.role === "Hidden Killer" || p.role === "Known Killer");
+		const isWinner = message.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes("οι καλοι")
+			? (p.role !== "Hidden Killer" && p.role !== "Known Killer")
+			: (p.role === "Hidden Killer" || p.role === "Known Killer");
 
 		const isDead = !p.isAlive;
 		const crown = isWinner ? '<span class="crown-icon">👑</span>' : '';
