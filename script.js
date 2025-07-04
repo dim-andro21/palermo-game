@@ -1122,17 +1122,16 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "5 Ιουλίου 2025 – 01:36"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "5 Ιουλίου 2025 – 02:50"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
 }
 
 function openCredits() {
-    document.getElementById("mainMenu").style.display = "none";
-    document.getElementById("creditsPage").style.display = "block";
-    updateFooterVisibility();
+    window.location.href = "credits.html";
 }
+
 
 function backToMainMenu() {
     releaseWakeLock(); // 👉 Απενεργοποιούμε την προστασία οθόνης
