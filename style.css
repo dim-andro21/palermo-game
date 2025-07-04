@@ -378,7 +378,7 @@ strong {
 	padding: 10px 16px;
 	border-radius: 12px;
 	font-size: 15px;
-	box-shadow: 0 0 10px #222;
+	box-shadow: 0 0 10px #1c1c1c;
 	z-index: 9999;
 	transition: opacity 0.3s ease;
 }
