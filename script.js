@@ -1122,7 +1122,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "5 Ιουλίου 2025 – 00:20"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "5 Ιουλίου 2025 – 00:26"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
@@ -1221,4 +1221,5 @@ function toggleLovers(checkbox) {
 		chosenRoles = chosenRoles.filter(r => r !== "Lovers");
 	}
 	updateChosenRolesList();
+	updateRemainingRolesText(); // ✅ Ενημερώνουμε τον τίτλο
 }
