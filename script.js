@@ -79,7 +79,7 @@ class Player {
 	}
 }
 
-const roleNames = ["Citizen", "Hidden Killer", "Known Killer", "Police officer", "Snitch", "Bulletproof"];
+const roleNames = ["Citizen", "Hidden Killer", "Known Killer", "Police officer", "Snitch", "Bulletproof", "Lovers"];
 const requiredRoles = ["Citizen", "Citizen", "Hidden Killer", "Known Killer"];
 
 let numPlayers = 0;
@@ -90,15 +90,13 @@ let currentPlayerIndex = 0;
 
 // Save selected setting when starting game
 function startRoleSelection() {
-
-	requestWakeLock(); // 👉 Ενεργοποιεί Wake Lock από εδώ και πέρα
+	requestWakeLock();
 
 	const trackSelect = document.getElementById("trackSelect");
 	if (trackSelect) {
 		selectedTrack = trackSelect.value;
 	}
 
-	// Save discussion setting
 	const select = document.getElementById("discussionTime");
 	if (select) {
 		discussionDuration = parseInt(select.value);
@@ -109,7 +107,6 @@ function startRoleSelection() {
 		alert("You need at least 5 players!");
 		return;
 	}
-
 	if (numPlayers > 10) {
 		alert("Μέγιστος αριθμός παικτών: 10.");
 		return;
@@ -136,22 +133,34 @@ function startRoleSelection() {
 		</label><br>
 	`;
 
-
-	// Checkboxes για άλλους προαιρετικούς ρόλους (χωρίς δολοφόνους)
+	// Checkboxes για άλλους ρόλους
 	for (let i = 3; i < roleNames.length; i++) {
-		if (roleNames[i] === "Citizen") continue; // Citizen τον βάζουμε μόνο με αριθμό
+		if (roleNames[i] === "Citizen") continue;
+
+		if (roleNames[i] === "Lovers") {
 			roleDiv.innerHTML += `
 				<label>
-					<input type="checkbox" value="${roleNames[i]}" onchange="updateRoleSelection(this)">
-					${translateRole(roleNames[i])}
+					<input type="checkbox" id="addLovers" onchange="toggleLovers(this)">
+					${translateRole("Lovers")} (2 άτομα)
 				</label><br>`;
+			continue;
+		}
+
+		roleDiv.innerHTML += `
+			<label>
+				<input type="checkbox" value="${roleNames[i]}" onchange="updateRoleSelection(this)">
+				${translateRole(roleNames[i])}
+			</label><br>`;
 	}
 
 	roleDiv.innerHTML += `<br><button onclick="startNameInput()">Continue</button>`;
 	roleDiv.style.display = "block";
 
-	chosenRoles = [...requiredRoles]; // Βάση 4 απαραίτητων ρόλων
+	chosenRoles = [...requiredRoles];
 	updateChosenRolesList();
+
+	// Προκαθορισμένη ανακατεύθυνση ρόλων πριν την είσοδο ονομάτων
+	chosenRoles = shuffleArray(chosenRoles);
 }
 
 
@@ -295,7 +304,15 @@ function showResults() {
 	resultDiv.innerHTML = "<h3>Όλοι οι παίκτες έχουν καταχωρηθεί.</h3><p>Μπορείτε τώρα να ξεκινήσετε το παιχνίδι!</p>";
 	resultDiv.innerHTML += `<br><button onclick="startNight()">Η Νύχτα Πέφτει...</button>`;
 	resultDiv.style.display = "block";
+
+	// 💘 Σύνδεση ερωτευμένων
+	const lovers = players.filter(p => p.role === "Lovers");
+	if (lovers.length === 2) {
+		lovers[0].linkedPartner = lovers[1];
+		lovers[1].linkedPartner = lovers[0];
+	}
 }
+
 
 
 function shuffleArray(array) {
@@ -313,7 +330,6 @@ function shuffleArray(array) {
 	return array;
 }
 
-// 2. Επέκταση startNight ώστε να αλλάζει background
 function startNight() {
     setBackground("night");
     document.getElementById("result").style.display = "none";
@@ -350,6 +366,17 @@ function startNight() {
         audioLines.push("line10.mp3");
     }
 
+    // 💘 Εμφάνιση κειμένου για Lovers, μόνο αν είναι και οι 2 ζωντανοί
+    const lovers = players.filter(p => p.role === "Lovers" && p.isAlive);
+    if (lovers.length === 2) {
+        scriptLines.push(
+            "Τέλος ανοίγουν τα μάτια τους και οι ερωτευμένοι για να γνωριστούν.",
+            "Αφού ερωτεύτηκαν κεραυνοβόλα μπορούν να κλείσουν τα μάτια τους."
+        );
+        // Αν έχεις ηχητικά, εδώ μπορείς να προσθέσεις:
+        // audioLines.push("lovers1.mp3", "lovers2.mp3");
+    }
+
     scriptLines.push("Μια μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...");
     audioLines.push("line11.mp3");
 
@@ -377,10 +404,6 @@ function startNight() {
 
     nextLine();
 }
-
-
-
-
 
 
 // 3. Επέκταση startDay για αλλαγή background
@@ -587,19 +610,34 @@ function finishVoting() {
 		eliminatedPlayer = didDie ? eliminated : null;
 
 		if (didDie) {
-			votingDiv.innerHTML = `<p>Ο παίκτης <strong>${eliminated.name}</strong> αποχωρεί από το παιχνίδι!</p>`;
+			if (
+				eliminated.role === "Lovers" &&
+				eliminated.linkedPartner &&
+				eliminated.linkedPartner.isAlive === false
+			) {
+				votingDiv.innerHTML = `<p>Ο παίκτης <strong>${eliminated.name}</strong> ήταν ερωτευμένος με τον/την <strong>${eliminated.linkedPartner.name}</strong>, επομένως αποχωρεί και το ταίρι του.</p>`;
+			} else {
+				votingDiv.innerHTML = `<p>Ο παίκτης <strong>${eliminated.name}</strong> αποχωρεί από το παιχνίδι!</p>`;
+			}
 		} else {
 			votingDiv.innerHTML = `<p>Ο παίκτης <strong>${eliminated.name}</strong> ήταν Αλεξίσφαιρος και επέζησε από την απόπειρα ψηφοφορίας! Του απομένει άλλη μία ζωή.</p>`;
 		}
 	} else {
-		// Ισοψηφία - επιλέγεται τυχαία
 		const randomIndex = Math.floor(Math.random() * candidates.length);
 		eliminated = candidates[randomIndex];
 		didDie = eliminatePlayer(eliminated);
 		eliminatedPlayer = didDie ? eliminated : null;
 
 		if (didDie) {
-			votingDiv.innerHTML = `<p>Υπήρξε ισοψηφία! Ο παίκτης <strong>${eliminated.name}</strong> επιλέχθηκε τυχαία και αποχωρεί από το παιχνίδι.</p>`;
+			if (
+				eliminated.role === "Lovers" &&
+				eliminated.linkedPartner &&
+				eliminated.linkedPartner.isAlive === false
+			) {
+				votingDiv.innerHTML = `<p>Υπήρξε ισοψηφία! Ο παίκτης <strong>${eliminated.name}</strong> επιλέχθηκε τυχαία, ήταν ερωτευμένος με τον/την <strong>${eliminated.linkedPartner.name}</strong>, επομένως αποχωρεί και το ταίρι του.</p>`;
+			} else {
+				votingDiv.innerHTML = `<p>Υπήρξε ισοψηφία! Ο παίκτης <strong>${eliminated.name}</strong> επιλέχθηκε τυχαία και αποχωρεί από το παιχνίδι.</p>`;
+			}
 		} else {
 			votingDiv.innerHTML = `<p>Υπήρξε ισοψηφία! Ο παίκτης <strong>${eliminated.name}</strong> επιλέχθηκε τυχαία, αλλά ήταν Αλεξίσφαιρος και επέζησε από την απόπειρα ψηφοφορίας! Του απομένει άλλη μία ζωή.</p>`;
 		}
@@ -608,8 +646,9 @@ function finishVoting() {
 	setTimeout(() => {
 		if (checkForGameEnd()) return;
 		startSecondNight();
-	}, 4000);
+	}, 4500);
 }
+
 
 
 function startSecondNight() {
@@ -982,12 +1021,19 @@ function updateCitizenSelection() {
 function eliminatePlayer(player, source = "ψηφοφορίας") {
 	if (player.lives > 1) {
 		player.lives--;
-		return false; // Δεν πέθανε
+		return false;
 	} else {
 		player.isAlive = false;
-		return true; // Πέθανε
+
+		// 💔 Αν είναι ερωτευμένος και ο/η άλλος/η ζει, πεθαίνει κι αυτός/ή
+		if (player.role === "Lovers" && player.linkedPartner && player.linkedPartner.isAlive) {
+			player.linkedPartner.isAlive = false;
+		}
+
+		return true;
 	}
 }
+
 
 function openNewGame() {
     document.getElementById("mainMenu").style.display = "none";
@@ -1055,7 +1101,8 @@ function getRoleIcon(role) {
         "Known Killer": "🔪",
         "Police officer": "👮",
         "Snitch": "👀",
-        "Bulletproof": "🛡️"
+        "Bulletproof": "🛡️",
+		"Lovers": "💑"
     };
     return map[role] || "❓";
 }
@@ -1073,7 +1120,8 @@ function translateRole(role) {
 		"Known Killer": "Φανερός Δολοφόνος",
 		"Police officer": "Αστυνομικός",
 		"Snitch": "Ρουφιάνος",
-		"Bulletproof": "Αλεξίσφαιρος"
+		"Bulletproof": "Αλεξίσφαιρος",
+		"Lovers": "Ερωτευμένος/η"
 	};
 	return translations[role] || role;
 }
@@ -1083,3 +1131,14 @@ document.body.addEventListener("click", (e) => {
 		vibratePattern();
 	}
 });
+
+function toggleLovers(checkbox) {
+	if (checkbox.checked) {
+		if (chosenRoles.filter(r => r === "Lovers").length < 2) {
+			chosenRoles.push("Lovers", "Lovers");
+		}
+	} else {
+		chosenRoles = chosenRoles.filter(r => r !== "Lovers");
+	}
+	updateChosenRolesList();
+}
