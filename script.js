@@ -331,79 +331,88 @@ function shuffleArray(array) {
 }
 
 function startNight() {
-    setBackground("night");
-    document.getElementById("result").style.display = "none";
-    document.getElementById("nightPhase").style.display = "block";
+	setBackground("night");
+	document.getElementById("result").style.display = "none";
+	document.getElementById("nightPhase").style.display = "block";
 
-    const nightTextDiv = document.getElementById("nightText");
-    nightTextDiv.innerHTML = "";
-    nightTextDiv.style.opacity = 0;
+	const nightTextDiv = document.getElementById("nightText");
+	nightTextDiv.innerHTML = "";
+	nightTextDiv.style.opacity = 0;
 
-    const hasSnitch = chosenRoles.includes("Snitch");
+	const hasSnitch = chosenRoles.includes("Snitch");
 
-    const scriptLines = [
-        "Μια νύχτα πέφτει στο Παλέρμο κι όλοι κλείνουν τα μάτια τους...",
-        "Οι 2 δολοφόνοι ανοίγουν τα μάτια τους και γνωρίζουν ο ένας τον άλλον",
-        "Αφού γνωριστούν, κλείνουν τα μάτια τους",
-        "Ο φανερός δολοφόνος σηκώνει το χέρι του κι ο αστυνομικός ανοίγει τα μάτια του",
-        "Τώρα που ο αστυνομικός έχει δει τον φανερό δολοφόνο, κλείνει τα μάτια του"
-    ];
+	const scriptLines = [
+		"Μια νύχτα πέφτει στο Παλέρμο κι όλοι κλείνουν τα μάτια τους...",
+		"Οι 2 δολοφόνοι ανοίγουν τα μάτια τους και γνωρίζουν ο ένας τον άλλον",
+		"Αφού γνωριστούν, κλείνουν τα μάτια τους",
+		"Ο φανερός δολοφόνος σηκώνει το χέρι του κι ο αστυνομικός ανοίγει τα μάτια του",
+		"Τώρα που ο αστυνομικός έχει δει τον φανερό δολοφόνο, κλείνει τα μάτια του"
+	];
 
-    const audioLines = [
-        "line1.mp3", "line2.mp3", "line3.mp3", "line4.mp3", "line5.mp3"
-    ];
+	const audioLines = [
+		"line1.mp3",
+		"line2.mp3",
+		"line3.mp3",
+		"line4.mp3",
+		"line5.mp3"
+	];
 
-    if (hasSnitch) {
-        scriptLines.push(
-            "Στη συνέχεια σηκώνει το χέρι του και ο κρυφός δολοφόνος",
-            "Ο ρουφιάνος ανοίγει τα μάτια του και βλέπει τους 2 δολοφόνους",
-            "Αφού πλέον γνωρίζει ποιους πρέπει να καλύψει, κλείνει τα μάτια του",
-            "Οι 2 δολοφόνοι κατεβάζουν τα χέρια τους"
-        );
-        audioLines.push("line6.mp3", "line7.mp3", "line8.mp3", "line9.mp3");
-    } else {
-        scriptLines.push("Ο δολοφόνος κατεβάζει το χέρι του");
-        audioLines.push("line10.mp3");
-    }
+	if (hasSnitch) {
+		scriptLines.push(
+			"Στη συνέχεια σηκώνει το χέρι του και ο κρυφός δολοφόνος",
+			"Ο ρουφιάνος ανοίγει τα μάτια του και βλέπει τους 2 δολοφόνους",
+			"Αφού πλέον γνωρίζει ποιους πρέπει να καλύψει, κλείνει τα μάτια του",
+			"Οι 2 δολοφόνοι κατεβάζουν τα χέρια τους"
+		);
+		audioLines.push(
+			"line6.mp3",
+			"line7.mp3",
+			"line8.mp3",
+			"line9.mp3"
+		);
+	} else {
+		scriptLines.push("Ο δολοφόνος κατεβάζει το χέρι του");
+		audioLines.push("line10.mp3");
+	}
 
-    // 💘 Εμφάνιση κειμένου για Lovers, μόνο αν είναι και οι 2 ζωντανοί
-    const lovers = players.filter(p => p.role === "Lovers" && p.isAlive);
-    if (lovers.length === 2) {
-        scriptLines.push(
-            "Τέλος ανοίγουν τα μάτια τους και οι ερωτευμένοι για να γνωριστούν.",
+	// 💘 Αν υπάρχουν και οι 2 Lovers ζωντανοί, προσθέτουμε ειδική αφήγηση
+	const lovers = players.filter(p => p.role === "Lovers" && p.isAlive);
+	if (lovers.length === 2) {
+		scriptLines.push(
+			"Τέλος ανοίγουν τα μάτια τους και οι ερωτευμένοι για να γνωριστούν.",
             "Αφού ερωτεύτηκαν κεραυνοβόλα μπορούν να κλείσουν τα μάτια τους."
-        );
-        // Αν έχεις ηχητικά, εδώ μπορείς να προσθέσεις:
-        // audioLines.push("lovers1.mp3", "lovers2.mp3");
-    }
+		);
+		audioLines.push("lovers1.mp3", "lovers2.mp3");
+	}
 
-    scriptLines.push("Μια μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...");
-    audioLines.push("line11.mp3");
+	scriptLines.push("Μια μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...");
+	audioLines.push("line11.mp3");
 
-    let index = 0;
+	let index = 0;
 
-    function nextLine() {
-        if (index >= scriptLines.length) {
-            setTimeout(() => {
-                startDay();
-            }, 1000);
-            return;
-        }
+	function nextLine() {
+		if (index >= scriptLines.length) {
+			setTimeout(() => {
+				startDay();
+			}, 1000);
+			return;
+		}
 
-        nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
-        const audio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
-        audio.load();
-        audio.oncanplaythrough = () => audio.play();
+		nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
+		const audio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
+		audio.load();
+		audio.oncanplaythrough = () => audio.play();
 
-        nightTextDiv.style.opacity = 1;
-        setTimeout(() => {
-            index++;
-            nextLine();
-        }, 7500);
-    }
+		nightTextDiv.style.opacity = 1;
+		setTimeout(() => {
+			index++;
+			nextLine();
+		}, 7500);
+	}
 
-    nextLine();
+	nextLine();
 }
+
 
 
 // 3. Επέκταση startDay για αλλαγή background
