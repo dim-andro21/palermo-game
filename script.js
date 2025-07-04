@@ -22,18 +22,27 @@ let currentTrackIndex = 0;
 let bgMusic = null;
 
 function playNextMusicTrack() {
-    const track = musicTracks[currentTrackIndex];
-    bgMusic = new Audio(track);
-    bgMusic.volume = 0.05;
-    bgMusic.loop = false;
+	if (bgMusic) {
+		bgMusic.pause();
+		bgMusic = null;
+	}
 
-    bgMusic.addEventListener("ended", () => {
-        currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
-        playNextMusicTrack();
-    });
+	const track = musicTracks[currentTrackIndex];
+	bgMusic = new Audio(track);
+	bgMusic.volume = 0.05;
+	bgMusic.muted = false;
+	bgMusic.loop = false;
 
-    bgMusic.play().catch(() => {});
+	bgMusic.addEventListener("ended", () => {
+		currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
+		playNextMusicTrack();
+	});
+
+	bgMusic.play().catch((err) => {
+		console.warn("🔇 Δεν επιτράπηκε autoplay:", err);
+	});
 }
+
 
 
 async function requestWakeLock() {
@@ -1095,6 +1104,7 @@ function eliminatePlayer(player, source = "ψηφοφορίας") {
 
 
 function openNewGame() {
+	// if (!bgMusic) playNextMusicTrack(); // 🎵 ξεκινά μουσική με 1ο click
     document.getElementById("mainMenu").style.display = "none";
     document.getElementById("setup").style.display = "block";
     document.getElementById("pageTitle").textContent = "ΠΑΛΕΡΜΟ";
