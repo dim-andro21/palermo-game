@@ -10,7 +10,7 @@
 			padding: 0;
 			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 			background: #0b0639;
-            color: #e4e4ff;
+			color: #e4e4ff;
 			overflow: hidden;
 		}
 
@@ -19,15 +19,14 @@
 			top: 100%;
 			width: 100%;
 			text-align: center;
-	        /* height: 175vh; ✅ κάνει το container πολύ ψηλό για να μην φανεί το κενό */
 			animation: scrollCredits 40s linear forwards;
-            background: linear-gradient(to bottom, #0b0639 0%, #030008 60%);
+			background: linear-gradient(to bottom, #0b0639 0%, #030008 60%);
 		}
 
-        @keyframes scrollCredits {
-            0% { top: 100%; }
-            100% { top: -110%; }
-        }
+		@keyframes scrollCredits {
+			0% { top: 100%; }
+			100% { top: -110%; }
+		}
 
 		h1, h2 {
 			margin-bottom: 0;
@@ -64,20 +63,14 @@
 			z-index: 1000;
 		}
 
-        .fade-out {
-            animation: fadeOut 3s ease-in forwards;
-            animation-delay: 2s; /* προσαρμόζεται από JS */
-        }
+		.fade-out {
+			animation: fadeOut 3s ease-in forwards;
+		}
 
-        @keyframes fadeOut {
-            from {
-                opacity: 1;
-            }
-            to {
-                opacity: 0;
-            }
-        }
-
+		@keyframes fadeOut {
+			from { opacity: 1; }
+			to { opacity: 0; }
+		}
 	</style>
 </head>
 <body>
@@ -86,7 +79,7 @@
 	<div class="credits-container">
 		<div class="credits-block">
 			<h1 class="fade-target">Palermo Game</h1>
-            <h2 class="fade-target">Official Credits</h2>
+			<h2 class="fade-target">Official Credits</h2>
 
 			<div class="role">Game Direction</div>
 			<div class="name">dim-andro21</div>
@@ -132,36 +125,63 @@
 
 			<div class="role">Special Thanks</div>
 			<div class="name">
-				To my best friend ChatGPT.<br> Without their help this project would have been impossible to complete.<br><br><br>
+				To my best friend ChatGPT.<br>Without their help this project would have been impossible to complete.
 			</div>
-            <div>     <br></div>
-		
-            <div style="height: 200vh;"></div>
-        </div>
+
+			<div style="height: 200vh;"></div>
+		</div>
 	</div>
 
-    <script>
-        function goBack() {
-            window.location.href = "index.html";
-        }
+	<script>
+		let wakeLock = null;
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting && !entry.target.classList.contains("fading")) {
-                    entry.target.classList.add("fading");
-                    setTimeout(() => {
-                        entry.target.classList.add("fade-out");
-                    }, 14000); // 🕒 1s μετά την είσοδο ξεκινάει το fade-out
-                }
-            });
-        }, {
-            threshold: 0.5 // εμφανίστηκε το 50% στο viewport
-        });
+		async function requestWakeLock() {
+			try {
+				if ('wakeLock' in navigator) {
+					wakeLock = await navigator.wakeLock.request('screen');
+					console.log("🔒 Wake Lock ενεργό (credits)");
+					wakeLock.addEventListener('release', () => {
+						console.log("🔓 Wake Lock αποδεσμεύτηκε (credits)");
+					});
+				}
+			} catch (err) {
+				console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+			}
+		}
 
-        document.querySelectorAll(".role, .name, .fade-target").forEach(el => {
-            observer.observe(el);
-        });
-    </script>
+		function releaseWakeLock() {
+			if (wakeLock) {
+				wakeLock.release();
+				wakeLock = null;
+				console.log("🔓 Wake Lock απενεργοποιήθηκε (credits)");
+			}
+		}
 
+		function goBack() {
+			releaseWakeLock();
+			window.location.href = "index.html";
+		}
+
+		window.addEventListener("load", () => {
+			requestWakeLock();
+		});
+
+		const observer = new IntersectionObserver((entries) => {
+			entries.forEach(entry => {
+				if (entry.isIntersecting && !entry.target.classList.contains("fading")) {
+					entry.target.classList.add("fading");
+					setTimeout(() => {
+						entry.target.classList.add("fade-out");
+					}, 14000); // 14s μετά την είσοδο
+				}
+			});
+		}, {
+			threshold: 0.5
+		});
+
+		document.querySelectorAll(".role, .name, .fade-target").forEach(el => {
+			observer.observe(el);
+		});
+	</script>
 </body>
 </html>
