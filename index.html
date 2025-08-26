@@ -33,19 +33,42 @@
 	<div id="result" style="display:none;"></div>
 
 	<div id="nightPhase" style="display:none;">
-		<h3>Η νύχτα πέφτει στο Παλέρμο...</h3>
-		<div id="nightText" style="margin-top:20px; font-style:italic;"></div>
+		<div class="phase-header">
+			<h3 class="phase-title">Αφήγηση</h3>
+			<div class="phase-tools">
+				<button id="btnMenuNight" class="icon-btn text-btn">Menu</button>
+			</div>
+		</div>
+		<div id="nightText"></div>
 	</div>
 
+
 	<div id="dayPhase" style="display:none;">
-		<h3>Ψηφοφορία</h3>
+		<div class="vote-header">
+			<div class="left-tools">
+				<button id="btnMayor" class="icon-btn" title="Δήμαρχος">👔</button>
+				<button id="btnKamikaze" class="icon-btn" title="Καμικάζι">🧨</button>
+			</div>
+			<h3 class="vote-title">Ψηφοφορία</h3>
+			<div class="right-tools">
+				<button id="btnMenu" class="icon-btn text-btn" title="Μενού">Menu</button>
+			</div>
+		</div>
+
 		<div id="votingArea"></div>
 	</div>
 
+
 	<div id="nightKillChoice" style="display:none;">
-		<h3>Οι δολοφόνοι επιλέγουν ποιον θα σκοτώσουν:</h3>
+		<div class="phase-header">
+			<h3 class="phase-title">Δολοφονία</h3>
+			<div class="phase-tools">
+				<button id="btnMenuKill" class="icon-btn text-btn">Menu</button>
+			</div>
+		</div>
 		<div id="killSelectionArea"></div>
 	</div>
+
 
 	<div id="settingsMenu" style="display:none;">
 		<h2>ΡΥΘΜΙΣΕΙΣ</h2>
@@ -94,6 +117,20 @@
 			<span style="font-size:18px; color:#e4e4ff; vertical-align:middle;">dim-andro21</span>
 		</a>
 	</footer>
+
+	<!-- In-Game Menu Modal -->
+	<div id="inGameMenu" class="modal" style="display:none;">
+		<div class="modal-backdrop"></div>
+		<div class="role-card menu-card">
+			<h3 style="margin-top:0;">Μενού</h3>
+			<div class="menu-buttons">
+				<button class="menu-action" id="menuAction1">1</button>
+				<button class="menu-action" id="menuAction2">2</button>
+				<button class="menu-action" id="menuAction3">3</button>
+			</div>
+			<button class="close-modal" id="closeMenuBtn">Κλείσιμο</button>
+		</div>
+	</div>
 
 	<!-- ✅ ΣΩΣΤΗ θέση του script -->
 	<script src="script.js"></script>

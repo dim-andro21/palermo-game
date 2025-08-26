@@ -401,3 +401,149 @@ strong {
   cursor: pointer;
   z-index: 1000;
 }
+
+/* ----- Vote header: centered title + safe gutters ----- */
+.vote-header {
+	position: relative;
+	min-height: 48px;
+	margin: 6px 0 12px 0;
+	--center-gap: 96px;	/* “μαξιλάρι” γύρω από τον τίτλο */
+}
+
+.vote-title {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	margin: 0;
+	text-align: center;
+	white-space: nowrap;
+	pointer-events: none;
+	z-index: 1;
+}
+
+/* Τα groups δεν επιτρέπεται να μπουν στο κεντρικό “μαξιλάρι” */
+.left-tools,
+.right-tools {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	gap: 0;
+	height: 40px;
+}
+
+.left-tools {
+	left: 14px;	/* λίγο πιο μέσα από την άκρη */
+	width: calc(50% - var(--center-gap));
+	justify-content: flex-end;	/* πλησιάζουν προς τον τίτλο χωρίς να τον ακουμπούν */
+}
+
+.right-tools {
+	right: 8px; /* λίγο πιο μέσα από την άκρη */
+	width: calc(50% - var(--center-gap));
+	justify-content: flex-start;
+}
+
+/* Βασικό icon button (👔, 🧨, Menu) */
+.icon-btn {
+	background: #222;
+	border: 2px solid #72a6fa;
+	color: #e4e4ff;
+	min-width: 38px;	/* ➕ λίγο μεγαλύτερο μήκος */
+	height: 30px;		/* ➕ ελαφρώς πιο ψηλό */
+	border-radius: 10px;
+	font-size: 18px;	/* ελαφρώς μικρότερο για να ισορροπεί */
+	line-height: 1;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	padding: 0 12px;	/* ➕ extra padding για κείμενο όπως το "Menu" */
+	transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+	background: #72a6fa;
+	color: #111;
+	box-shadow: 0 0 12px #72a6fa88;
+}
+
+
+/* Κουμπί με κείμενο (Menu) — πιο “στενό” για να χωράει πάντα */
+.text-btn {
+	width: auto;
+	min-width: 80px;	/* μικρό αλλά ευανάγνωστο */
+	height: 40px;
+	border-radius: 10px;
+	font-size: 14px;	/* μικρότερο κείμενο για να μη μπουκάρει στο κέντρο */
+	padding: 0 10px;
+}
+
+/* responsive προσαρμογές */
+@media (max-width: 420px) {
+	.vote-header { --center-gap: 84px; }	/* ελαφρώς πιο στενό “μαξιλάρι” */
+	.text-btn { min-width: 52px; font-size: 13px; padding: 0 8px; }
+}
+@media (max-width: 360px) {
+	.vote-header { --center-gap: 76px; }
+	.icon-btn { width: 36px; height: 36px; font-size: 18px; }
+	.text-btn { min-width: 70px; height: 36px; font-size: 12.5px; }
+	.vote-header { min-height: 44px; }
+}
+
+/* === Modal για το In-Game Menu === */
+.modal {
+	position: fixed;
+	inset: 0;
+	display: none;
+	z-index: 5000;
+}
+
+.modal-backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.65); /* πιο σκοτεινό */
+	backdrop-filter: blur(4px);       /* θόλωμα φόντου */
+}
+
+.menu-card {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	max-width: 380px;
+	width: calc(100% - 40px);
+	background: rgba(0,0,0,0.85);
+	border: 2px solid #72a6fa;
+	border-radius: 20px;
+	padding: 30px 20px;
+	box-shadow: 0 0 20px #000;
+	animation: fadeIn 0.4s ease;
+}
+
+/* Σιγουρεύουμε ότι δεν γίνεται scroll στο body όσο είναι ανοιχτό το menu */
+body.menu-open {
+	overflow: hidden;
+	touch-action: none;
+}
+
+.phase-header {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 10px;
+}
+
+.phase-title {
+	margin: 0;
+}
+
+.phase-tools {
+	position: absolute;
+	right: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+}

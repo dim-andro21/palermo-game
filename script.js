@@ -9,6 +9,10 @@ let discussionTimerRemaining = 0;
 let selectedTrack = "track1";
 let wakeLock = null;
 let defaultVibrationType = "short";
+let narrationPaused = false;
+let narrationTimeout = null;
+let narrationAudio = null;
+
 
 const musicTracks = [
     "music/Curse_of_the_worgen.mp3",
@@ -103,6 +107,75 @@ document.addEventListener("DOMContentLoaded", () => {
 	updateFooterVisibility();
 	playNextMusicTrack(); // 🎵 Ξεκινά η μουσική μόλις φορτώσει η σελίδα
 });
+
+function openInGameMenu() {
+	const modal = document.getElementById("inGameMenu");
+	if (modal) {
+		modal.style.display = "block";
+		document.body.classList.add("menu-open");
+
+		// Παύση αφήγησης αν παίζει
+		if (narrationAudio && !narrationAudio.paused) {
+			narrationAudio.pause();
+			narrationPaused = true;
+		}
+		if (narrationTimeout) {
+			clearTimeout(narrationTimeout);
+			narrationTimeout = null;
+		}
+	}
+}
+
+function closeInGameMenu() {
+	const modal = document.getElementById("inGameMenu");
+	if (modal) {
+		modal.style.display = "none";
+		document.body.classList.remove("menu-open");
+
+		// Συνέχιση αφήγησης αν είχε παύση
+		if (narrationPaused && narrationAudio) {
+			narrationAudio.play().catch(()=>{});
+			narrationPaused = false;
+		}
+		// ⚠️ Δεν σπρώχνουμε εδώ σε επόμενη φράση.
+		// Το onended του audio θα προχωρήσει φυσικά.
+	}
+}
+
+
+function initVoteHeaderEvents() {
+	const menuBtn = document.getElementById("btnMenu");
+	const mayorBtn = document.getElementById("btnMayor");
+	const kamikazeBtn = document.getElementById("btnKamikaze");
+	const closeBtn = document.getElementById("closeMenuBtn");
+	const backdrop = document.querySelector("#inGameMenu .modal-backdrop");
+
+	if (menuBtn) menuBtn.onclick = openInGameMenu;
+	if (closeBtn) closeBtn.onclick = closeInGameMenu;
+	if (backdrop) backdrop.onclick = closeInGameMenu;
+
+	// placeholders
+	if (mayorBtn) mayorBtn.onclick = () => { /* TODO */ };
+	if (kamikazeBtn) kamikazeBtn.onclick = () => { /* TODO */ };
+
+	// μελλοντικές ενέργειες
+	const a1 = document.getElementById("menuAction1");
+	const a2 = document.getElementById("menuAction2");
+	const a3 = document.getElementById("menuAction3");
+	if (a1) a1.onclick = () => {/* TODO */};
+	if (a2) a2.onclick = () => {/* TODO */};
+	if (a3) a3.onclick = () => {/* TODO */};
+
+	// 👉 νέα κουμπιά menu σε αφήγηση & δολοφονία
+	const menuNight = document.getElementById("btnMenuNight");
+	const menuKill = document.getElementById("btnMenuKill");
+	if (menuNight) menuNight.onclick = openInGameMenu;
+	if (menuKill) menuKill.onclick = openInGameMenu;
+}
+
+
+
+
 
 class Player {
 	constructor(name) {
@@ -383,7 +456,6 @@ function shuffleArray(array) {
 
 function startNight() {
 	if (bgMusic) {
-		const fadeDuration = 2000; // 2 δευτερόλεπτα
 		const step = 50;
 		const fadeOutInterval = setInterval(() => {
 			if (bgMusic.volume > 0.05) {
@@ -413,13 +485,7 @@ function startNight() {
 		"Τώρα που ο αστυνομικός έχει δει τον φανερό δολοφόνο, κλείνει τα μάτια του"
 	];
 
-	const audioLines = [
-		"line1.mp3",
-		"line2.mp3",
-		"line3.mp3",
-		"line4.mp3",
-		"line5.mp3"
-	];
+	const audioLines = ["line1.mp3","line2.mp3","line3.mp3","line4.mp3","line5.mp3"];
 
 	if (hasSnitch) {
 		scriptLines.push(
@@ -428,25 +494,19 @@ function startNight() {
 			"Αφού πλέον γνωρίζει ποιους πρέπει να καλύψει, κλείνει τα μάτια του",
 			"Οι 2 δολοφόνοι κατεβάζουν τα χέρια τους"
 		);
-		audioLines.push(
-			"line6.mp3",
-			"line7.mp3",
-			"line8.mp3",
-			"line9.mp3"
-		);
+		audioLines.push("line6.mp3","line7.mp3","line8.mp3","line9.mp3");
 	} else {
 		scriptLines.push("Ο δολοφόνος κατεβάζει το χέρι του");
 		audioLines.push("line10.mp3");
 	}
 
-	// 💘 Αν υπάρχουν και οι 2 Lovers ζωντανοί, προσθέτουμε ειδική αφήγηση
 	const lovers = players.filter(p => p.role === "Lovers" && p.isAlive);
 	if (lovers.length === 2) {
 		scriptLines.push(
 			"Τέλος ανοίγουν τα μάτια τους και οι ερωτευμένοι για να γνωριστούν.",
-            "Αφού ερωτεύτηκαν κεραυνοβόλα μπορούν να κλείσουν τα μάτια τους."
+			"Αφού ερωτεύτηκαν κεραυνοβόλα μπορούν να κλείσουν τα μάτια τους."
 		);
-		audioLines.push("lovers1.mp3", "lovers2.mp3");
+		audioLines.push("lovers1.mp3","lovers2.mp3");
 	}
 
 	scriptLines.push("Μια μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...");
@@ -456,26 +516,32 @@ function startNight() {
 
 	function nextLine() {
 		if (index >= scriptLines.length) {
-			setTimeout(() => {
-				startDay();
-			}, 1000);
+			setTimeout(() => startDay(), 1000);
 			return;
 		}
 
 		nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
-		const audio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
-		audio.load();
-		audio.oncanplaythrough = () => audio.play();
-
 		nightTextDiv.style.opacity = 1;
-		setTimeout(() => {
-			index++;
-			nextLine();
-		}, 7500);
+
+		// Παίζουμε το αντίστοιχο audio και όταν τελειώσει προχωράμε
+		narrationAudio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
+		narrationAudio.onended = () => {
+			// μικρό κενό μεταξύ γραμμών
+			narrationTimeout = setTimeout(() => {
+				narrationTimeout = null;
+				index++;
+				nextLine();
+			}, 1000);
+		};
+		narrationAudio.load();
+		narrationAudio.play().catch(()=>{});
 	}
 
+	initVoteHeaderEvents();
 	nextLine();
 }
+
+
 
 
 
@@ -486,6 +552,7 @@ function startDay() {
     document.getElementById("dayPhase").style.display = "block";
     players.forEach(p => p.votes = 0);
     renderVotingInterface();
+	initVoteHeaderEvents();
     startDiscussionTimer();
 }
 
@@ -596,7 +663,6 @@ function handleRemoveVote(index) {
 		cancelCountdown();
 	}
 }
-
 
 
 function updateVotesDisplay(index, votes) {
@@ -732,38 +798,37 @@ function startSecondNight() {
 		"Μια νύχτα πέφτει στο Παλέρμο κι όλοι κλείνουν τα μάτια τους...",
 		"Οι 2 δολοφόνοι ανοίγουν τα μάτια τους και δείχνουν στον παίκτη εκτός παιχνιδιού ποιον παίκτη θέλουν να σκοτώσουν."
 	];
-
-	const audioLines = [
-		"night2_1.mp3",
-		"night2_2.mp3"
-	];
+	const audioLines = ["night2_1.mp3","night2_2.mp3"];
 
 	let index = 0;
 
 	function nextLine() {
 		if (index >= scriptLines.length) {
-			setTimeout(() => {
-				showKillChoiceMenu();
-			}, 1000);
+			// Αν εδώ θες να πας σε επιλογή θύματος, βάλε showKillChoiceMenu()
+			// setTimeout(() => showKillChoiceMenu(), 1000);
+			setTimeout(() => startDay(), 1000);
 			return;
 		}
 
 		nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
 
-		const audio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
-		audio.load();
-		audio.oncanplaythrough = () => {
-			audio.play();
+		narrationAudio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
+		narrationAudio.onended = () => {
+			narrationTimeout = setTimeout(() => {
+				narrationTimeout = null;
+				index++;
+				nextLine();
+			}, 1000);
 		};
-
-		setTimeout(() => {
-			index++;
-			nextLine();
-		}, 7000);
+		narrationAudio.load();
+		narrationAudio.play().catch(()=>{});
 	}
 
+	initVoteHeaderEvents();
 	nextLine();
 }
+
+
 
 
 function showKillChoiceMenu() {
@@ -832,7 +897,11 @@ function showKillChoiceMenu() {
 	countdownDiv.style.gridColumn = "1 / -1"; // ➕ Το countdown πιάνει όλο το πλάτος
 	countdownDiv.style.marginTop = "20px";
 	container.appendChild(countdownDiv);
+
+	// 👉 εδώ για να δουλέψει το Menu button
+	initVoteHeaderEvents();
 }
+
 
 
 function checkForGameEnd() {
@@ -1122,7 +1191,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "5 Ιουλίου 2025 – 03:25"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "26 Αυγούστου 2025 – 14:31"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
