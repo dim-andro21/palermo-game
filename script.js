@@ -155,15 +155,25 @@ function initVoteHeaderEvents() {
 	if (mayorBtn) mayorBtn.onclick = () => { /* TODO */ };
 	if (kamikazeBtn) kamikazeBtn.onclick = () => { /* TODO */ };
 
-	// μελλοντικές ενέργειες
-	const a1 = document.getElementById("menuAction1");
-	const a2 = document.getElementById("menuAction2");
-	const a3 = document.getElementById("menuAction3");
-	if (a1) a1.onclick = () => {/* TODO */};
-	if (a2) a2.onclick = () => {/* TODO */};
-	if (a3) a3.onclick = () => {/* TODO */};
+	// ➕ νέα κουμπιά με ενέργειες τέλους παιχνιδιού
+	const samePlayersBtn = document.getElementById("menuSamePlayers");
+	const newNamesBtn = document.getElementById("menuNewNames");
 
-	// 👉 νέα κουμπιά menu σε αφήγηση & δολοφονία
+	if (samePlayersBtn) {
+		samePlayersBtn.onclick = () => {
+			resetGameState(true);		// stop παλιά παρτίδα, κράτα ονόματα
+			restartSamePlayers();		// ίδιοι παίκτες, νέα μοιρασιά ρόλων
+		};
+	}
+
+	if (newNamesBtn) {
+		newNamesBtn.onclick = () => {
+			resetGameState(false);		// stop παλιά παρτίδα, χωρίς ονόματα
+			restartNewNames();			// full reset
+		};
+	}
+
+	// 👉 menu buttons και στη φάση αφήγησης/δολοφονίας
 	const menuNight = document.getElementById("btnMenuNight");
 	const menuKill = document.getElementById("btnMenuKill");
 	if (menuNight) menuNight.onclick = openInGameMenu;
@@ -171,7 +181,78 @@ function initVoteHeaderEvents() {
 }
 
 
+// ===== Hard reset helpers =====
+function stopAllTimersAndAudio() {
+	// timers
+	if (countdownTimeout) {
+		clearInterval(countdownTimeout);
+		countdownTimeout = null;
+	}
+	if (discussionTimerInterval) {
+		clearInterval(discussionTimerInterval);
+		discussionTimerInterval = null;
+	}
+	if (narrationTimeout) {
+		clearTimeout(narrationTimeout);
+		narrationTimeout = null;
+	}
 
+	// audio
+	try {
+		if (narrationAudio) {
+			narrationAudio.pause();
+			narrationAudio.currentTime = 0;
+			narrationAudio = null;
+		}
+	} catch {}
+	try {
+		if (bgMusic) {
+			bgMusic.pause();
+			bgMusic = null;
+		}
+	} catch {}
+}
+
+function hideAllPhases() {
+	const ids = ["result","nightPhase","dayPhase","nightKillChoice","roleSelection","nameInput"];
+	ids.forEach(id => {
+		const el = document.getElementById(id);
+		if (el) el.style.display = "none";
+	});
+	const vc = document.getElementById("voteCountdown");
+	if (vc) vc.innerHTML = "";
+	const killArea = document.getElementById("killSelectionArea");
+	if (killArea) killArea.innerHTML = "";
+}
+
+function resetGameState(keepNames = false) {
+	// κλείσε το menu (αν είναι ανοιχτό)
+	closeInGameMenu();
+
+	// σταμάτα τα πάντα
+	stopAllTimersAndAudio();
+	releaseWakeLock();	// θα ζητηθεί ξανά όταν ξεκινήσει η νέα παρτίδα
+
+	// καθάρισε UI
+	hideAllPhases();
+
+	// reset βασικών state
+	totalVotes = 0;
+	eliminatedPlayer = null;
+	currentPlayerIndex = 0;
+
+	// αν ΔΕΝ κρατάμε τα ονόματα, καθάρισε και τους παίκτες/μέτρηση
+	if (!keepNames) {
+		players = [];
+		numPlayers = 0;
+	}
+
+	// μικρό safety: άδειασε τυχόν disabled +Ψήφος κουμπιά
+	const buttons = document.querySelectorAll("button");
+	buttons.forEach(btn => {
+		if (btn.textContent === "+ Ψήφος") btn.disabled = false;
+	});
+}
 
 
 class Player {
@@ -960,11 +1041,99 @@ function showEndMessage(message) {
 	setTimeout(() => {
 		resultDiv.innerHTML += `
 			<br><br>
-			<button onclick="restartSameNames()">Νέο παιχνίδι με ίδια ονόματα</button>
+			<button onclick="restartSamePlayers()">Νέο παιχνίδι με ίδιους παίκτες</button>
 			<button onclick="restartNewNames()">Νέο παιχνίδι με νέα ονόματα</button>
 		`;
 	}, 3000);
 }
+
+function restartSamePlayers() {
+	// εδώ μπαίνουμε ΑΦΟΥ έγινε resetGameState(true)
+	document.getElementById("pageTitle").textContent = "ΠΑΛΕΡΜΟ";
+
+	const roleDiv = document.getElementById("roleSelection");
+	roleDiv.innerHTML = `
+		<h3>Έχεις επιλέξει:</h3>
+		<ul id="chosenRolesList"></ul>
+		<h3 id="extraRolesHeader">Επίλεξε ${numPlayers - 4} επιπλέον ρόλους:</h3>
+	`;
+
+	roleDiv.innerHTML += `
+		<label>
+			Πολίτης
+			<input type="number" id="extraCitizenCount" value="${chosenRoles.filter(r => r==='Citizen').length - 2}" 
+				min="0" max="${numPlayers - 4}" onchange="updateCitizenSelection()">
+		</label><br>
+	`;
+
+	for (let i = 3; i < roleNames.length; i++) {
+		if (roleNames[i] === "Citizen") continue;
+
+		if (roleNames[i] === "Lovers") {
+			const checked = chosenRoles.filter(r => r==="Lovers").length === 2 ? "checked" : "";
+			roleDiv.innerHTML += `
+				<label>
+					<input type="checkbox" id="addLovers" onchange="toggleLovers(this)" ${checked}>
+					${translateRole("Lovers")} (2 άτομα)
+				</label><br>`;
+			continue;
+		}
+
+		const checked = chosenRoles.includes(roleNames[i]) ? "checked" : "";
+		roleDiv.innerHTML += `
+			<label>
+				<input type="checkbox" value="${roleNames[i]}" onchange="updateRoleSelection(this)" ${checked}>
+				${translateRole(roleNames[i])}
+			</label><br>`;
+	}
+
+	roleDiv.innerHTML += `<br><button onclick="applyRolesToSamePlayers()">Continue</button>`;
+
+	updateRemainingRolesText();
+	updateChosenRolesList();
+	roleDiv.style.display = "block";
+}
+
+function restartNewNames() {
+	// αν δεν θέλεις reload, κάν' το «in-app»:
+	resetGameState(false);
+	document.getElementById("pageTitle").textContent = "ΠΑΛΕΡΜΟ";
+	openNewGame();
+	// ή, αν θες σκληρό reset assets/event listeners:
+	// location.reload();
+}
+
+
+
+function applyRolesToSamePlayers() {
+	if (chosenRoles.length !== numPlayers) {
+		alert(`You need exactly ${numPlayers} roles!`);
+		return;
+	}
+
+	// Ανακάτεμα ρόλων
+	chosenRoles = shuffleArray(chosenRoles);
+
+	// Εφαρμογή νέων ρόλων στους ίδιους παίκτες (ίδια ονόματα)
+	players.forEach((p, i) => {
+		p.assignRole(chosenRoles[i]);	// reset isAlive, votes, lives γίνεται μέσα στο assignRole
+	});
+
+	// Σύνδεση Lovers ξανά αν υπάρχουν
+	const lovers = players.filter(p => p.role === "Lovers");
+	if (lovers.length === 2) {
+		lovers[0].linkedPartner = lovers[1];
+		lovers[1].linkedPartner = lovers[0];
+	}
+
+	// 👉 Αντί να πάμε κατευθείαν στο αποτέλεσμα,
+	// κλείνουμε την επιλογή ρόλων και ξεκινάμε το flow αποκάλυψης ρόλων
+	document.getElementById("roleSelection").style.display = "none";
+
+	currentPlayerIndex = 0;				// από τον πρώτο παίκτη
+	showNextPlayerRole();				// εμφανίζει "Δες τον νέο ρόλο σου" για κάθε παίκτη με τη σειρά
+}
+
 
 
 function restartSameNames() {
@@ -1054,10 +1223,6 @@ function revealRestartedRole() {
 
 	nameInput.disabled = true;
 	if (button) button.disabled = true;
-}
-
-function restartNewNames() {
-	location.reload();
 }
 
 function nextRestartedPlayer() {
