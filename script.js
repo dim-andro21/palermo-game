@@ -804,9 +804,7 @@ function startSecondNight() {
 
 	function nextLine() {
 		if (index >= scriptLines.length) {
-			// Αν εδώ θες να πας σε επιλογή θύματος, βάλε showKillChoiceMenu()
-			// setTimeout(() => showKillChoiceMenu(), 1000);
-			setTimeout(() => startDay(), 1000);
+			setTimeout(() => showKillChoiceMenu(), 1000);
 			return;
 		}
 
@@ -832,7 +830,12 @@ function startSecondNight() {
 
 
 function showKillChoiceMenu() {
+	// προαιρετικό safety
+  	clearInterval(countdownTimeout);
+  	clearInterval(discussionTimerInterval);
+
 	document.getElementById("nightPhase").style.display = "none";
+	// document.getElementById("dayPhase").style.display = "none"; // μόνο αν το χρειαστείς
 	document.getElementById("nightKillChoice").style.display = "block";
 
 	const container = document.getElementById("killSelectionArea");
