@@ -272,7 +272,19 @@ class Player {
 	}
 }
 
-const roleNames = ["Citizen", "Hidden Killer", "Known Killer", "Police officer", "Snitch", "Bulletproof", "Lovers"];
+const roleNames = [
+	"Citizen",
+	"Hidden Killer",
+	"Known Killer",
+	"Police officer",
+	"Snitch",
+	"Bulletproof",
+	"Lovers",
+	"Kamikaze",
+	"Madman",
+	"MotherTeresa",
+	"Mayor"
+];
 const requiredRoles = ["Citizen", "Citizen", "Hidden Killer", "Known Killer"];
 
 let numPlayers = 0;
@@ -1408,16 +1420,20 @@ function setBackground(phase) {
 // 4. Προσθήκη εικονιδίου στον ρόλο (μέσα στο showRole και revealRestartedRole)
 // Παράδειγμα μόνο:
 function getRoleIcon(role) {
-    const map = {
-        "Citizen": "🧍‍♂️",
-        "Hidden Killer": "🗡️",
-        "Known Killer": "🔪",
-        "Police officer": "👮",
-        "Snitch": "👀",
-        "Bulletproof": "🛡️",
-		"Lovers": "💑"
-    };
-    return map[role] || "❓";
+	const map = {
+		"Citizen": "🧍‍♂️",
+		"Hidden Killer": "🗡️",
+		"Known Killer": "🔪",
+		"Police officer": "👮",
+		"Snitch": "👀",
+		"Bulletproof": "🛡️",
+		"Lovers": "💑",
+		"Kamikaze": "🧨",
+		"Madman": "🤪",
+		"MotherTeresa": "🙏",
+		"Mayor": "👔"
+	};
+	return map[role] || "❓";
 }
 
 if ('serviceWorker' in navigator) {
@@ -1434,10 +1450,15 @@ function translateRole(role) {
 		"Police officer": "Αστυνομικός",
 		"Snitch": "Ρουφιάνος",
 		"Bulletproof": "Αλεξίσφαιρος",
-		"Lovers": "Ερωτευμένος/η"
+		"Lovers": "Ερωτευμένος/η",
+		"Kamikaze": "Καμικάζι",
+		"Madman": "Τρέλα",
+		"MotherTeresa": "Μητέρα Τερέζα",
+		"Mayor": "Δήμαρχος"
 	};
 	return translations[role] || role;
 }
+
 
 document.body.addEventListener("click", (e) => {
 	if (e.target.tagName === "BUTTON") {
