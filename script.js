@@ -111,10 +111,9 @@ document.addEventListener("DOMContentLoaded", () => {
 function openInGameMenu() {
 	const modal = document.getElementById("inGameMenu");
 	if (modal) {
-		modal.style.display = "block";
+		modal.classList.add("show");
+		modal.style.removeProperty("display");	// καθάρισε inline display αν έχει μείνει
 		document.body.classList.add("menu-open");
-
-		// Παύση αφήγησης αν παίζει
 		if (narrationAudio && !narrationAudio.paused) {
 			narrationAudio.pause();
 			narrationPaused = true;
@@ -129,18 +128,16 @@ function openInGameMenu() {
 function closeInGameMenu() {
 	const modal = document.getElementById("inGameMenu");
 	if (modal) {
-		modal.style.display = "none";
+		modal.classList.remove("show");
 		document.body.classList.remove("menu-open");
-
-		// Συνέχιση αφήγησης αν είχε παύση
 		if (narrationPaused && narrationAudio) {
 			narrationAudio.play().catch(()=>{});
 			narrationPaused = false;
 		}
-		// ⚠️ Δεν σπρώχνουμε εδώ σε επόμενη φράση.
-		// Το onended του audio θα προχωρήσει φυσικά.
 	}
 }
+
+
 
 
 function initVoteHeaderEvents() {

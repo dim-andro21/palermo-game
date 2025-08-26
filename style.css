@@ -497,30 +497,38 @@ strong {
 .modal {
 	position: fixed;
 	inset: 0;
-	display: none;
+	display: none;			/* αρχικά κρυφό */
 	z-index: 5000;
+	align-items: center;	/* κεντράρισμα κατακόρυφα */
+	justify-content: center;/* κεντράρισμα οριζόντια */
 }
+
+.modal.show {				/* θα το ανοίγουμε με class από JS */
+	display: flex;
+}
+
+.menu-card {
+	position: relative;
+	max-width: 320px;
+	width: min(92vw, 320px);
+	max-height: 70vh;
+	overflow: auto;
+	background: rgba(0,0,0,0.85);
+	border: 2px solid #72a6fa;
+	border-radius: 20px;
+	padding: 24px 16px;
+	/* 🔥 ίδιο glow με την κάρτα ρόλου */
+	box-shadow: 0 0 20px #6fa4f8, 0 0 40px #6fa4f866;
+	animation: fadeIn 0.4s ease;
+}
+
+
 
 .modal-backdrop {
 	position: absolute;
 	inset: 0;
 	background: rgba(0, 0, 0, 0.65); /* πιο σκοτεινό */
 	backdrop-filter: blur(4px);       /* θόλωμα φόντου */
-}
-
-.menu-card {
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	transform: translate(-50%, -50%);
-	max-width: 380px;
-	width: calc(100% - 40px);
-	background: rgba(0,0,0,0.85);
-	border: 2px solid #72a6fa;
-	border-radius: 20px;
-	padding: 30px 20px;
-	box-shadow: 0 0 20px #000;
-	animation: fadeIn 0.4s ease;
 }
 
 /* Σιγουρεύουμε ότι δεν γίνεται scroll στο body όσο είναι ανοιχτό το menu */
