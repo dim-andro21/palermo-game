@@ -157,7 +157,7 @@ function initVoteHeaderEvents() {
 
 	// ➕ νέα κουμπιά με ενέργειες τέλους παιχνιδιού
 	const samePlayersBtn = document.getElementById("menuSamePlayers");
-	const newNamesBtn = document.getElementById("menuNewNames");
+	const newPlayersBtn = document.getElementById("menuNewPlayers");
 
 	if (samePlayersBtn) {
 		samePlayersBtn.onclick = () => {
@@ -166,10 +166,10 @@ function initVoteHeaderEvents() {
 		};
 	}
 
-	if (newNamesBtn) {
-		newNamesBtn.onclick = () => {
+	if (newPlayersBtn) {
+		newPlayersBtn.onclick = () => {
 			resetGameState(false);		// stop παλιά παρτίδα, χωρίς ονόματα
-			restartNewNames();			// full reset
+			restartNewNames();			// full reset (παραμένει ίδια συνάρτηση)
 		};
 	}
 
@@ -1042,7 +1042,7 @@ function showEndMessage(message) {
 		resultDiv.innerHTML += `
 			<br><br>
 			<button onclick="restartSamePlayers()">Νέο παιχνίδι με ίδιους παίκτες</button>
-			<button onclick="restartNewNames()">Νέο παιχνίδι με νέα ονόματα</button>
+			<button onclick="restartNewNames()">Νέο παιχνίδι με νέους παίκτες</button>
 		`;
 	}, 3000);
 }
