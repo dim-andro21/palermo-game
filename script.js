@@ -254,6 +254,26 @@ function resetGameState(keepNames = false) {
 	});
 }
 
+function playNarrationClip(relPath, onEnd) {
+	const url = `audio/${selectedTrack}/${relPath}`;
+	narrationAudio = new Audio(url);
+	narrationAudio.onended = () => {
+		narrationTimeout = setTimeout(() => {
+			narrationTimeout = null;
+			if (onEnd) onEnd();
+		}, 800);
+	};
+	const tryPlay = () => {
+		if (!narrationPaused) {
+			narrationAudio.load();
+			narrationAudio.play().catch(() => onEnd && onEnd());
+		} else {
+			setTimeout(tryPlay, 300);
+		}
+	};
+	tryPlay();
+}
+
 
 class Player {
 	constructor(name) {
@@ -516,7 +536,8 @@ function nextPlayer() {
 function showResults() {
 	const resultDiv = document.getElementById("result");
 	resultDiv.innerHTML = "<h3>Όλοι οι παίκτες έχουν καταχωρηθεί.</h3><p>Μπορείτε τώρα να ξεκινήσετε το παιχνίδι!</p>";
-	resultDiv.innerHTML += `<br><button onclick="startNight()">Η Νύχτα Πέφτει...</button>`;
+	// Ξεκινάμε με την εισαγωγική αφήγηση
+	resultDiv.innerHTML += `<br><button onclick="startIntroduction()">Ξεκινάμε!</button>`;
 	resultDiv.style.display = "block";
 
 	// 💘 Σύνδεση ερωτευμένων
@@ -544,6 +565,123 @@ function shuffleArray(array) {
 	return array;
 }
 
+
+
+function startIntroduction() {
+	setBackground("night");
+	document.getElementById("result").style.display = "none";
+	document.getElementById("nightPhase").style.display = "block";
+
+	const nightTextDiv = document.getElementById("nightText");
+	nightTextDiv.innerHTML = "";
+	nightTextDiv.style.opacity = 0;
+
+	const scriptLines = [];
+	const audioLines = [];
+
+	// ➤ Εισαγωγή
+	scriptLines.push("Μια νύχτα στο Παλέρμο.");
+	audioLines.push("intro/intro_palermo1.wav");
+
+	// ➤ Καλή ομάδα
+	scriptLines.push("Η ομάδα των καλών αποτελείται από:");
+	audioLines.push("intro/intro_good_team_1.wav");
+
+	const goodRoles = [];
+	if (chosenRoles.includes("Citizen")) goodRoles.push(["τους Πολίτες,", "intro/intro_citizens_1.wav"]);
+	if (chosenRoles.includes("Police officer")) goodRoles.push(["τον Αστυνομικό,", "intro/intro_police.wav"]);
+	if (chosenRoles.includes("Kamikaze")) goodRoles.push(["τον Καμικάζι,", "intro/intro_kamikaze.wav"]);
+	if (chosenRoles.filter(r => r === "Lovers").length === 2) goodRoles.push(["τους Ερωτευμένους,", "intro/intro_lovers.wav"]);
+	if (chosenRoles.includes("Mayor")) goodRoles.push(["τον Δήμαρχο,", "intro/intro_mayor.wav"]);
+	if (chosenRoles.includes("Bulletproof")) goodRoles.push(["τον Αλεξίσφαιρο,", "intro/intro_bulletproof.wav"]);
+	if (chosenRoles.includes("MotherTeresa")) goodRoles.push(["τη Μητέρα Τερέζα.", "intro/intro_motherteresa.wav"]);
+
+	if (goodRoles.length > 0) {
+		for (let i = 0; i < goodRoles.length; i++) {
+			// βάλε "και" πριν από τον τελευταίο ρόλο (αν υπάρχουν πάνω από 1)
+			if (i === goodRoles.length - 1 && goodRoles.length > 1) {
+				scriptLines.push("και");
+				audioLines.push("intro/word_and.wav");
+			}
+			scriptLines.push(goodRoles[i][0]);
+			audioLines.push(goodRoles[i][1]);
+		}
+	}
+
+	// ➤ Κακή ομάδα
+	scriptLines.push("Η ομάδα των κακών αποτελείται από:");
+	audioLines.push("intro/intro_bad_team.wav");
+
+	const badRoles = [];
+	if (chosenRoles.includes("Hidden Killer") || chosenRoles.includes("Known Killer")) {
+		badRoles.push(["τους δύο Δολοφόνους,", "intro/intro_two_killers.wav"]);
+	}
+	if (chosenRoles.includes("Snitch")) {
+		badRoles.push(["τον Ρουφιάνο.", "intro/intro_snitch.wav"]);
+	}
+
+	if (badRoles.length > 0) {
+		for (let i = 0; i < badRoles.length; i++) {
+			if (i === badRoles.length - 1 && badRoles.length > 1) {
+				scriptLines.push("και");
+				audioLines.push("intro/word_and.wav");
+			}
+			scriptLines.push(badRoles[i][0]);
+			audioLines.push(badRoles[i][1]);
+		}
+	}
+
+	// ➤ Extra ρόλοι (Madman)
+	if (chosenRoles.includes("Madman")) {
+		scriptLines.push("Επίσης, παίζει και η Τρέλα.");
+		audioLines.push("intro/intro_madman.wav");
+	}
+
+	// ➤ Κλείσιμο
+	scriptLines.push("Καλή επιτυχία σε όλους!");
+	audioLines.push("intro/intro_goodluck.wav");
+
+	// --- Προβολή / Αναπαραγωγή ---
+	let index = 0;
+	function nextLine() {
+		if (index >= audioLines.length) {
+			// όταν τελειώσει η εισαγωγή → ξεκινάει νύχτα
+			setTimeout(() => startNight(), 1000);
+			return;
+		}
+
+		if (index < scriptLines.length) {
+			nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
+			nightTextDiv.style.opacity = 1;
+		}
+
+		const url = `audio/${selectedTrack}/${audioLines[index]}`;
+		narrationAudio = new Audio(url);
+		narrationAudio.onended = () => {
+			narrationTimeout = setTimeout(() => {
+				narrationTimeout = null;
+				index++;
+				nextLine();
+			}, 800);
+		};
+
+		// ✅ χειρισμός pause/resume όπως στη νύχτα
+		const playIfNotPaused = () => {
+			if (!narrationPaused) {
+				narrationAudio.load();
+				narrationAudio.play().catch(() => { index++; nextLine(); });
+			} else {
+				setTimeout(playIfNotPaused, 300);
+			}
+		};
+		playIfNotPaused();
+	}
+
+	initVoteHeaderEvents();
+	nextLine();
+}
+
+
 function startNight() {
 	if (bgMusic) {
 		const step = 50;
@@ -565,8 +703,11 @@ function startNight() {
 	nightTextDiv.innerHTML = "";
 	nightTextDiv.style.opacity = 0;
 
-	const hasSnitch = chosenRoles.includes("Snitch");
+	// ✅ Flags
+	const hasSnitch = players.some(p => p.role === "Snitch" && p.isAlive);
+	const loversAlive = players.filter(p => p.role === "Lovers" && p.isAlive).length === 2;
 
+	// ✅ Κείμενα στην οθόνη
 	const scriptLines = [
 		"Μια νύχτα πέφτει στο Παλέρμο κι όλοι κλείνουν τα μάτια τους...",
 		"Οι 2 δολοφόνοι ανοίγουν τα μάτια τους και γνωρίζουν ο ένας τον άλλον",
@@ -575,8 +716,16 @@ function startNight() {
 		"Τώρα που ο αστυνομικός έχει δει τον φανερό δολοφόνο, κλείνει τα μάτια του"
 	];
 
-	const audioLines = ["line1.mp3","line2.mp3","line3.mp3","line4.mp3","line5.mp3"];
+	// ✅ Νέα αρχεία ήχου (.wav)
+	let audioLines = [
+		"night/night_start.wav",
+		"night/night_killers_open.wav",
+		"night/night_police_phase.wav",
+		"night/night_police_sees.wav",
+		"night/night_police_close.wav"
+	];
 
+	// --- Snitch section ---
 	if (hasSnitch) {
 		scriptLines.push(
 			"Στη συνέχεια σηκώνει το χέρι του και ο κρυφός δολοφόνος",
@@ -584,55 +733,62 @@ function startNight() {
 			"Αφού πλέον γνωρίζει ποιους πρέπει να καλύψει, κλείνει τα μάτια του",
 			"Οι 2 δολοφόνοι κατεβάζουν τα χέρια τους"
 		);
-		audioLines.push("line6.mp3","line7.mp3","line8.mp3","line9.mp3");
-	} else {
-		scriptLines.push("Ο δολοφόνος κατεβάζει το χέρι του");
-		audioLines.push("line10.mp3");
+		audioLines.push(
+			"night/night_snitch_phase.wav",
+			// Αν έχεις ξεχωριστό knows clip, βάλ’ το εδώ:
+			// "night/night_snitch_knows.wav",
+			"night/night_snitch_end.wav",
+			"night/night_snitch_end.wav"
+		);
 	}
+	// ❗ Αν δεν υπάρχει Snitch → δεν προσθέτουμε τίποτα εδώ
 
-	const lovers = players.filter(p => p.role === "Lovers" && p.isAlive);
-	if (lovers.length === 2) {
+	// --- Lovers section ---
+	if (loversAlive) {
 		scriptLines.push(
 			"Τέλος ανοίγουν τα μάτια τους και οι ερωτευμένοι για να γνωριστούν.",
 			"Αφού ερωτεύτηκαν κεραυνοβόλα μπορούν να κλείσουν τα μάτια τους."
 		);
-		audioLines.push("lovers1.mp3","lovers2.mp3");
+		audioLines.push("night/lovers_open.wav", "night/lovers_close.wav");
 	}
 
+	// --- Day start ---
 	scriptLines.push("Μια μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...");
-	audioLines.push("line11.mp3");
+	audioLines.push("day/day_start.wav");
 
+	// --- Επιπλέον μόνο ήχος (χωρίς κείμενο) για την ψηφοφορία ---
+	audioLines.push("day/vote_start.wav");
+
+	// --- Προβολή / Αναπαραγωγή ---
 	let index = 0;
-
 	function nextLine() {
-		if (index >= scriptLines.length) {
+		if (index >= audioLines.length) {   // ✅ σταματάμε με βάση τα audio
 			setTimeout(() => startDay(), 1000);
 			return;
 		}
 
-		nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
-		nightTextDiv.style.opacity = 1;
+		// εμφανίζουμε κείμενο μόνο αν υπάρχει
+		if (index < scriptLines.length) {
+			nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
+			nightTextDiv.style.opacity = 1;
+		}
 
-		// Παίζουμε το αντίστοιχο audio και όταν τελειώσει προχωράμε
-		narrationAudio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
+		const url = `audio/${selectedTrack}/${audioLines[index]}`;
+		narrationAudio = new Audio(url);
 		narrationAudio.onended = () => {
-			// μικρό κενό μεταξύ γραμμών
 			narrationTimeout = setTimeout(() => {
 				narrationTimeout = null;
 				index++;
 				nextLine();
-			}, 1000);
+			}, 800);
 		};
 		narrationAudio.load();
-		narrationAudio.play().catch(()=>{});
+		narrationAudio.play().catch(() => { index++; nextLine(); });
 	}
 
 	initVoteHeaderEvents();
 	nextLine();
 }
-
-
-
 
 
 // 3. Επέκταση startDay για αλλαγή background
@@ -878,123 +1034,126 @@ function finishVoting() {
 
 
 function startSecondNight() {
+	// καθάρισε ό,τι έπαιζε πριν
+	stopAllTimersAndAudio?.();
+	narrationPaused = false;
+
+	// UI setup
+	const killOverlay = document.getElementById("nightKillChoice");
+	if (killOverlay) killOverlay.style.display = "none"; // κρύψε «Δολοφονία»
 	document.getElementById("dayPhase").style.display = "none";
+	setBackground("night");
 	document.getElementById("nightPhase").style.display = "block";
 
 	const nightTextDiv = document.getElementById("nightText");
 	nightTextDiv.innerHTML = "";
+	nightTextDiv.style.opacity = 0;
 
+	// Γραμμές μέχρι και «…ο παίκτης ανακοινώνει ποιον σκότωσαν οι δολοφόνοι.»
 	const scriptLines = [
-		"Μια νύχτα πέφτει στο Παλέρμο κι όλοι κλείνουν τα μάτια τους...",
-		"Οι 2 δολοφόνοι ανοίγουν τα μάτια τους και δείχνουν στον παίκτη εκτός παιχνιδιού ποιον παίκτη θέλουν να σκοτώσουν."
+		"Η ψηφοφορία ολοκληρώθηκε.",
+		"Έτσι λοιπόν ο ένοχος βρίσκεται εκτός παιχνιδιού.",
+		"Μια νύχτα πέφτει στο Παλέρμο κι οι παίκτες κλείνουν τα μάτια τους.",
+		"Ήρθε η σειρά των δολοφόνων να επιλέξουν το πρώτο τους θύμα.",
+		"Ο παίκτης που κρίθηκε ένοχος κι οι δύο δολοφόνοι ανοίγουν τα μάτια τους.",
+		"Οι δολοφόνοι συνεννοούνται και δείχνουν στον παίκτη εκτός παιχνιδιού ποιο είναι το θύμα τους.",
+		"Στη συνέχεια οι δολοφόνοι κλείνουν τα μάτια τους και ο παίκτης ανακοινώνει ποιον σκότωσαν οι δολοφόνοι."
 	];
-	const audioLines = ["night2_1.mp3","night2_2.mp3"];
 
-	let index = 0;
+	// Τα 2 audio parts της 2ης νύχτας (στον φάκελο second-night/)
+	const audioParts = [
+		"second-night/night2_vote_end.wav",
+		"second-night/night2_core.wav"
+	];
 
-	function nextLine() {
-		if (index >= scriptLines.length) {
-			setTimeout(() => showKillChoiceMenu(), 1000);
+	// ---- Εμφάνιση κειμένων σταδιακά ----
+	let textIndex = 0;
+	let textTimer = null;
+	let showTextActive = true;
+
+	function showNextLine() {
+		if (!showTextActive) return;
+		if (textIndex >= scriptLines.length) return;
+
+		nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[textIndex]}</div>`;
+		nightTextDiv.style.opacity = 1;
+
+		textIndex++;
+		textTimer = setTimeout(showNextLine, 3500); // ρυθμός εμφάνισης
+	}
+
+	// ---- Αναπαραγωγή των 2 clips στη σειρά (με pause/resume) ----
+	let partIndex = 0;
+
+	function playNextPart() {
+		if (partIndex >= audioParts.length) {
+			// Τέλος 2ου clip → σταμάτα τα κείμενα & άνοιξε τη «Δολοφονία»
+			showTextActive = false;
+			if (textTimer) { clearTimeout(textTimer); textTimer = null; }
+			showKillChoiceMenu(); // αυτή κρύβει το nightPhase και δείχνει μόνο την «Δολοφονία»
 			return;
 		}
 
-		nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
-
-		narrationAudio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
-		narrationAudio.onended = () => {
-			narrationTimeout = setTimeout(() => {
-				narrationTimeout = null;
-				index++;
-				nextLine();
-			}, 1000);
-		};
-		narrationAudio.load();
-		narrationAudio.play().catch(()=>{});
+		// παίζει ένα clip και στο τέλος του πάμε στο επόμενο
+		playNarrationClip(audioParts[partIndex], () => {
+			partIndex++;
+			playNextPart();
+		});
 	}
 
 	initVoteHeaderEvents();
-	nextLine();
+	showNextLine();
+	playNextPart();
 }
 
 
 
 
 function showKillChoiceMenu() {
-	// προαιρετικό safety
-  	clearInterval(countdownTimeout);
-  	clearInterval(discussionTimerInterval);
-
-	document.getElementById("nightPhase").style.display = "none";
-	// document.getElementById("dayPhase").style.display = "none"; // μόνο αν το χρειαστείς
-	document.getElementById("nightKillChoice").style.display = "block";
-
 	const container = document.getElementById("killSelectionArea");
 	container.innerHTML = "";
-	container.style.display = "grid";                 // ➕ Grid layout
-	container.style.gridTemplateColumns = "1fr 1fr";  // ➕ Δύο στήλες ίσου πλάτους
-	container.style.gap = "10px";                     // ➕ Απόσταση ανάμεσα στα κουμπιά
-	container.style.justifyItems = "center";          // ➕ Κεντράρισμα περιεχομένου
 
-	players.forEach((p, index) => {
+	// ✅ Κρύψε την οθόνη αφήγησης για να μην συνυπάρχει με τη «Δολοφονία»
+	const nightPhase = document.getElementById("nightPhase");
+	if (nightPhase) nightPhase.style.display = "none";
+
+	players.forEach((p) => {
+		if (!p.isAlive) return;
+
 		const btn = document.createElement("button");
-		btn.textContent = p.name;
+		btn.className = "kill-choice-btn";
+		btn.innerText = p.name;
 
-		if (!p.isAlive || p === eliminatedPlayer) {
-			btn.disabled = true;
-			btn.style.opacity = "0.5";
-		} else {
-			btn.onclick = () => {
-				let seconds = 3;
-				const countdownDiv = document.getElementById("voteCountdown");
-				countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds} `;
+		btn.onclick = () => {
+			// Κλείσε το overlay «Δολοφονία» και γύρνα στην οθόνη νύχτας (μόνο τώρα)
+			document.getElementById("nightKillChoice").style.display = "none";
+			if (nightPhase) nightPhase.style.display = "block";
 
-				const cancelBtn = document.createElement("button");
-				cancelBtn.textContent = "Ακύρωση";
-				cancelBtn.className = "cancel-vote-button";
-				cancelBtn.onclick = () => {
-					clearInterval(countdownTimeout);
-					countdownDiv.innerHTML = "";
-				};
-				countdownDiv.appendChild(cancelBtn);
+			// Εξόντωση θύματος
+			eliminatePlayer(p, "δολοφονίας");
 
-				countdownTimeout = setInterval(() => {
-					seconds--;
-					if (seconds === 0) {
-						clearInterval(countdownTimeout);
-						eliminatePlayer(p, "δολοφονίας");
-						document.getElementById("nightKillChoice").style.display = "none";
-						document.getElementById("nightPhase").style.display = "block";
+			// Μήνυμα μετά τη δολοφονία
+			const nightTextDiv = document.getElementById("nightText");
+			nightTextDiv.innerHTML = "<br><em>Οι δολοφόνοι αποφάσισαν ποιον θέλουν να σκοτώσουν.</em><br>";
 
-						const nightTextDiv = document.getElementById("nightText");
-						nightTextDiv.innerHTML = "<br><em>Οι δολοφόνοι αποφάσισαν ποιον θέλουν να σκοτώσουν.</em><br>";
-						setTimeout(() => {
-							nightTextDiv.innerHTML += "Μια νέα μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...";
-							setTimeout(() => {
-								if (checkForGameEnd()) return;
-								startDay();
-							}, 2000);
-						}, 1500);
-					} else {
-						countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds} `;
-						countdownDiv.appendChild(cancelBtn);
-					}
-				}, 1000);
-			};
-		}
+			// 🔊 Παίξε ΜΟΝΟ το 3ο κομμάτι της 2ης νύχτας
+			playNarrationClip("second-night/night2_after_kill.wav", () => {
+				// Όταν τελειώσει το audio → μετάβαση στη μέρα
+				nightTextDiv.innerHTML +=
+					"Μια νέα μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...";
+				setTimeout(() => {
+					if (checkForGameEnd()) return;
+					startDay();
+				}, 2000);
+			});
+		};
 
 		container.appendChild(btn);
 	});
 
-	const countdownDiv = document.createElement("div");
-	countdownDiv.id = "voteCountdown";
-	countdownDiv.style.gridColumn = "1 / -1"; // ➕ Το countdown πιάνει όλο το πλάτος
-	countdownDiv.style.marginTop = "20px";
-	container.appendChild(countdownDiv);
-
-	// 👉 εδώ για να δουλέψει το Menu button
-	initVoteHeaderEvents();
+	// ✅ Εμφάνισε το overlay «Δολοφονία» μόνο του (η αφήγηση είναι κρυμμένη)
+	document.getElementById("nightKillChoice").style.display = "block";
 }
-
 
 
 function checkForGameEnd() {
