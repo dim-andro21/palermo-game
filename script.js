@@ -596,6 +596,18 @@ function shuffleArray(array) {
 
 
 function startIntroduction() {
+	if (bgMusic) {
+		const step = 50;
+		const fadeOutInterval = setInterval(() => {
+			if (bgMusic.volume > 0.05) {
+				bgMusic.volume -= 0.05;
+			} else {
+				clearInterval(fadeOutInterval);
+				bgMusic.pause();
+			}
+		}, step);
+	}
+
 	setBackground("night");
 	document.getElementById("result").style.display = "none";
 	document.getElementById("nightPhase").style.display = "block";
