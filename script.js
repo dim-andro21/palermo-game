@@ -180,17 +180,6 @@ function initVoteHeaderEvents() {
 	if (menuKill) menuKill.onclick = openInGameMenu;
 }
 
-function applyManyPlayersLayout() {
-	const count = Array.isArray(players) ? players.length : 0;
-	if (count > 10) {
-		document.body.classList.add("many-players");
-	} else {
-		document.body.classList.remove("many-players");
-	}
-}
-
-
-
 // ===== Hard reset helpers =====
 function stopAllTimersAndAudio() {
 	// timers
@@ -283,6 +272,16 @@ function playNarrationClip(relPath, onEnd) {
 	};
 	tryPlay();
 }
+
+function updateVotingScroll() {
+	const count = Array.isArray(players) ? players.length : 0;
+	if (count > 10) {
+		document.body.classList.add("scroll-votes");
+	} else {
+		document.body.classList.remove("scroll-votes");
+	}
+}
+
 
 
 class Player {
@@ -801,14 +800,13 @@ function startNight() {
 }
 
 
-// 3. Επέκταση startDay για αλλαγή background
 function startDay() {
 	setBackground("day");
 	document.getElementById("nightPhase").style.display = "none";
 	document.getElementById("dayPhase").style.display = "block";
 	players.forEach(p => p.votes = 0);
 
-	applyManyPlayersLayout();	// 🔹 ενεργοποιεί το condensed mode αν >10
+	updateVotingScroll();	// ✅ ενεργοποιεί/απενεργοποιεί το scroll
 
 	renderVotingInterface();
 	initVoteHeaderEvents();
@@ -862,7 +860,7 @@ function renderVotingInterface() {
 	const votingDiv = document.getElementById("votingArea");
 	votingDiv.innerHTML = ""; // Καθαρίζει προηγούμενα μηνύματα
 
-	applyManyPlayersLayout();	// 🔹 ξαναελέγχει αν αλλάξει κάτι on-the-fly
+	updateVotingScroll();	// ✅ αν αλλάξει κάτι on-the-fly
 
 	totalVotes = 0;
 
@@ -1615,7 +1613,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "27 Αυγούστου 2025 – 21:17"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "27 Αυγούστου 2025 – 23:45"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 

@@ -556,41 +556,26 @@ body.menu-open {
 	transform: translateY(-50%);
 }
 
-/* ==== ΨΗΦΟΦΟΡΙΑ: ύψος/scroll & condensed mode ==== */
-
-/* Το dayPhase γίνεται κολόνα πλήρους ύψους */
+/* === Ψηφοφορία: fixed header + scroll μόνο όταν το ζητήσει το JS === */
 #dayPhase{
 	display:flex;
 	flex-direction:column;
 	height:100vh;
+	overflow:hidden; /* κόβει το page scroll */
 }
 
-/* Η λίστα παίρνει όλο τον χώρο κάτω από το header και κάνει κάθετο scroll */
 #votingArea{
 	flex:1;
-	overflow-y:auto;
-	-webkit-overflow-scrolling: touch;
-	padding-bottom:12px;
+	min-height:0;           /* κρίσιμο για να δουλέψει το εσωτερικό scroll */
+	overflow-y:hidden;      /* default: ΟΧΙ scroll */
+	padding-bottom:calc(env(safe-area-inset-bottom,0) + 12px);
 }
 
-/* Condensed mode όταν οι παίκτες είναι >10 */
-body.many-players .vote-line{
-	gap:4px;
-	padding:4px 6px;
+/* Το JS προσθέτει body.scroll-votes όταν players > 10 */
+body.scroll-votes #votingArea{
+	overflow-y:auto;        /* scroll μόνο τότε */
+	-webkit-overflow-scrolling:touch;
 }
-body.many-players .vote-line span{
-	font-size:14px;
-}
-body.many-players .vote-add,
-body.many-players .vote-remove{
-	padding:5px 8px;
-	font-size:13px;
-	min-width:auto;
-	border-radius:8px;
-}
-body.many-players .vote-line span:first-child{
-	white-space:nowrap;
-	overflow:hidden;
-	text-overflow:ellipsis;
-	max-width:56vw;
-}
+
+/* ❌ Αφαίρεσε/σβήσε τυχόν rules για body.many-players (μίκραινε-UI) */
+
