@@ -274,11 +274,30 @@ function playNarrationClip(relPath, onEnd) {
 }
 
 function updateVotingScroll() {
+	const voting = document.getElementById("votingArea");
+	if (!voting) return;
+
 	const count = Array.isArray(players) ? players.length : 0;
+
 	if (count > 10) {
+		// βάλε κλάση αν θες για styling, αλλά το βασικό είναι τα inline styles
 		document.body.classList.add("scroll-votes");
+
+		// Υπολόγισε δυναμικά ένα max-height ώστε να ΥΠΑΡΧΕΙ scroll πάντα
+		const rect = voting.getBoundingClientRect();
+		const viewportH = window.innerHeight || document.documentElement.clientHeight;
+		const padBottom = 16; // μικρό οπτικό περιθώριο να μη «κολλάει» κάτω
+		const maxH = Math.max(240, Math.floor(viewportH - rect.top - padBottom));
+
+		voting.style.maxHeight = maxH + "px";
+		voting.style.overflowY = "scroll"; // δείξε scroll bar/gesture ΠΑΝΤΑ
+		voting.style.webkitOverflowScrolling = "touch";
 	} else {
 		document.body.classList.remove("scroll-votes");
+		// επαναφορά defaults
+		voting.style.maxHeight = "";
+		voting.style.overflowY = "hidden";
+		voting.style.webkitOverflowScrolling = "";
 	}
 }
 
@@ -808,6 +827,7 @@ function startDay() {
 
 	updateVotingScroll();	// ✅ ενεργοποιεί/απενεργοποιεί το scroll
 
+	updateVotingScroll();
 	renderVotingInterface();
 	initVoteHeaderEvents();
 	startDiscussionTimer();
@@ -1613,7 +1633,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "27 Αυγούστου 2025 – 23:45"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "27 Αυγούστου 2025 – 23:55"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
@@ -1704,12 +1724,16 @@ function translateRole(role) {
 	return translations[role] || role;
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+	updateFooterVisibility();
+	playNextMusicTrack(); // 🎵 Ξεκινά η μουσική μόλις φορτώσει η σελίδα
 
-document.body.addEventListener("click", (e) => {
-	if (e.target.tagName === "BUTTON") {
-		vibratePattern();
-	}
+	// 👉 Πρόσθεσε εδώ
+	window.addEventListener("resize", () => {
+		updateVotingScroll();
+	});
 });
+
 
 function toggleLovers(checkbox) {
 	if (checkbox.checked) {

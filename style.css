@@ -561,21 +561,13 @@ body.menu-open {
 	display:flex;
 	flex-direction:column;
 	height:100vh;
-	overflow:hidden; /* κόβει το page scroll */
+	overflow:hidden;
 }
 
 #votingArea{
 	flex:1;
-	min-height:0;           /* κρίσιμο για να δουλέψει το εσωτερικό scroll */
-	overflow-y:hidden;      /* default: ΟΧΙ scroll */
-	padding-bottom:calc(env(safe-area-inset-bottom,0) + 12px);
+	min-height:0;
+	overflow-y:hidden; /* default: ΟΧΙ scroll, το βάζει το JS όταν >10 */
 }
-
-/* Το JS προσθέτει body.scroll-votes όταν players > 10 */
-body.scroll-votes #votingArea{
-	overflow-y:auto;        /* scroll μόνο τότε */
-	-webkit-overflow-scrolling:touch;
-}
-
-/* ❌ Αφαίρεσε/σβήσε τυχόν rules για body.many-players (μίκραινε-UI) */
+ε/σβήσε τυχόν rules για body.many-players (μίκραινε-UI) */
 
