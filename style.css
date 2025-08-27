@@ -314,7 +314,7 @@ strong {
 
 .vote-line {
 	display: grid;
-	grid-template-columns: 2.5fr 0.2fr 120px auto;
+	grid-template-columns: 2.5fr 0.3fr 120px auto;
 	gap: 0.5px;
 	align-items: center;
 	margin-bottom: 2px;
@@ -569,5 +569,4 @@ body.menu-open {
 	min-height:0;
 	overflow-y:hidden; /* default: ΟΧΙ scroll, το βάζει το JS όταν >10 */
 }
-ε/σβήσε τυχόν rules για body.many-players (μίκραινε-UI) */
 
