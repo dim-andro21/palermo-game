@@ -1160,23 +1160,31 @@ function checkForGameEnd() {
 	const alivePlayers = players.filter(p => p.isAlive);
 	if (alivePlayers.length === 0) return false; // ασφαλιστική δικλείδα
 
+	// 🤪 Αν η Τρέλα έχει πεθάνει → αυτόματα νικάει
+	const madman = players.find(p => p.role === "Madman");
+	if (madman && !madman.isAlive) {
+		showEndMessage("Η Τρέλα ΚΕΡΔΙΣΕ!", "madman");
+		return true;
+	}
+
 	const allBad = alivePlayers.every(p => p.role === "Hidden Killer" || p.role === "Known Killer");
 	const allGood = alivePlayers.every(p => p.role !== "Hidden Killer" && p.role !== "Known Killer");
 
 	if (allBad) {
-		showEndMessage("ΟΙ ΚΑΚΟΙ ΚΕΡΔΙΣΑΝ!");
+		showEndMessage("ΟΙ ΚΑΚΟΙ ΚΕΡΔΙΣΑΝ!", "bad");
 		return true;
 	}
 	if (allGood) {
-		showEndMessage("ΟΙ ΚΑΛΟΙ ΚΕΡΔΙΣΑΝ!");
+		showEndMessage("ΟΙ ΚΑΛΟΙ ΚΕΡΔΙΣΑΝ!", "good");
 		return true;
 	}
 
 	return false;
 }
 
-function showEndMessage(message) {
-	releaseWakeLock(); // 👉 Η οθόνη επιτρέπεται να σβήσει τώρα
+
+function showEndMessage(message, winnerType = null) {
+	releaseWakeLock();
 	currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
 	playNextMusicTrack();
 
@@ -1188,20 +1196,25 @@ function showEndMessage(message) {
 	dayDiv.style.display = "none";
 	resultDiv.style.display = "block";
 
-	// έλεγχος αν υπάρχουν ζωντανοί δολοφόνοι
-	const killersAlive = players.some(p => p.isAlive && (p.role === "Hidden Killer" || p.role === "Known Killer"));
-
 	let playerListHTML = "<h3>Ρόλοι όλων των παικτών:</h3><ul>";
 	players.forEach((p) => {
-		const goodWin = message.toLowerCase()
-			.normalize("NFD")
-			.replace(/[\u0300-\u036f]/g, "")
-			.includes("οι καλοι");
+		let isWinner = false;
 
-		const isWinner = goodWin
-			? (p.role !== "Hidden Killer" && p.role !== "Known Killer" && p.role !== "Snitch")
-			: ((p.role === "Hidden Killer" || p.role === "Known Killer") ||
-			   (p.role === "Snitch" && killersAlive));
+		if (winnerType === "madman") {
+			isWinner = (p.role === "Madman");
+		} else {
+			const goodWin = message.toLowerCase()
+				.normalize("NFD")
+				.replace(/[\u0300-\u036f]/g, "")
+				.includes("οι καλοι");
+
+			const killersAlive = players.some(x => x.isAlive && (x.role === "Hidden Killer" || x.role === "Known Killer"));
+
+			isWinner = goodWin
+				? (p.role !== "Hidden Killer" && p.role !== "Known Killer" && p.role !== "Snitch" && p.role !== "Madman")
+				: ((p.role === "Hidden Killer" || p.role === "Known Killer") ||
+				   (p.role === "Snitch" && killersAlive));
+		}
 
 		const isDead = !p.isAlive;
 		const crown = isWinner ? '<span class="crown-icon">👑</span>' : '';
@@ -1210,7 +1223,6 @@ function showEndMessage(message) {
 		const playerClass = isWinner ? "winner-player" : "loser-player";
 		playerListHTML += `<li class="${playerClass}">${crown}<strong>${p.name}</strong>: ${translateRole(p.role)} ${tombstone}</li>`;
 	});
-
 	playerListHTML += "</ul>";
 
 	resultDiv.innerHTML = `
@@ -1218,7 +1230,6 @@ function showEndMessage(message) {
 		${playerListHTML}
 	`;
 
-	// ✅ Χρήση wrappers για σωστό reset
 	setTimeout(() => {
 		resultDiv.innerHTML += `
 			<br><br>
@@ -1529,9 +1540,15 @@ function eliminatePlayer(player, source = "ψηφοφορίας") {
 			player.linkedPartner.isAlive = false;
 		}
 
+		// 🤪 Αν είναι Τρέλα → άμεση νίκη
+		if (player.role === "Madman") {
+			showEndMessage("Η Τρέλα ΚΕΡΔΙΣΕ!", "madman");
+		}
+
 		return true;
 	}
 }
+
 
 
 function openNewGame() {
