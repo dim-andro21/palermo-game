@@ -1188,11 +1188,20 @@ function showEndMessage(message) {
 	dayDiv.style.display = "none";
 	resultDiv.style.display = "block";
 
+	// έλεγχος αν υπάρχουν ζωντανοί δολοφόνοι
+	const killersAlive = players.some(p => p.isAlive && (p.role === "Hidden Killer" || p.role === "Known Killer"));
+
 	let playerListHTML = "<h3>Ρόλοι όλων των παικτών:</h3><ul>";
-	players.forEach((p, i) => {
-		const isWinner = message.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes("οι καλοι")
-			? (p.role !== "Hidden Killer" && p.role !== "Known Killer")
-			: (p.role === "Hidden Killer" || p.role === "Known Killer");
+	players.forEach((p) => {
+		const goodWin = message.toLowerCase()
+			.normalize("NFD")
+			.replace(/[\u0300-\u036f]/g, "")
+			.includes("οι καλοι");
+
+		const isWinner = goodWin
+			? (p.role !== "Hidden Killer" && p.role !== "Known Killer" && p.role !== "Snitch")
+			: ((p.role === "Hidden Killer" || p.role === "Known Killer") ||
+			   (p.role === "Snitch" && killersAlive));
 
 		const isDead = !p.isAlive;
 		const crown = isWinner ? '<span class="crown-icon">👑</span>' : '';
@@ -1209,13 +1218,25 @@ function showEndMessage(message) {
 		${playerListHTML}
 	`;
 
+	// ✅ Χρήση wrappers για σωστό reset
 	setTimeout(() => {
 		resultDiv.innerHTML += `
 			<br><br>
-			<button onclick="restartSamePlayers()">Νέο παιχνίδι με ίδιους παίκτες</button>
-			<button onclick="restartNewNames()">Νέο παιχνίδι με νέους παίκτες</button>
+			<button onclick="startNewGameSamePlayers()">Νέο παιχνίδι με ίδιους παίκτες</button>
+			<button onclick="startNewGameNewPlayers()">Νέο παιχνίδι με νέους παίκτες</button>
 		`;
 	}, 3000);
+}
+
+
+function startNewGameSamePlayers() {
+	resetGameState(true);   // κρύψε τελική οθόνη, σταμάτα timers/audio, κράτα ονόματα
+	restartSamePlayers();   // ίδιοι παίκτες, νέα μοιρασιά
+}
+
+function startNewGameNewPlayers() {
+	resetGameState(false);  // full reset
+	restartNewNames();      // νέα ονόματα
 }
 
 function restartSamePlayers() {
