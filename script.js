@@ -1080,13 +1080,25 @@ function finishVoting() {
 
 
 function startSecondNight() {
+	// ✅ Early-win: αν μένουν 2 ζωντανοί = 1 δολοφόνος + 1 καλός → κερδίζουν οι κακοί
+	{
+		const alive = players.filter(p => p.isAlive);
+		const killers = alive.filter(isKiller).length;
+		const goods	= alive.filter(p => !isKiller(p) && p.role !== "Snitch").length; // ο ρουφιάνος δεν μετράει ως «καλός»
+
+		if (alive.length === 2 && killers === 1 && goods === 1) {
+			showEndMessage("ΟΙ ΚΑΚΟΙ ΚΕΡΔΙΣΑΝ!", "bad");
+			return; // μην μπαίνεις στη φάση δολοφονίας
+		}
+	}
+
 	// καθάρισε ό,τι έπαιζε πριν
 	stopAllTimersAndAudio?.();
 	narrationPaused = false;
 
 	// UI setup
 	const killOverlay = document.getElementById("nightKillChoice");
-	if (killOverlay) killOverlay.style.display = "none"; // κρύψε «Δολοφονία»
+	if (killOverlay) killOverlay.style.display = "none";
 	document.getElementById("dayPhase").style.display = "none";
 	setBackground("night");
 	document.getElementById("nightPhase").style.display = "block";
@@ -1095,62 +1107,12 @@ function startSecondNight() {
 	nightTextDiv.innerHTML = "";
 	nightTextDiv.style.opacity = 0;
 
-	// Γραμμές μέχρι και «…ο παίκτης ανακοινώνει ποιον σκότωσαν οι δολοφόνοι.»
-	const scriptLines = [
-		"Η ψηφοφορία ολοκληρώθηκε.",
-		"Έτσι λοιπόν ο ένοχος βρίσκεται εκτός παιχνιδιού.",
-		"Μια νύχτα πέφτει στο Παλέρμο κι οι παίκτες κλείνουν τα μάτια τους.",
-		"Ήρθε η σειρά των δολοφόνων να επιλέξουν το πρώτο τους θύμα.",
-		"Ο παίκτης που κρίθηκε ένοχος κι οι δύο δολοφόνοι ανοίγουν τα μάτια τους.",
-		"Οι δολοφόνοι συνεννοούνται και δείχνουν στον παίκτη εκτός παιχνιδιού ποιο είναι το θύμα τους.",
-		"Στη συνέχεια οι δολοφόνοι κλείνουν τα μάτια τους και ο παίκτης ανακοινώνει ποιον σκότωσαν οι δολοφόνοι."
-	];
-
-	// Τα 2 audio parts της 2ης νύχτας (στον φάκελο second-night/)
-	const audioParts = [
-		"second-night/night2_vote_end.wav",
-		"second-night/night2_core.wav"
-	];
-
-	// ---- Εμφάνιση κειμένων σταδιακά ----
-	let textIndex = 0;
-	let textTimer = null;
-	let showTextActive = true;
-
-	function showNextLine() {
-		if (!showTextActive) return;
-		if (textIndex >= scriptLines.length) return;
-
-		nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[textIndex]}</div>`;
-		nightTextDiv.style.opacity = 1;
-
-		textIndex++;
-		textTimer = setTimeout(showNextLine, 3500); // ρυθμός εμφάνισης
-	}
-
-	// ---- Αναπαραγωγή των 2 clips στη σειρά (με pause/resume) ----
-	let partIndex = 0;
-
-	function playNextPart() {
-		if (partIndex >= audioParts.length) {
-			// Τέλος 2ου clip → σταμάτα τα κείμενα & άνοιξε τη «Δολοφονία»
-			showTextActive = false;
-			if (textTimer) { clearTimeout(textTimer); textTimer = null; }
-			showKillChoiceMenu(); // αυτή κρύβει το nightPhase και δείχνει μόνο την «Δολοφονία»
-			return;
-		}
-
-		// παίζει ένα clip και στο τέλος του πάμε στο επόμενο
-		playNarrationClip(audioParts[partIndex], () => {
-			partIndex++;
-			playNextPart();
-		});
-	}
-
+	// … (όπως το έχεις: scriptLines, audioParts, showNextLine, playNextPart)
 	initVoteHeaderEvents();
 	showNextLine();
 	playNextPart();
 }
+
 
 
 
@@ -1206,21 +1168,35 @@ function showKillChoiceMenu() {
 	document.getElementById("nightKillChoice").style.display = "block";
 }
 
+function isKiller(p) {
+	return p.role === "Hidden Killer" || p.role === "Known Killer";
+}
 
 
 function checkForGameEnd() {
-	const alivePlayers = players.filter(p => p.isAlive);
-	if (alivePlayers.length === 0) return false; // ασφαλιστική δικλείδα
+	const alive = players.filter(p => p.isAlive);
+	if (alive.length === 0) return false;	// safety
 
-	// 🤪 Αν η Τρέλα έχει πεθάνει → αυτόματα νικάει
+	// 🤪 Τρέλα: αν έχει πεθάνει → νίκη τρέλας
 	const madman = players.find(p => p.role === "Madman");
 	if (madman && !madman.isAlive) {
 		showEndMessage("Η Τρέλα ΚΕΡΔΙΣΕ!", "madman");
 		return true;
 	}
 
-	const allBad = alivePlayers.every(p => p.role === "Hidden Killer" || p.role === "Known Killer");
-	const allGood = alivePlayers.every(p => p.role !== "Hidden Killer" && p.role !== "Known Killer");
+	const killersAlive = alive.filter(isKiller).length;
+	const snitchAlive	= alive.some(p => p.role === "Snitch");
+	const othersAlive	= alive.filter(p => !isKiller(p) && p.role !== "Snitch").length;
+
+	// ✅ ΝΕΟ: Αν ζουν ΜΟΝΟ δολοφόνοι (>=1) + ρουφιάνος (>=1) και κανένας άλλος → win κακοί
+	if (killersAlive >= 1 && snitchAlive && othersAlive === 0) {
+		showEndMessage("ΟΙ ΚΑΚΟΙ ΚΕΡΔΙΣΑΝ!", "bad");
+		return true;
+	}
+
+	// Υφιστάμενα rules
+	const allBad  = alive.every(isKiller);
+	const allGood = alive.every(p => !isKiller(p));
 
 	if (allBad) {
 		showEndMessage("ΟΙ ΚΑΚΟΙ ΚΕΡΔΙΣΑΝ!", "bad");
@@ -1230,9 +1206,10 @@ function checkForGameEnd() {
 		showEndMessage("ΟΙ ΚΑΛΟΙ ΚΕΡΔΙΣΑΝ!", "good");
 		return true;
 	}
-
 	return false;
 }
+
+
 
 
 function showEndMessage(message, winnerType = null) {
@@ -1645,7 +1622,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "28 Αυγούστου 2025 – 00:21"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "28 Αυγούστου 2025 – 00:34"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
