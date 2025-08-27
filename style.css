@@ -570,3 +570,118 @@ body.menu-open {
 	overflow-y:hidden; /* default: ΟΧΙ scroll, το βάζει το JS όταν >10 */
 }
 
+/* Δομή λίστας ρόλων (αριστερά σύμβολο/έλεγχος – δεξιά όνομα) */
+#extraRolesContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  max-height: none;     /* ⛔ χωρίς περιορισμό ύψους */
+  overflow: visible;    /* ⛔ χωρίς scroll */
+  padding-right: 0;
+}
+
+
+.role-row {
+	display: grid;
+	grid-template-columns: 56px 1fr; /* αριστερά έλεγχος, δεξιά όνομα */
+	align-items: center;
+	min-height: 34px;
+}
+
+.role-ctrl {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 6px;
+}
+
+.count-badge {
+	min-width: 28px;
+	text-align: center;
+	border: 1px solid rgba(255,255,255,.25);
+	border-radius: 8px;
+	padding: 2px 6px;
+}
+
+.stepper {
+	min-width: 28px;
+	height: 28px;
+	border-radius: 8px;
+}
+
+.role-name .hint {
+	opacity: .8;
+	font-size: .9em;
+	margin-left: 6px;
+}
+
+.bullet-list {
+	margin-left: 0;
+	padding-left: 18px; /* τελίτσες */
+}
+
+/* Ειδικό στυλ για το input των πολιτών */
+#citizenInput {
+  width: 26px;        /* σταθερό πλάτος */
+  height: 26px;       /* ίδιο ύψος = τετράγωνο */
+  text-align: center; /* το νούμερο στο κέντρο */
+  border-radius: 6px; /* κρατάμε λίγο στρογγυλάδα */
+  padding: 0;         /* χωρίς extra padding */
+  font-size: 15.5px;    /* λίγο πιο μεγάλο νούμερο */
+  background-color: #121212;
+  border: 2px solid #72a6fa;
+}
+
+/* === Custom checkbox style === */
+input[type="checkbox"] {
+  appearance: none;           /* αφαιρεί το default browser style */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  width: 26px;                /* μέγεθος κουτιού */
+  height: 26px;
+  border: 2px solid #4a90e2;  /* μπλε περίγραμμα */
+  border-radius: 4px;         /* λίγο στρογγυλό (προαιρετικό) */
+  background-color: #111;     /* σκούρο background για contrast */
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+/* Όταν το checkbox είναι τσεκαρισμένο */
+input[type="checkbox"]:checked {
+  background-color: #4a90e2;  /* γεμίζει μπλε */
+  border-color: #4a90e2;
+}
+
+/* Το ✓ */
+input[type="checkbox"]:checked::after {
+  content: "✓";
+  color: white;
+  font-size: 16px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -60%); /* κεντράρει το σύμβολο */
+}
+
+.bullet::before {
+  content: "✦";          /* αστεράκι */
+  font-size: 25px;
+  opacity: 0.7;
+  color: #d6d1f8;        /* χρυσό */
+}
+
+/* Input για τον αριθμό παικτών */
+#numPlayers {
+  width: 20px;        /* φαρδύτερο */
+  height: 12px;       /* πιο ψηλό */
+  font-size: 15px;    /* μεγαλύτερη γραμματοσειρά */
+  text-align: center; /* κέντρο το νούμερο */
+  border-radius: 6px; /* λίγο στρογγυλεμένο */
+  
+  border: 2px solid #72a6fa;  /* πιο χοντρό μπλε περίγραμμα */
+  background-color: #121212;     /* σκουρόχρωμο background */
+  color: #fff;                /* λευκό το νούμερο */
+}

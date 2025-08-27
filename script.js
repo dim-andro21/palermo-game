@@ -12,6 +12,8 @@ let defaultVibrationType = "short";
 let narrationPaused = false;
 let narrationTimeout = null;
 let narrationAudio = null;
+let citizenCount = 0; // πόσοι Πολίτες επιλέχθηκαν από τον χρήστη
+
 
 
 const musicTracks = [
@@ -333,7 +335,10 @@ const roleNames = [
 	"MotherTeresa",
 	"Mayor"
 ];
-const requiredRoles = ["Citizen", "Citizen", "Hidden Killer", "Known Killer"];
+
+// ΠΑΛΙΑ: ["Citizen","Citizen","Hidden Killer","Known Killer"]
+// ΝΕΑ λίστα υποχρεωτικών:
+const requiredRoles = ["Hidden Killer", "Known Killer", "Police officer"];
 
 let numPlayers = 0;
 let chosenRoles = [];
@@ -341,86 +346,172 @@ let players = [];
 
 let currentPlayerIndex = 0;
 
+function renderRequiredRoles() {
+	const container = document.getElementById("extraRolesContainer");
+	if (!container) return;
+
+	// αφαίρεσε παλιές required-γραμμές (αν ξαναμπαίνεις στη σελίδα)
+	container.querySelectorAll(".role-row[data-kind='required']").forEach(el => el.remove());
+
+	// βάλε τους required ΠΡΙΝ από τη γραμμή Πολίτη
+	const citizenRow = container.querySelector(".role-row[data-fixed='citizen']");
+
+	requiredRoles.forEach(role => {
+		const row = document.createElement("div");
+		row.className = "role-row";
+		row.dataset.kind = "required";            // ώστε να μπορούμε να τα καθαρίζουμε
+		row.innerHTML = `
+			<div class="role-ctrl"><span class="bullet"></span></div>
+			<div class="role-name">${translateRole(role)}</div>
+		`;
+		container.insertBefore(row, citizenRow);   // εμφάνιση πάνω από «Πολίτης»
+	});
+}
+
+
 // Save selected setting when starting game
 function startRoleSelection() {
 	requestWakeLock();
 
 	const trackSelect = document.getElementById("trackSelect");
-	if (trackSelect) {
-		selectedTrack = trackSelect.value;
-	}
+	if (trackSelect) selectedTrack = trackSelect.value;
 
 	const select = document.getElementById("discussionTime");
-	if (select) {
-		discussionDuration = parseInt(select.value);
-	}
+	if (select) discussionDuration = parseInt(select.value);
 
 	numPlayers = parseInt(document.getElementById("numPlayers").value);
-	if (numPlayers < 5) {
-		alert("You need at least 5 players!");
-		return;
-	}
-	if (numPlayers > 15) {
-		alert("Μέγιστος αριθμός παικτών: 15.");
-		return;
-	}
+	if (numPlayers < 5) { alert("You need at least 5 players!"); return; }
+	if (numPlayers > 15) { alert("Μέγιστος αριθμός παικτών: 15."); return; }
 
+	// κρύψε το setup
 	document.getElementById("setup").style.display = "none";
 
+	// reset επιλογών
+	chosenRoles = [];        // προαιρετικοί ρόλοι (Lovers προσθέτει 2)
+	citizenCount = 0;        // μετρητής Πολίτων
+
+	// === ΜΟΝΟ ο τίτλος "Επίλεξε Χ επιπλέον ρόλους" + λίστα ρόλων ===
 	const roleDiv = document.getElementById("roleSelection");
 	roleDiv.innerHTML = `
-		<h3>Έχεις επιλέξει:</h3>
-		<ul id="chosenRolesList">
-			<li>Citizen ×2</li>
-			<li>Hidden Killer</li>
-			<li>Known Killer</li>
-		</ul>
-		<h3 id="extraRolesHeader">Επίλεξε ${numPlayers - 4} επιπλέον ρόλους:</h3>
+		<h3 id="extraRolesHeader"></h3>
+
+		<div id="extraRolesContainer">
+			<!-- Πολίτης: ΑΠΛΟ number input -->
+			<div class="role-row">
+				<div class="role-ctrl">
+					<input id="citizenInput" type="number" value="2" min="2" step="1" />
+				</div>
+				<div class="role-name">Πολίτης</div>
+			</div>
+		</div>
+
+		<br><button onclick="startNameInput()">Continue</button>
 	`;
-
-	// Input για πολλαπλούς Citizen
-	roleDiv.innerHTML += `
-		<label>
-			Πολίτης
-			<input type="number" id="extraCitizenCount" value="0" min="0" max="${numPlayers - 4}" onchange="updateCitizenSelection()">
-		</label><br>
-	`;
-
-	// Checkboxes για άλλους ρόλους
-	for (let i = 3; i < roleNames.length; i++) {
-		if (roleNames[i] === "Citizen") continue;
-
-		if (roleNames[i] === "Lovers") {
-			roleDiv.innerHTML += `
-				<label>
-					<input type="checkbox" id="addLovers" onchange="toggleLovers(this)">
-					${translateRole("Lovers")} (2 άτομα)
-				</label><br>`;
-			continue;
-		}
-
-		roleDiv.innerHTML += `
-			<label>
-				<input type="checkbox" value="${roleNames[i]}" onchange="updateRoleSelection(this)">
-				${translateRole(roleNames[i])}
-			</label><br>`;
-	}
-
-	roleDiv.innerHTML += `<br><button onclick="startNameInput()">Continue</button>`;
 	roleDiv.style.display = "block";
 
-	chosenRoles = [...requiredRoles];
-	updateChosenRolesList();
+	// citizen: αρχικοποίηση + listener
+	citizenCount = 2;
+	const citizenInput = document.getElementById("citizenInput");
+	citizenInput.addEventListener("input", refreshCitizenMax);
+	refreshCitizenMax(); // ορίζει και το σωστό max στην εκκίνηση
 
-	// Προκαθορισμένη ανακατεύθυνση ρόλων πριν την είσοδο ονομάτων
-	chosenRoles = shuffleArray(chosenRoles);
+	// container της λίστας
+	const container = document.getElementById("extraRolesContainer");
+
+	// ➤ ΥΠΟΧΡΕΩΤΙΚΟΙ ρόλοι (πάνω από τον «Πολίτη»)
+	requiredRoles.forEach(role => {
+		const row = document.createElement("div");
+		row.className = "role-row";
+		row.innerHTML = `
+			<div class="role-ctrl"><span class="bullet"></span></div>
+			<div class="role-name">${translateRole(role)}</div>
+		`;
+		container.insertBefore(row, container.firstChild);
+	});
+
+	// ➤ ΠΡΟΑΙΡΕΤΙΚΟΙ ρόλοι (κάτω από τον «Πολίτη»)
+	const extras = roleNames.filter(r => r !== "Citizen" && !requiredRoles.includes(r));
+	extras.forEach(role => {
+		const id = `role_${role.replace(/\s+/g, "_")}`;
+		const row = document.createElement("div");
+		row.className = "role-row";
+		row.innerHTML = `
+			<div class="role-ctrl">
+				<input type="checkbox" id="${id}" onchange="toggleExtraRole('${role}', this.checked)">
+			</div>
+			<label class="role-name" for="${id}">
+				${translateRole(role)}${role === "Lovers" ? " <span class='hint'>(2 άτομα)</span>" : ""}
+			</label>
+		`;
+		container.appendChild(row);
+	});
+
+	// ενημέρωσε το "Επίλεξε Χ επιπλέον ρόλους"
+	updateRemainingRolesText();
+
+}
+
+
+
+function currentSlotsUsed() {
+	// slots που έχουν δεσμευτεί: υποχρεωτικοί + πολίτες + προαιρετικοί
+	// (οι Lovers έχουν μπει δύο φορές στη chosenRoles, οπότε μετριούνται ως 2)
+	return requiredRoles.length + citizenCount + chosenRoles.length;
+}
+
+function changeCitizen(delta) {
+  const badge = document.getElementById("citizenCountBadge");
+  if (!badge) return;
+
+  // Θέλουμε μόνο ΑΥΞΗΣΗ. Καμία μείωση (οι 2 είναι κλειδωμένοι).
+  if (delta <= 0) return;
+
+  // Πόσα slots απομένουν αυτή τη στιγμή;
+  const spaceLeft = numPlayers - (requiredRoles.length + citizenCount + chosenRoles.length);
+  if (spaceLeft <= 0) return;        // δεν χωράει άλλος πολίτης
+
+  citizenCount += 1;                  // +1 πολίτης
+  badge.textContent = String(citizenCount);
+  updateRemainingRolesText();
+}
+
+
+
+function toggleExtraRole(role, checked) {
+	if (role === "Lovers") {
+		if (checked) {
+			// χρειάζονται 2 slots
+			if (numPlayers - currentSlotsUsed() < 2) {
+				// όχι αρκετός χώρος → ξε-τσεκάρισμα
+				const id = `role_${role.replace(/\s+/g, "_")}`;
+				document.getElementById(id).checked = false;
+				return;
+			}
+			chosenRoles.push("Lovers", "Lovers");
+		} else {
+			// αφαίρεσε ΟΛΑ τα "Lovers"
+			chosenRoles = chosenRoles.filter(r => r !== "Lovers");
+		}
+	} else {
+		if (checked) {
+			if (numPlayers - currentSlotsUsed() <= 0) {
+				const id = `role_${role.replace(/\s+/g, "_")}`;
+				document.getElementById(id).checked = false;
+				return;
+			}
+			chosenRoles.push(role);
+		} else {
+			const i = chosenRoles.indexOf(role);
+			if (i !== -1) chosenRoles.splice(i, 1);
+		}
+	}
+	updateRemainingRolesText();
+	refreshCitizenMax();
 }
 
 function updateRemainingRolesText() {
 	const header = document.getElementById("extraRolesHeader");
-	if (!header) return;
-
-	const remaining = numPlayers - chosenRoles.length;
+	const remaining = numPlayers - currentSlotsUsed();
 	header.textContent = `Επίλεξε ${remaining} επιπλέον ρόλους:`;
 }
 
@@ -450,14 +541,51 @@ function updateRoleSelection(checkbox) {
 	updateChosenRolesList();
 }
 
+function refreshCitizenMax() {
+	const input = document.getElementById("citizenInput");
+	if (!input) return;
+
+	// πόσα slots απομένουν συνολικά;
+	const max = Math.max(2, numPlayers - (requiredRoles.length + chosenRoles.length));
+	input.min = "2";
+	input.step = "1";
+	input.max = String(max);
+
+	// clamp τιμή input και sync με citizenCount
+	let val = parseInt(input.value, 10);
+	if (isNaN(val) || val < 2) val = 2;
+	if (val > max) val = max;
+	input.value = String(val);
+	citizenCount = val;
+
+	updateRemainingRolesText();
+}
+
+
+function buildFinalRoleList() {
+	// requiredRoles: ["Hidden Killer","Known Killer","Police officer"]
+	// citizenCount: πόσοι πολίτες επέλεξε ο χρήστης
+	const final = [...requiredRoles];
+	for (let i = 0; i < citizenCount; i++) final.push("Citizen");
+	return final.concat(chosenRoles);
+}
 
 function startNameInput() {
-	if (chosenRoles.length !== numPlayers) {
-		alert(`You need exactly ${numPlayers} roles!`);
+	const finalRoles = buildFinalRoleList();
+
+	if (finalRoles.length !== numPlayers) {
+		const remaining = numPlayers - finalRoles.length;
+		alert(
+			remaining > 0
+				? `Χρειάζεσαι ακόμα ${remaining} ρόλο/ρόλους!`
+				: `Έχεις επιλέξει παραπάνω ρόλους από όσους χρειάζονται.`
+		);
 		return;
 	}
 
-	chosenRoles = shuffleArray(chosenRoles);
+	// Τελική λίστα που θα μοιραστεί στους παίκτες
+	chosenRoles = shuffleArray(finalRoles);
+
 	document.getElementById("roleSelection").style.display = "none";
 	document.getElementById("nameInput").style.display = "block";
 
@@ -466,6 +594,7 @@ function startNameInput() {
 
 	renderNameInputStep();
 }
+
 
 function renderNameInputStep() {
 	const nameDiv = document.getElementById("nameInput");
@@ -1724,7 +1853,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	// 👉 Επαναφορά δόνησης σε όλα τα κουμπιά
 	document.body.addEventListener("click", (e) => {
-		if (e.target.tagName === "BUTTON") {
+		if (e.target.tagName === "BUTTON" || e.target.type === "checkbox") {
 			vibratePattern(); // short vibration
 		}
 	});
