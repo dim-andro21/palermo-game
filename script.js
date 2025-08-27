@@ -1645,7 +1645,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "28 Αυγούστου 2025 – 00:16"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "28 Αυγούστου 2025 – 00:21"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
@@ -1740,18 +1740,18 @@ document.addEventListener("DOMContentLoaded", () => {
 	updateFooterVisibility();
 	playNextMusicTrack(); // 🎵 Ξεκινά η μουσική μόλις φορτώσει η σελίδα
 
-	// 👉 Πρόσθεσε εδώ
+	// 👉 Scroll update on resize
 	window.addEventListener("resize", () => {
 		updateVotingScroll();
 	});
+
+	// 👉 Επαναφορά δόνησης σε όλα τα κουμπιά
+	document.body.addEventListener("click", (e) => {
+		if (e.target.tagName === "BUTTON") {
+			vibratePattern(); // short vibration
+		}
+	});
 });
-
-document.addEventListener("pointerdown", (e) => {
-  const btn = e.target.closest("button");
-  if (!btn) return;
-  vibratePattern();
-}, { passive: true });
-
 
 
 function toggleLovers(checkbox) {
