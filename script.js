@@ -288,7 +288,7 @@ class Player {
 		this.role = role;
 		this.isAlive = true;
 		this.votes = 0;
-		this.lives = (role === "Bulletproof") ? 2 : 1;
+		this.lives = 1; // default
 	}
 }
 
@@ -1546,21 +1546,35 @@ function updateCitizenSelection() {
 }
 
 function eliminatePlayer(player, source = "ψηφοφορίας") {
-	if (player.lives > 1) {
-		player.lives--;
-		return false;
-	} else {
-		player.isAlive = false;
-
-		// 💔 Αν είναι ερωτευμένος και ο/η άλλος/η ζει, πεθαίνει κι αυτός/ή
-		if (player.role === "Lovers" && player.linkedPartner && player.linkedPartner.isAlive) {
-			player.linkedPartner.isAlive = false;
+	// 👉 Ειδική λογική για Αλεξίσφαιρο
+	if (player.role === "Bulletproof" && source === "δολοφονίας") {
+		if (player.lives > 0) {
+			player.lives = 0; // καίει την ασπίδα του
+			const audio = new Audio(`audio/${selectedTrack}/reveal/bulletproof_reveal.wav`);
+			audio.play().catch(() => {});
+			
+			const nightTextDiv = document.getElementById("nightText");
+			if (nightTextDiv) {
+				nightTextDiv.innerHTML = `
+					<p>🛡️ Ο Αλεξίσφαιρος <strong>${player.name}</strong> γλίτωσε από την απόπειρα δολοφονίας!</p>
+				`;
+			}
+			return false; // ❌ δεν πεθαίνει αυτή τη φορά
 		}
-
-		// ❌ Βγάλαμε τον έλεγχο για την Τρέλα
-		return true;
 	}
+
+	// ✅ Κανονικός θάνατος
+	player.isAlive = false;
+
+	// 💔 Αν είναι ερωτευμένος και ο/η άλλος/η ζει, πεθαίνει κι αυτός/ή
+	if (player.role === "Lovers" && player.linkedPartner && player.linkedPartner.isAlive) {
+		player.linkedPartner.isAlive = false;
+	}
+
+	return true;
 }
+
+
 
 
 
@@ -1579,7 +1593,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "27 Αυγούστου 2025 – 20:57"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "27 Αυγούστου 2025 – 21:17"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
