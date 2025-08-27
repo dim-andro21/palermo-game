@@ -1746,6 +1746,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	});
 });
 
+document.addEventListener("pointerdown", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  vibratePattern();
+}, { passive: true });
+
+
 
 function toggleLovers(checkbox) {
 	if (checkbox.checked) {
