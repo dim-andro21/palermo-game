@@ -1186,6 +1186,22 @@ function checkForGameEnd() {
 function showEndMessage(message, winnerType = null) {
 	releaseWakeLock();
 	currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
+
+	// 🔊 Παίξε ήχο νίκης ανάλογα με τον τύπο
+	let winSound = null;
+	if (winnerType === "madman") {
+		winSound = "win/madman_win.wav";
+	} else if (winnerType === "bad") {
+		winSound = "win/bad_win.wav";
+	} else {
+		winSound = "win/good_win.wav";
+	}
+
+	if (winSound) {
+		const audio = new Audio(`audio/${selectedTrack}/${winSound}`);
+		audio.play().catch(() => {});
+	}
+
 	playNextMusicTrack();
 
 	const nightDiv = document.getElementById("nightPhase");
@@ -1238,6 +1254,7 @@ function showEndMessage(message, winnerType = null) {
 		`;
 	}, 3000);
 }
+
 
 
 function startNewGameSamePlayers() {
@@ -1540,14 +1557,11 @@ function eliminatePlayer(player, source = "ψηφοφορίας") {
 			player.linkedPartner.isAlive = false;
 		}
 
-		// 🤪 Αν είναι Τρέλα → άμεση νίκη
-		if (player.role === "Madman") {
-			showEndMessage("Η Τρέλα ΚΕΡΔΙΣΕ!", "madman");
-		}
-
+		// ❌ Βγάλαμε τον έλεγχο για την Τρέλα
 		return true;
 	}
 }
+
 
 
 
@@ -1565,7 +1579,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "26 Αυγούστου 2025 – 14:31"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "27 Αυγούστου 2025 – 20:57"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
