@@ -180,6 +180,16 @@ function initVoteHeaderEvents() {
 	if (menuKill) menuKill.onclick = openInGameMenu;
 }
 
+function applyManyPlayersLayout() {
+	const count = Array.isArray(players) ? players.length : 0;
+	if (count > 10) {
+		document.body.classList.add("many-players");
+	} else {
+		document.body.classList.remove("many-players");
+	}
+}
+
+
 
 // ===== Hard reset helpers =====
 function stopAllTimersAndAudio() {
@@ -332,8 +342,8 @@ function startRoleSelection() {
 		alert("You need at least 5 players!");
 		return;
 	}
-	if (numPlayers > 10) {
-		alert("Μέγιστος αριθμός παικτών: 10.");
+	if (numPlayers > 15) {
+		alert("Μέγιστος αριθμός παικτών: 15.");
 		return;
 	}
 
@@ -793,14 +803,18 @@ function startNight() {
 
 // 3. Επέκταση startDay για αλλαγή background
 function startDay() {
-    setBackground("day");
-    document.getElementById("nightPhase").style.display = "none";
-    document.getElementById("dayPhase").style.display = "block";
-    players.forEach(p => p.votes = 0);
-    renderVotingInterface();
+	setBackground("day");
+	document.getElementById("nightPhase").style.display = "none";
+	document.getElementById("dayPhase").style.display = "block";
+	players.forEach(p => p.votes = 0);
+
+	applyManyPlayersLayout();	// 🔹 ενεργοποιεί το condensed mode αν >10
+
+	renderVotingInterface();
 	initVoteHeaderEvents();
-    startDiscussionTimer();
+	startDiscussionTimer();
 }
+
 
 function startDiscussionTimer() {
 	const countdownDiv = document.getElementById("voteCountdown");
@@ -847,6 +861,8 @@ function startDiscussionTimer() {
 function renderVotingInterface() {
 	const votingDiv = document.getElementById("votingArea");
 	votingDiv.innerHTML = ""; // Καθαρίζει προηγούμενα μηνύματα
+
+	applyManyPlayersLayout();	// 🔹 ξαναελέγχει αν αλλάξει κάτι on-the-fly
 
 	totalVotes = 0;
 

@@ -555,3 +555,42 @@ body.menu-open {
 	top: 50%;
 	transform: translateY(-50%);
 }
+
+/* ==== ΨΗΦΟΦΟΡΙΑ: ύψος/scroll & condensed mode ==== */
+
+/* Το dayPhase γίνεται κολόνα πλήρους ύψους */
+#dayPhase{
+	display:flex;
+	flex-direction:column;
+	height:100vh;
+}
+
+/* Η λίστα παίρνει όλο τον χώρο κάτω από το header και κάνει κάθετο scroll */
+#votingArea{
+	flex:1;
+	overflow-y:auto;
+	-webkit-overflow-scrolling: touch;
+	padding-bottom:12px;
+}
+
+/* Condensed mode όταν οι παίκτες είναι >10 */
+body.many-players .vote-line{
+	gap:4px;
+	padding:4px 6px;
+}
+body.many-players .vote-line span{
+	font-size:14px;
+}
+body.many-players .vote-add,
+body.many-players .vote-remove{
+	padding:5px 8px;
+	font-size:13px;
+	min-width:auto;
+	border-radius:8px;
+}
+body.many-players .vote-line span:first-child{
+	white-space:nowrap;
+	overflow:hidden;
+	text-overflow:ellipsis;
+	max-width:56vw;
+}
