@@ -399,7 +399,7 @@ function startRoleSelection() {
 			<!-- Πολίτης: ΑΠΛΟ number input -->
 			<div class="role-row">
 				<div class="role-ctrl">
-					<input id="citizenInput" type="number" value="2" min="2" step="1" />
+					<input id="citizenInput" type="number" value="2" min="0" step="1" />
 				</div>
 				<div class="role-name">Πολίτης</div>
 			</div>
@@ -459,21 +459,23 @@ function currentSlotsUsed() {
 	return requiredRoles.length + citizenCount + chosenRoles.length;
 }
 
-function changeCitizen(delta) {
-  const badge = document.getElementById("citizenCountBadge");
-  if (!badge) return;
+// function changeCitizen(delta) {
+// 	const badge = document.getElementById("citizenCountBadge");
+// 	if (!badge) return;
 
-  // Θέλουμε μόνο ΑΥΞΗΣΗ. Καμία μείωση (οι 2 είναι κλειδωμένοι).
-  if (delta <= 0) return;
+// 	const proposed = Math.max(0, citizenCount + delta); // ✅ min 0
+// 	const deltaNeeded = proposed - citizenCount;
 
-  // Πόσα slots απομένουν αυτή τη στιγμή;
-  const spaceLeft = numPlayers - (requiredRoles.length + citizenCount + chosenRoles.length);
-  if (spaceLeft <= 0) return;        // δεν χωράει άλλος πολίτης
+// 	// Χώρος για την αλλαγή;
+// 	const spaceLeft = numPlayers - (requiredRoles.length + chosenRoles.length + citizenCount);
+// 	if (deltaNeeded > 0 && deltaNeeded > spaceLeft) return;
 
-  citizenCount += 1;                  // +1 πολίτης
-  badge.textContent = String(citizenCount);
-  updateRemainingRolesText();
-}
+// 	citizenCount = proposed;
+// 	badge.textContent = String(citizenCount);
+// 	updateRemainingRolesText();
+// 	refreshCitizenMax();
+// }
+
 
 
 
@@ -546,20 +548,21 @@ function refreshCitizenMax() {
 	if (!input) return;
 
 	// πόσα slots απομένουν συνολικά;
-	const max = Math.max(2, numPlayers - (requiredRoles.length + chosenRoles.length));
-	input.min = "2";
+	const max = Math.max(0, numPlayers - (requiredRoles.length + chosenRoles.length));
+	input.min = "0";			// ✅ όχι υποχρεωτικά 2
 	input.step = "1";
 	input.max = String(max);
 
 	// clamp τιμή input και sync με citizenCount
 	let val = parseInt(input.value, 10);
-	if (isNaN(val) || val < 2) val = 2;
+	if (isNaN(val) || val < 0) val = 0;	// ✅ min = 0
 	if (val > max) val = max;
 	input.value = String(val);
 	citizenCount = val;
 
 	updateRemainingRolesText();
 }
+
 
 
 function buildFinalRoleList() {
