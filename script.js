@@ -385,11 +385,21 @@ function startRoleSelection() {
 	if (trackSelect) selectedTrack = trackSelect.value;
 
 	const select = document.getElementById("discussionTime");
-	if (select) discussionDuration = parseInt(select.value);
+	if (select) discussionDuration = parseInt(select.value, 10);
 
-	numPlayers = parseInt(document.getElementById("numPlayers").value);
-	if (numPlayers < 5) { alert("You need at least 5 players!"); return; }
-	if (numPlayers > 15) { alert("Μέγιστος αριθμός παικτών: 15."); return; }
+	// ✅ robust ανάγνωση παικτών: κενό => NaN => ίδιο alert με <5
+	const numInput = document.getElementById("numPlayers");
+	const raw = (numInput?.value ?? "").trim();
+	numPlayers = parseInt(raw, 10);
+
+	if (!Number.isInteger(numPlayers) || numPlayers < 5) {
+		alert("You need at least 5 players!");
+		return;
+	}
+	if (numPlayers > 15) {
+		alert("Μέγιστος αριθμός παικτών: 15.");
+		return;
+	}
 
 	// κρύψε το setup
 	document.getElementById("setup").style.display = "none";
