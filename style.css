@@ -675,9 +675,9 @@ input[type="checkbox"]:checked::after {
 
 /* Input για τον αριθμό παικτών */
 #numPlayers {
-  width: 20px;        /* φαρδύτερο */
+  width: 28px;        /* φαρδύτερο */
   height: 12px;       /* πιο ψηλό */
-  font-size: 15px;    /* μεγαλύτερη γραμματοσειρά */
+  font-size: 15.5px;    /* μεγαλύτερη γραμματοσειρά */
   text-align: center; /* κέντρο το νούμερο */
   border-radius: 6px; /* λίγο στρογγυλεμένο */
   
