@@ -1756,8 +1756,16 @@ function revealRestartedRole() {
 }
 
 function nextRestartedPlayer() {
+	// 🛡️ αποφυγή πολλαπλών πατημάτων
+	if (nextPlayerBusy) return;
+	nextPlayerBusy = true;
+
 	const roleDiv = document.getElementById("roleReveal");
 	roleDiv.classList.add("fade-out");
+
+	// απενεργοποίησε αμέσως το κουμπί
+	const nextBtn = document.querySelector("#roleReveal button");
+	if (nextBtn) nextBtn.disabled = true;
 
 	setTimeout(() => {
 		currentPlayerIndex++;
@@ -1765,10 +1773,12 @@ function nextRestartedPlayer() {
 		if (currentPlayerIndex >= numPlayers) {
 			document.getElementById("nameInput").style.display = "none";
 			showResults();
+			nextPlayerBusy = false; // reset
 		} else {
 			const player = players[currentPlayerIndex];
 
-			document.getElementById("playerHeader").textContent = `Player ${currentPlayerIndex + 1} - Επιβεβαίωσε ή άλλαξε το όνομά σου:`;
+			document.getElementById("playerHeader").textContent =
+				`Player ${currentPlayerIndex + 1} - Επιβεβαίωσε ή άλλαξε το όνομά σου:`;
 
 			const nameInput = document.getElementById("playerName");
 			nameInput.value = player.name;
@@ -1780,9 +1790,12 @@ function nextRestartedPlayer() {
 
 			roleDiv.classList.remove("fade-out");
 			roleDiv.innerHTML = "";
+
+			nextPlayerBusy = false; // ✅ ξαναεπιτρέπεται νέο πάτημα
 		}
 	}, 400);
 }
+
 
 
 function disableAllAddButtons() {
@@ -1903,7 +1916,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "28 Αυγούστου 2025 – 16:22"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "28 Αυγούστου 2025 – 16:27"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
