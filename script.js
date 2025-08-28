@@ -1478,51 +1478,81 @@ function startNewGameNewPlayers() {
 }
 
 function restartSamePlayers() {
-	// εδώ μπαίνουμε ΑΦΟΥ έγινε resetGameState(true)
-	document.getElementById("pageTitle").textContent = "ΠΑΛΕΡΜΟ";
+	// μπαίνουμε εδώ ΑΦΟΥ έχει κληθεί resetGameState(true)
+	requestWakeLock();
 
+	// κρατάμε τα ίδια ονόματα
+	numPlayers = players.length;
+
+	// reset επιλογών ρόλων (όπως στο startRoleSelection)
+	chosenRoles = [];
+	citizenCount = 2;
+
+	// κρύψε τυχόν άλλα panels
+	const result = document.getElementById("result");
+	if (result) result.style.display = "none";
+	const setup = document.getElementById("setup");
+	if (setup) setup.style.display = "none";
+
+	// από εδώ και κάτω: ΙΔΙΟ layout με το νέο role selection,
+	// απλώς το Continue καλεί applyRolesToSamePlayers()
 	const roleDiv = document.getElementById("roleSelection");
 	roleDiv.innerHTML = `
-		<h3>Έχεις επιλέξει:</h3>
-		<ul id="chosenRolesList"></ul>
-		<h3 id="extraRolesHeader">Επίλεξε ${numPlayers - 4} επιπλέον ρόλους:</h3>
+		<h3 id="extraRolesHeader"></h3>
+
+		<div id="extraRolesContainer">
+			<!-- Πολίτης: απλό number input -->
+			<div class="role-row">
+				<div class="role-ctrl">
+					<input id="citizenInput" type="number" value="2" min="2" step="1" />
+				</div>
+				<div class="role-name">Πολίτης</div>
+			</div>
+		</div>
+
+		<br><button onclick="applyRolesToSamePlayers()">Continue</button>
 	`;
+	roleDiv.style.display = "block";
 
-	roleDiv.innerHTML += `
-		<label>
-			Πολίτης
-			<input type="number" id="extraCitizenCount" value="${chosenRoles.filter(r => r==='Citizen').length - 2}" 
-				min="0" max="${numPlayers - 4}" onchange="updateCitizenSelection()">
-		</label><br>
-	`;
+	// citizen: αρχικοποίηση + listener
+	const citizenInput = document.getElementById("citizenInput");
+	citizenInput.addEventListener("input", refreshCitizenMax);
+	refreshCitizenMax();
 
-	for (let i = 3; i < roleNames.length; i++) {
-		if (roleNames[i] === "Citizen") continue;
+	// container της λίστας
+	const container = document.getElementById("extraRolesContainer");
 
-		if (roleNames[i] === "Lovers") {
-			const checked = chosenRoles.filter(r => r==="Lovers").length === 2 ? "checked" : "";
-			roleDiv.innerHTML += `
-				<label>
-					<input type="checkbox" id="addLovers" onchange="toggleLovers(this)" ${checked}>
-					${translateRole("Lovers")} (2 άτομα)
-				</label><br>`;
-			continue;
-		}
+	// ➤ ΥΠΟΧΡΕΩΤΙΚΟΙ ρόλοι (πάνω από τον «Πολίτη»)
+	requiredRoles.forEach(role => {
+		const row = document.createElement("div");
+		row.className = "role-row";
+		row.innerHTML = `
+			<div class="role-ctrl"><span class="bullet"></span></div>
+			<div class="role-name">${translateRole(role)}</div>
+		`;
+		container.insertBefore(row, container.firstChild);
+	});
 
-		const checked = chosenRoles.includes(roleNames[i]) ? "checked" : "";
-		roleDiv.innerHTML += `
-			<label>
-				<input type="checkbox" value="${roleNames[i]}" onchange="updateRoleSelection(this)" ${checked}>
-				${translateRole(roleNames[i])}
-			</label><br>`;
-	}
-
-	roleDiv.innerHTML += `<br><button onclick="applyRolesToSamePlayers()">Continue</button>`;
+	// ➤ ΠΡΟΑΙΡΕΤΙΚΟΙ ρόλοι (κάτω από τον «Πολίτη»)
+	const extras = roleNames.filter(r => r !== "Citizen" && !requiredRoles.includes(r));
+	extras.forEach(role => {
+		const id = `role_${role.replace(/\s+/g, "_")}`;
+		const row = document.createElement("div");
+		row.className = "role-row";
+		row.innerHTML = `
+			<div class="role-ctrl">
+				<input type="checkbox" id="${id}" onchange="toggleExtraRole('${role}', this.checked)">
+			</div>
+			<label class="role-name" for="${id}">
+				${translateRole(role)}${role === "Lovers" ? " <span class='hint'>(2 άτομα)</span>" : ""}
+			</label>
+		`;
+		container.appendChild(row);
+	});
 
 	updateRemainingRolesText();
-	updateChosenRolesList();
-	roleDiv.style.display = "block";
 }
+
 
 function restartNewNames() {
 	// αν δεν θέλεις reload, κάν' το «in-app»:
