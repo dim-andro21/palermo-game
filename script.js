@@ -14,6 +14,7 @@ let narrationTimeout = null;
 let narrationAudio = null;
 let citizenCount = 0; // πόσοι Πολίτες επιλέχθηκαν από τον χρήστη
 let nextPlayerBusy = false;
+let noMoreNights = false; // όταν πεθάνει η Μητέρα Τερέζα, δεν ξαναπέφτει νύχτα
 
 
 
@@ -239,6 +240,8 @@ function hideAllPhases() {
 function resetGameState(keepNames = false) {
 	// κλείσε το menu (αν είναι ανοιχτό)
 	closeInGameMenu();
+
+	noMoreNights = false; // reset ειδικού κανόνα μητέρας Τερέζας
 
 	// σταμάτα τα πάντα
 	stopAllTimersAndAudio();
@@ -1244,8 +1247,14 @@ function finishVoting() {
 
 	setTimeout(() => {
 		if (checkForGameEnd()) return;
-		startSecondNight();
+		if (noMoreNights) {
+			// συνεχίζουμε κατευθείαν σε νέα μέρα (διαδοχικές ψηφοφορίες)
+			startDay();
+		} else {
+			startSecondNight();
+		}
 	}, 4500);
+
 }
 
 // ==========================
@@ -1927,13 +1936,39 @@ function eliminatePlayer(player, source = "ψηφοφορίας") {
 	// ✅ Κανονικός θάνατος
 	player.isAlive = false;
 
-	// 💔 Αν είναι ερωτευμένος και ο/η άλλος/η ζει, πεθαίνει κι αυτός/ή
+	// 💔 Lovers: αν ζει το ταίρι, πεθαίνει κι αυτό
 	if (player.role === "Lovers" && player.linkedPartner && player.linkedPartner.isAlive) {
 		player.linkedPartner.isAlive = false;
 	}
 
+	// 🌟 Mother Teresa: από εδώ και πέρα ΔΕΝ ξαναπέφτει νύχτα
+	if (player.role === "MotherTeresa" && !noMoreNights) {
+		noMoreNights = true;
+
+		// ήχος αποκάλυψης
+		const mtAudio = new Audio(`audio/${selectedTrack}/reveal/motherteresa_reveal.wav`);
+		mtAudio.play().catch(() => {});
+
+		// μήνυμα στην ενεργή οθόνη (ημέρα ή νύχτα)
+		const msg = `
+			<div class="system-msg" style="margin-top:10px;">
+				<strong>Επιλέχθηκε να φύγει η μητερα Τερεζα.</strong><br>
+				Απο εδω και πέρα η νύχτα δεν θα ξαναπέσει και το παιχνιδι θα συνεχίσει με διαδοχικές ψηφοφορίες.
+			</div>
+		`;
+		const dayVisible = document.getElementById("dayPhase")?.style.display !== "none";
+		if (dayVisible) {
+			const votingDiv = document.getElementById("votingArea");
+			if (votingDiv) votingDiv.innerHTML += msg;
+		} else {
+			const nightTextDiv = document.getElementById("nightText");
+			if (nightTextDiv) nightTextDiv.innerHTML += msg;
+		}
+	}
+
 	return true;
 }
+
 
 
 
