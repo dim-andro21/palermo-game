@@ -796,7 +796,7 @@ input[type="checkbox"]:checked::after {
 	position: fixed;
 	left: 50%;
 	transform: translateX(-50%);
-	bottom: max(16px, env(safe-area-inset-bottom));
+	bottom: max(30px, env(safe-area-inset-bottom));
 	display: flex;
 	flex-direction: row;    /* ➡️ τώρα πάνε οριζόντια */
 	gap: 12px;              /* κενό ανάμεσά τους */
