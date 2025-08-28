@@ -139,6 +139,14 @@ function closeInGameMenu() {
 	}
 }
 
+function clearOnFirstInteraction(input) {
+	if (!input) return;
+	const clear = () => { input.value = ""; };
+	// Μια φορά μόνο, είτε σε focus είτε σε πρώτο tap/click (mobile/desktop)
+	input.addEventListener("focus", clear, { once: true });
+	input.addEventListener("pointerdown", clear, { once: true });
+}
+
 
 
 
@@ -413,7 +421,8 @@ function startRoleSelection() {
 	citizenCount = 2;
 	const citizenInput = document.getElementById("citizenInput");
 	citizenInput.addEventListener("input", refreshCitizenMax);
-	refreshCitizenMax(); // ορίζει και το σωστό max στην εκκίνηση
+	clearOnFirstInteraction(citizenInput);    // ✅ αδειάζει με το πάτημα, μία φορά
+	refreshCitizenMax();
 
 	// container της λίστας
 	const container = document.getElementById("extraRolesContainer");
@@ -1520,6 +1529,7 @@ function restartSamePlayers() {
 	// citizen: αρχικοποίηση + listener
 	const citizenInput = document.getElementById("citizenInput");
 	citizenInput.addEventListener("input", refreshCitizenMax);
+	clearOnFirstInteraction(citizenInput);    // ✅
 	refreshCitizenMax();
 
 	// container της λίστας
@@ -1942,6 +1952,9 @@ document.addEventListener("DOMContentLoaded", () => {
 			vibratePattern(); // short vibration
 		}
 	});
+
+	const numPlayersInput = document.getElementById("numPlayers");
+	clearOnFirstInteraction(numPlayersInput);   // ✅ αδειάζει με το πάτημα, μία φορά
 });
 
 
