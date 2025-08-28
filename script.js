@@ -13,6 +13,8 @@ let narrationPaused = false;
 let narrationTimeout = null;
 let narrationAudio = null;
 let citizenCount = 0; // πόσοι Πολίτες επιλέχθηκαν από τον χρήστη
+let nextPlayerBusy = false;
+
 
 
 
@@ -685,6 +687,14 @@ function showRole() {
 }
 
 function nextPlayer() {
+	// 🛡️ αγνόησε έξτρα πατήματα
+	if (nextPlayerBusy) return;
+	nextPlayerBusy = true;
+
+	// απενεργοποίησε αμέσως το κουμπί για οπτικό feedback
+	const nextBtn = document.querySelector("#roleReveal button");
+	if (nextBtn) nextBtn.disabled = true;
+
 	const roleDiv = document.getElementById("roleReveal");
 	roleDiv.classList.add("fade-out");
 
@@ -692,25 +702,35 @@ function nextPlayer() {
 		currentPlayerIndex++;
 
 		if (currentPlayerIndex >= numPlayers) {
+			// Τελευταίος παίκτης → πάμε στα αποτελέσματα
 			document.getElementById("nameInput").style.display = "none";
 			showResults();
-		} else {
-			// Αλλάζουμε μόνο το κείμενο και καθαρίζουμε
-			document.getElementById("playerHeader").textContent = `Παίκτη ${currentPlayerIndex + 1} - Γράψε το όνομα σου:`;
-			const input = document.getElementById("playerName");
-			input.value = "";
-			input.disabled = false;
-
-			const button = document.querySelector("#nameInput button");
-			button.disabled = false;
-			button.textContent = "Δες τον ρόλο σου";
-
-			const roleDiv = document.getElementById("roleReveal");
-			roleDiv.classList.remove("fade-out");
-			roleDiv.innerHTML = "";
+			nextPlayerBusy = false; // ασφαλές reset
+			return;
 		}
+
+		// Επόμενος παίκτης: καθάρισμα / reset UI
+		document.getElementById("playerHeader").textContent =
+			`Παίκτη ${currentPlayerIndex + 1} - Γράψε το όνομα σου:`;
+
+		const input = document.getElementById("playerName");
+		input.value = "";
+		input.disabled = false;
+
+		// ξαναενεργοποίησε το "Δες τον ρόλο σου" (το πρώτο κουμπί στη φόρμα ονομάτων)
+		const showRoleBtn = document.querySelector("#nameInput > button, #nameInput button");
+		if (showRoleBtn) {
+			showRoleBtn.disabled = false;
+			showRoleBtn.textContent = "Δες τον ρόλο σου";
+		}
+
+		roleDiv.classList.remove("fade-out");
+		roleDiv.innerHTML = "";
+
+		nextPlayerBusy = false; // ✅ τώρα επιτρέπεται νέο πάτημα
 	}, 400);
 }
+
 
 function showResults() {
 	const resultDiv = document.getElementById("result");
