@@ -1479,11 +1479,12 @@ function showEndMessage(message, winnerType = null) {
 	`;
 
 	setTimeout(() => {
-		resultDiv.innerHTML += `
-			<br><br>
+	resultDiv.innerHTML += `
+		<div class="end-buttons" id="endButtons">
 			<button onclick="startNewGameSamePlayers()">Νέο παιχνίδι με ίδιους παίκτες</button>
 			<button onclick="startNewGameNewPlayers()">Νέο παιχνίδι με νέους παίκτες</button>
-		`;
+		</div>
+	`;
 	}, 3000);
 }
 
@@ -1882,7 +1883,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "28 Αυγούστου 2025 – 13:04"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "28 Αυγούστου 2025 – 16:08"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
