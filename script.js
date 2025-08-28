@@ -1500,33 +1500,42 @@ function startNewGameNewPlayers() {
 }
 
 function restartSamePlayers() {
-	// μπαίνουμε εδώ ΑΦΟΥ έχει κληθεί resetGameState(true)
+	// Μπαίνουμε εδώ ΑΦΟΥ έχει κληθεί resetGameState(true)
 	requestWakeLock();
 
-	// κρατάμε τα ίδια ονόματα
+	// Ίδιοι παίκτες (κρατάμε ονόματα)
 	numPlayers = players.length;
 
-	// reset επιλογών ρόλων (όπως στο startRoleSelection)
-	chosenRoles = [];
-	citizenCount = 2;
+	// --- Ανακατασκευή προηγούμενης σύνθεσης από το chosenRoles της προηγούμενης παρτίδας ---
+	// Προηγούμενοι Πολίτες:
+	const previousCitizens = (Array.isArray(chosenRoles) ? chosenRoles : []).filter(r => r === "Citizen").length;
 
-	// κρύψε τυχόν άλλα panels
+	// Προηγούμενα extras (ΧΩΡΙΣ Citizens και ΧΩΡΙΣ τους required ρόλους)
+	const previousExtras = (Array.isArray(chosenRoles) ? chosenRoles : []).filter(r => {
+		return r !== "Citizen" && !(requiredRoles || []).includes(r);
+	});
+
+	// ΤΩΡΑ ορίζουμε τη νέα "πηγή αλήθειας":
+	// - citizenCount = #Citizens που έπαιξαν πριν
+	// - chosenRoles   = ΜΟΝΟ τα extras (Lovers μένουν 2 φορές, όπως παλιά)
+	citizenCount = previousCitizens;
+	chosenRoles = [...previousExtras];
+
+	// --- UI setup ---
 	const result = document.getElementById("result");
 	if (result) result.style.display = "none";
 	const setup = document.getElementById("setup");
 	if (setup) setup.style.display = "none";
 
-	// από εδώ και κάτω: ΙΔΙΟ layout με το νέο role selection,
-	// απλώς το Continue καλεί applyRolesToSamePlayers()
 	const roleDiv = document.getElementById("roleSelection");
 	roleDiv.innerHTML = `
 		<h3 id="extraRolesHeader"></h3>
 
 		<div id="extraRolesContainer">
-			<!-- Πολίτης: απλό number input -->
+			<!-- Πολίτης: απλό number input (όχι υποχρεωτικοί) -->
 			<div class="role-row">
 				<div class="role-ctrl">
-					<input id="citizenInput" type="number" value="2" min="2" step="1" />
+					<input id="citizenInput" type="number" value="${citizenCount}" min="0" step="1" />
 				</div>
 				<div class="role-name">Πολίτης</div>
 			</div>
@@ -1536,35 +1545,36 @@ function restartSamePlayers() {
 	`;
 	roleDiv.style.display = "block";
 
-	// citizen: αρχικοποίηση + listener
-	const citizenInput = document.getElementById("citizenInput");
-	citizenInput.addEventListener("input", refreshCitizenMax);
-	clearOnFirstInteraction(citizenInput);    // ✅
-	refreshCitizenMax();
-
-	// container της λίστας
 	const container = document.getElementById("extraRolesContainer");
 
-	// ➤ ΥΠΟΧΡΕΩΤΙΚΟΙ ρόλοι (πάνω από τον «Πολίτη»)
-	requiredRoles.forEach(role => {
-		const row = document.createElement("div");
-		row.className = "role-row";
-		row.innerHTML = `
-			<div class="role-ctrl"><span class="bullet"></span></div>
-			<div class="role-name">${translateRole(role)}</div>
-		`;
-		container.insertBefore(row, container.firstChild);
-	});
+	// ΥΠΟΧΡΕΩΤΙΚΟΙ (μόνο προβολή)
+	if (typeof requiredRoles !== "undefined" && Array.isArray(requiredRoles)) {
+		const uniqueRequired = [...new Set(requiredRoles)];
+		uniqueRequired.reverse().forEach(role => {
+			const row = document.createElement("div");
+			row.className = "role-row";
+			row.innerHTML = `
+				<div class="role-ctrl"><span class="bullet"></span></div>
+				<div class="role-name">${translateRole(role)}</div>
+			`;
+			container.insertBefore(row, container.firstChild);
+		});
+	}
 
-	// ➤ ΠΡΟΑΙΡΕΤΙΚΟΙ ρόλοι (κάτω από τον «Πολίτη»)
-	const extras = roleNames.filter(r => r !== "Citizen" && !requiredRoles.includes(r));
+	// ΠΡΟΑΙΡΕΤΙΚΟΙ ρόλοι (checkboxes)
+	const extras = roleNames.filter(r => r !== "Citizen" && !(requiredRoles || []).includes(r));
 	extras.forEach(role => {
 		const id = `role_${role.replace(/\s+/g, "_")}`;
+		const alreadySelected = (role === "Lovers")
+			? (chosenRoles.filter(r => r === "Lovers").length >= 2)
+			: chosenRoles.includes(role);
+
 		const row = document.createElement("div");
 		row.className = "role-row";
 		row.innerHTML = `
 			<div class="role-ctrl">
-				<input type="checkbox" id="${id}" onchange="toggleExtraRole('${role}', this.checked)">
+				<input type="checkbox" id="${id}" ${alreadySelected ? "checked" : ""}
+					onchange="toggleExtraRole('${role}', this.checked)">
 			</div>
 			<label class="role-name" for="${id}">
 				${translateRole(role)}${role === "Lovers" ? " <span class='hint'>(2 άτομα)</span>" : ""}
@@ -1573,8 +1583,17 @@ function restartSamePlayers() {
 		container.appendChild(row);
 	});
 
+	// Πολίτες: listeners + UX
+	const citizenInput = document.getElementById("citizenInput");
+	citizenInput.addEventListener("input", refreshCitizenMax);
+	clearOnFirstInteraction(citizenInput);
+
+	// Ενημέρωσε όρια και header με βάση το νέο state (citizenCount + extras)
+	refreshCitizenMax();
 	updateRemainingRolesText();
 }
+
+
 
 
 function restartNewNames() {
@@ -1589,33 +1608,40 @@ function restartNewNames() {
 
 
 function applyRolesToSamePlayers() {
-	if (chosenRoles.length !== numPlayers) {
-		alert(`You need exactly ${numPlayers} roles!`);
+	// Φτιάξε την πλήρη λίστα ρόλων (required + citizens + extras)
+	const finalRoles = buildFinalRoleList();
+
+	if (finalRoles.length !== numPlayers) {
+		const remaining = numPlayers - finalRoles.length;
+		alert(
+			remaining > 0
+				? `Χρειάζεσαι ακόμα ${remaining} ρόλο/ρόλους!`
+				: `Έχεις επιλέξει παραπάνω ρόλους από όσους χρειάζονται.`
+		);
 		return;
 	}
 
-	// Ανακάτεμα ρόλων
-	chosenRoles = shuffleArray(chosenRoles);
-
-	// Εφαρμογή νέων ρόλων στους ίδιους παίκτες (ίδια ονόματα)
+	// Ανακάτεμα και ανάθεση στους ΙΔΙΟΥΣ παίκτες (ίδια ονόματα)
+	chosenRoles = shuffleArray(finalRoles);
 	players.forEach((p, i) => {
-		p.assignRole(chosenRoles[i]);	// reset isAlive, votes, lives γίνεται μέσα στο assignRole
+		p.assignRole(chosenRoles[i]);
 	});
 
-	// Σύνδεση Lovers ξανά αν υπάρχουν
+	// Επανασύνδεση Lovers
 	const lovers = players.filter(p => p.role === "Lovers");
 	if (lovers.length === 2) {
 		lovers[0].linkedPartner = lovers[1];
 		lovers[1].linkedPartner = lovers[0];
 	}
 
-	// 👉 Αντί να πάμε κατευθείαν στο αποτέλεσμα,
-	// κλείνουμε την επιλογή ρόλων και ξεκινάμε το flow αποκάλυψης ρόλων
-	document.getElementById("roleSelection").style.display = "none";
-
-	currentPlayerIndex = 0;				// από τον πρώτο παίκτη
-	showNextPlayerRole();				// εμφανίζει "Δες τον νέο ρόλο σου" για κάθε παίκτη με τη σειρά
+	// Συνέχεια στο flow αποκάλυψης ρόλων για τους ίδιους παίκτες
+	const roleDiv = document.getElementById("roleSelection");
+	roleDiv.style.display = "none";
+	const nameDiv = document.getElementById("nameInput");
+	nameDiv.style.display = "block";
+	showNextPlayerRole(); // όπως πριν, αποκαλύπτει ρόλο σειριακά
 }
+
 
 
 
