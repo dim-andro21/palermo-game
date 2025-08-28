@@ -1337,9 +1337,6 @@ function startSecondNight() {
 }
 
 
-
-
-
 function showKillChoiceMenu() {
 	const container = document.getElementById("killSelectionArea");
 	container.innerHTML = "";
@@ -1356,32 +1353,71 @@ function showKillChoiceMenu() {
 		btn.innerText = p.name;
 
 		btn.onclick = () => {
-			// Κλείσε το overlay «Δολοφονία» και γύρνα στην οθόνη νύχτας (μόνο τώρα)
-			document.getElementById("nightKillChoice").style.display = "none";
-			if (nightPhase) nightPhase.style.display = "block";
+			// 🔁 κάθε νέα επιλογή καθαρίζει τυχόν παλιό timer
+			clearInterval(countdownTimeout);
 
-			// Εξόντωση θύματος
-			const survived = !eliminatePlayer(p, "δολοφονίας");
+			// 3″ αντίστροφη μέτρηση με Ακύρωση
+			let seconds = 3;
+			const countdownDiv = document.getElementById("voteCountdown") || (() => {
+				const d = document.createElement("div");
+				d.id = "voteCountdown";
+				container.appendChild(d);
+				return d;
+			})();
 
-			// Μήνυμα μετά τη δολοφονία
-			const nightTextDiv = document.getElementById("nightText");
-			nightTextDiv.innerHTML = "<br><em>Οι δολοφόνοι αποφάσισαν ποιον θέλουν να σκοτώσουν.</em><br>";
+			const render = () => {
+				countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds} `;
+				countdownDiv.appendChild(cancelBtn);
+			};
 
-			// 👉 Αν είναι Bulletproof και γλίτωσε, καθυστέρησε την αφήγηση
-			const delay = (p.role === "Bulletproof" && survived) ? 2500 : 0;
+			const cancelBtn = document.createElement("button");
+			cancelBtn.textContent = "Ακύρωση";
+			cancelBtn.className = "cancel-vote-button";
+			cancelBtn.onclick = () => {
+				clearInterval(countdownTimeout);
+				countdownDiv.innerHTML = "";
+			};
 
-			setTimeout(() => {
-				// 🔊 Παίξε ΜΟΝΟ το 3ο κομμάτι της 2ης νύχτας
-				playNarrationClip("second-night/night2_after_kill.wav", () => {
-					// Όταν τελειώσει το audio → μετάβαση στη μέρα
-					nightTextDiv.innerHTML +=
-						"Μια νέα μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...";
+			render();
+
+			countdownTimeout = setInterval(() => {
+				seconds--;
+				if (seconds === 0) {
+					clearInterval(countdownTimeout);
+
+					// Κλείσε το overlay «Δολοφονία» και γύρνα στην οθόνη νύχτας
+					document.getElementById("nightKillChoice").style.display = "none";
+					if (nightPhase) nightPhase.style.display = "block";
+
+					// Εξόντωση θύματος
+					const survived = !eliminatePlayer(p, "δολοφονίας");
+
+					// Μήνυμα μετά τη δολοφονία
+					const nightTextDiv = document.getElementById("nightText");
+					nightTextDiv.innerHTML = "<br><em>Οι δολοφόνοι αποφάσισαν ποιον θέλουν να σκοτώσουν.</em><br>";
+
+					// 👉 Αν είναι Bulletproof και γλίτωσε, καθυστέρησε την αφήγηση
+					const delay = (p.role === "Bulletproof" && survived) ? 2500 : 0;
+
 					setTimeout(() => {
-						if (checkForGameEnd()) return;
-						startDay();
-					}, 2000);
-				});
-			}, delay);
+						// 🔊 Παίξε ΜΟΝΟ το 3ο κομμάτι της 2ης νύχτας
+						playNarrationClip("second-night/night2_after_kill.wav", () => {
+							// Όταν τελειώσει το audio → μετάβαση στη μέρα
+							nightTextDiv.innerHTML +=
+								"Μια νέα μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...";
+							setTimeout(() => {
+								if (checkForGameEnd()) return;
+								startDay();
+							}, 2000);
+						});
+					}, delay);
+
+					// καθάρισε UI countdown
+					countdownDiv.innerHTML = "";
+				} else {
+					render();
+				}
+			}, 1000);
 		};
 
 		container.appendChild(btn);
@@ -1390,6 +1426,8 @@ function showKillChoiceMenu() {
 	// ✅ Εμφάνισε το overlay «Δολοφονία» μόνο του (η αφήγηση είναι κρυμμένη)
 	document.getElementById("nightKillChoice").style.display = "block";
 }
+
+
 
 function isKiller(p) {
 	return p.role === "Hidden Killer" || p.role === "Known Killer";
