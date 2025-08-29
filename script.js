@@ -17,8 +17,6 @@ let nextPlayerBusy = false;
 let noMoreNights = false; // όταν πεθάνει η Μητέρα Τερέζα, δεν ξαναπέφτει νύχτα
 let mayorRevealed = false;  // 👉 Δήμαρχος: αποκάλυψη για διπλή ψήφο
 let kamikazeRevealed = false;
-let lastNarrationTime = 0;
-let narrationInterruptedByOS = false; // π.χ. κλείδωμα οθόνης, app switch, ακουστικά
 
 
 
@@ -53,66 +51,6 @@ function playNextMusicTrack() {
 	bgMusic.play().catch((err) => {
 		console.warn("🔇 Δεν επιτράπηκε autoplay:", err);
 	});
-}
-
-
-function showResumeOverlay(){
-	const ov = document.getElementById("resumeOverlay");
-	if (ov) ov.classList.add("show");
-}
-function hideResumeOverlay(){
-	const ov = document.getElementById("resumeOverlay");
-	if (ov) ov.classList.remove("show");
-}
-
-// Προσπάθησε αυτόματο resume αν επιτρέπεται, αλλιώς δείξε overlay
-function tryAutoResumeNarration(){
-	if (!narrationAudio) return;
-	if (!narrationInterruptedByOS) return;
-
-	// γύρνα λίγο πίσω για ασφαλές resume (π.χ. 0.15s)
-	const t = Math.max(0, lastNarrationTime - 0.15);
-	narrationAudio.currentTime = t;
-
-	narrationAudio.play()
-		.then(() => {
-			narrationInterruptedByOS = false;
-			hideResumeOverlay();
-		})
-		.catch(() => {
-			// απαιτεί gesture → δείξε overlay
-			showResumeOverlay();
-		});
-}
-
-function initRobustAudioHandlers(){
-	// Κουμπί resume στο overlay
-	const btn = document.getElementById("resumeBtn");
-	if (btn) {
-		btn.onclick = () => {
-			tryAutoResumeNarration();
-		};
-	}
-
-	// Όταν η σελίδα ξαναγίνει ορατή ή το window πάρει focus, προσπάθησε auto-resume
-	document.addEventListener("visibilitychange", () => {
-		if (document.visibilityState === "visible") {
-			tryAutoResumeNarration();
-		}
-	});
-	window.addEventListener("focus", tryAutoResumeNarration);
-
-	// Αλλαγή συσκευής ήχου (plug/unplug ακουστικά) → σημείωσε διακοπή
-	if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
-		navigator.mediaDevices.addEventListener("devicechange", () => {
-			if (narrationAudio) {
-				// Σημείωσε “εξωτερική” διακοπή ώστε να κάνουμε resume
-				lastNarrationTime = narrationAudio.currentTime || 0;
-				narrationInterruptedByOS = true;
-				showResumeOverlay();
-			}
-		});
-	}
 }
 
 
@@ -174,14 +112,6 @@ function playSFX(filename) {
 document.addEventListener("DOMContentLoaded", () => {
 	updateFooterVisibility();
 	playNextMusicTrack(); // 🎵 Ξεκινά η μουσική μόλις φορτώσει η σελίδα
-	initRobustAudioHandlers(); // ⬅️ νέο
-
-	// 👉 Επαναφορά δόνησης σε όλα τα κουμπιά
-	document.body.addEventListener("click", (e) => {
-		if (e.target.tagName === "BUTTON" || e.target.type === "checkbox") {
-			vibratePattern(); // short vibration
-		}
-	});
 });
 
 function openInGameMenu() {
@@ -386,11 +316,6 @@ function initVoteHeaderEvents() {
 			const kamikaze = players.find(p => p.role === "Kamikaze" && p.isAlive);
 			if (!kamikaze) return;
 
-			// ⬇️ ΝΕΟ: αν έτρεχε το 3" timer της ψηφοφορίας, κάνε "Ακύρωση"
-			if (countdownTimeout) {
-				cancelCountdown();
-			}
-
 			kamikazeRevealed = true;
 			playNarrationClip("reveal/kamikaze_reveal.wav");
 			disableAndFade(kamikazeBtn);
@@ -565,17 +490,6 @@ function playNarrationClip(relPath, onEnd) {
 			if (onEnd) onEnd();
 		}, 800);
 	};
-
-	narrationAudio.addEventListener("pause", () => {
-		// αν έκανε pause ΧΩΡΙΣ να είναι paused λόγω in-game menu (narrationPaused)
-		// και χωρίς να έχει τελειώσει φυσιολογικά
-		if (!narrationAudio.ended && !narrationPaused) {
-			lastNarrationTime = narrationAudio.currentTime || 0;
-			narrationInterruptedByOS = true;
-			showResumeOverlay();
-		}
-	});
-
 	const tryPlay = () => {
 		if (!narrationPaused) {
 			narrationAudio.load();
@@ -1163,13 +1077,6 @@ function startIntroduction() {
 			return;
 		}
 
-		// 👇 νέο: παύση inline
-		const cur = audioLines[index];
-		if (typeof cur === "object" && cur && typeof cur.pause === "number") {
-			setTimeout(() => { index++; nextLine(); }, cur.pause);
-			return;
-		}
-
 		if (index < scriptLines.length) {
 			nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
 			nightTextDiv.style.opacity = 1;
@@ -1184,15 +1091,6 @@ function startIntroduction() {
 				nextLine();
 			}, 800);
 		};
-
-		narrationAudio.addEventListener("pause", () => {
-			if (!narrationAudio.ended && !narrationPaused) {
-				lastNarrationTime = narrationAudio.currentTime || 0;
-				narrationInterruptedByOS = true;
-				showResumeOverlay();
-			}
-		});
-
 
 		// ✅ χειρισμός pause/resume όπως στη νύχτα
 		const playIfNotPaused = () => {
@@ -1249,10 +1147,8 @@ function startNight() {
 	let audioLines = [
 		"night/night_start.wav",
 		"night/night_killers_open.wav",
-		{ pause: 5000 },
 		"night/night_police_phase.wav",
 		"night/night_police_sees.wav",
-		{ pause: 5000 },
 		"night/night_police_close.wav"
 	];
 
@@ -1266,7 +1162,9 @@ function startNight() {
 		);
 		audioLines.push(
 			"night/night_snitch_phase.wav",
-			{ pause: 5000 },
+			// Αν έχεις ξεχωριστό knows clip, βάλ’ το εδώ:
+			// "night/night_snitch_knows.wav",
+			"night/night_snitch_end.wav",
 			"night/night_snitch_end.wav"
 		);
 	}
@@ -1278,7 +1176,7 @@ function startNight() {
 			"Τέλος ανοίγουν τα μάτια τους και οι ερωτευμένοι για να γνωριστούν.",
 			"Αφού ερωτεύτηκαν κεραυνοβόλα μπορούν να κλείσουν τα μάτια τους."
 		);
-		audioLines.push("night/lovers_open.wav", { pause: 5000 }, "night/lovers_close.wav");
+		audioLines.push("night/lovers_open.wav", "night/lovers_close.wav");
 	}
 
 	// --- Day start ---
@@ -1293,13 +1191,6 @@ function startNight() {
 	function nextLine() {
 		if (index >= audioLines.length) {   // ✅ σταματάμε με βάση τα audio
 			setTimeout(() => startDay(), 1000);
-			return;
-		}
-
-		// 👇 νέο: αν το τρέχον στοιχείο είναι { pause: ms }, κάνε καθυστέρηση
-		const cur = audioLines[index];
-		if (typeof cur === "object" && cur && typeof cur.pause === "number") {
-			setTimeout(() => { index++; nextLine(); }, cur.pause);
 			return;
 		}
 
@@ -1318,16 +1209,6 @@ function startNight() {
 				nextLine();
 			}, 800);
 		};
-
-		narrationAudio.addEventListener("pause", () => {
-			if (!narrationAudio.ended && !narrationPaused) {
-				lastNarrationTime = narrationAudio.currentTime || 0;
-				narrationInterruptedByOS = true;
-				showResumeOverlay();
-			}
-		});
-
-
 		narrationAudio.load();
 		narrationAudio.play().catch(() => { index++; nextLine(); });
 	}
@@ -2405,7 +2286,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "29 Αυγούστου 2025 – 23:41 Version 2.0"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "29 Αυγούστου 2025 – 22:43 Version 2.0"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
