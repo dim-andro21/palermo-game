@@ -14,7 +14,6 @@ let narrationTimeout = null;
 let narrationAudio = null;
 let citizenCount = 0; // πόσοι Πολίτες επιλέχθηκαν από τον χρήστη
 let nextPlayerBusy = false;
-let noMoreNights = false; // όταν πεθάνει η Μητέρα Τερέζα, δεν ξαναπέφτει νύχτα
 
 
 
@@ -240,8 +239,6 @@ function hideAllPhases() {
 function resetGameState(keepNames = false) {
 	// κλείσε το menu (αν είναι ανοιχτό)
 	closeInGameMenu();
-
-	noMoreNights = false; // reset ειδικού κανόνα μητέρας Τερέζας
 
 	// σταμάτα τα πάντα
 	stopAllTimersAndAudio();
@@ -1011,31 +1008,12 @@ function startDay() {
 	document.getElementById("dayPhase").style.display = "block";
 	players.forEach(p => p.votes = 0);
 
-	const votingDiv = document.getElementById("votingArea");
+	updateVotingScroll();	// ✅ ενεργοποιεί/απενεργοποιεί το scroll
 
-	if (noMoreNights) {
-		// 🕯️ Ειδικό intro μετά τον θάνατο της Μητέρας Τερέζας
-		if (votingDiv) {
-			votingDiv.innerHTML = `<p><strong>Μια νέα μέρα ξημερώνει...</strong></p>`;
-		}
-		try {
-			new Audio(`audio/${selectedTrack}/second-night/night2_after_kill.wav`).play();
-		} catch (_) {}
-
-		// ⏳ Άφησε το μήνυμα να μείνει λίγο στην οθόνη πριν φορτώσει η ψηφοφορία
-		//    (ρύθμισε την καθυστέρηση αλλάζοντας το 3000 σε ό,τι ms θέλεις)
-		setTimeout(() => {
-			updateVotingScroll();	// ✅ ενεργοποιεί/απενεργοποιεί το scroll
-			renderVotingInterface();
-			initVoteHeaderEvents();
-			startDiscussionTimer();
-		}, 3000);
-	} else {
-		updateVotingScroll();	// ✅ ενεργοποιεί/απενεργοποιεί το scroll
-		renderVotingInterface();
-		initVoteHeaderEvents();
-		startDiscussionTimer();
-	}
+	updateVotingScroll();
+	renderVotingInterface();
+	initVoteHeaderEvents();
+	startDiscussionTimer();
 }
 
 
@@ -1206,121 +1184,69 @@ function cancelCountdown() {
 }
 
 function finishVoting() {
-	// UI refs
 	const votingDiv = document.getElementById("votingArea");
-	if (!votingDiv) return;
 
-	// Υπολογισμός ψήφων μόνο για όσους ζουν
-	const alive = players.filter(p => p.isAlive);
 	let maxVotes = 0;
-	alive.forEach(p => { maxVotes = Math.max(maxVotes, p.votes || 0); });
+	let candidates = [];
 
-	// Καμία ψήφος
-	if (maxVotes === 0) {
-		votingDiv.innerHTML = `<p>Δεν υπήρξαν ψήφοι. Κανείς δεν αποχωρεί.</p>`;
-		// Επόμενη φάση (με βάση τον κανόνα της Μητέρας Τερέζας)
-		setTimeout(() => {
-			if (checkForGameEnd()) return;
-			if (noMoreNights) {
-				startDay();
-			} else {
-				startSecondNight();
-			}
-		}, 4500);
-		return;
-	}
-
-	// Ποιοι ισοψήφησαν στο μέγιστο
-	const tied = alive.filter(p => (p.votes || 0) === maxVotes);
-
-	// Επιλογή παίκτη για αποχώρηση (αν ισοψηφία -> τυχαίος)
-	let eliminated = null;
-	let tieHappened = false;
-
-	if (tied.length === 1) {
-		eliminated = tied[0];
-	} else {
-		tieHappened = true;
-		eliminated = tied[Math.floor(Math.random() * tied.length)];
-	}
-
-	// Μηδενισμός ψήφων για τον επόμενο γύρο
-	players.forEach(p => { p.votes = 0; });
-
-	// Εξάλειψη παίκτη (επιστρέφει true αν πέθανε όντως)
-	const didDie = eliminatePlayer(eliminated, "ψηφοφορίας");
-
-	// Μηνύματα στην οθόνη
-	if (didDie) {
-		// 👉 ΠΡΩΤΑ: ειδικό μήνυμα για Μητέρα Τερέζα
-		if (eliminated.role === "MotherTeresa") {
-			if (tieHappened) {
-				votingDiv.innerHTML = `
-					<p><strong>Υπήρξε ισοψηφία!</strong> Επιλέχθηκε να φύγει η μητερα Τερεζα.<br>
-					Απο εδω και πέρα η νύχτα δεν θα ξαναπέσει και το παιχνιδι θα συνεχίσει με διαδοχικές ψηφοφορίες.</p>
-				`;
-			} else {
-				votingDiv.innerHTML = `
-					<p><strong>Επιλέχθηκε να φύγει η μητερα Τερεζα.</strong><br>
-					Απο εδω και πέρα η νύχτα δεν θα ξαναπέσει και το παιχνιδι θα συνεχίσει με διαδοχικές ψηφοφορίες.</p>
-				`;
-			}
-		} else if (
-			eliminated.role === "Lovers" &&
-			eliminated.linkedPartner &&
-			eliminated.linkedPartner.isAlive === false
-		) {
-			// Αν πέθανε κι ο/η σύντροφος λόγω Lovers, ενημέρωσε ανάλογα
-			if (tieHappened) {
-				votingDiv.innerHTML = `
-					<p>Υπήρξε ισοψηφία! Ο παίκτης <strong>${eliminated.name}</strong> ήταν ερωτευμένος/η με τον/την <strong>${eliminated.linkedPartner.name}</strong>, επομένως αποχωρεί και το ταίρι του.</p>
-				`;
-			} else {
-				votingDiv.innerHTML = `
-					<p>Ο παίκτης <strong>${eliminated.name}</strong> ήταν ερωτευμένος/η με τον/την <strong>${eliminated.linkedPartner.name}</strong>, επομένως αποχωρεί και το ταίρι του.</p>
-				`;
-			}
-		} else {
-			// Γενικά μηνύματα αποχώρησης
-			if (tieHappened) {
-				votingDiv.innerHTML = `
-					<p>Υπήρξε ισοψηφία! Ο παίκτης <strong>${eliminated.name}</strong> επιλέχθηκε τυχαία και αποχωρεί από το παιχνίδι.</p>
-				`;
-			} else {
-				votingDiv.innerHTML = `
-					<p>Ο παίκτης <strong>${eliminated.name}</strong> αποχωρεί από το παιχνίδι!</p>
-				`;
+	players.forEach(p => {
+		if (p.isAlive) {
+			if (p.votes > maxVotes) {
+				maxVotes = p.votes;
+				candidates = [p];
+			} else if (p.votes === maxVotes) {
+				candidates.push(p);
 			}
 		}
-	} else {
-		// Δεν πέθανε τελικά (π.χ. Αλεξίσφαιρος)
-		if (tieHappened) {
-			votingDiv.innerHTML = `
-				<p>Υπήρξε ισοψηφία! Ο παίκτης <strong>${eliminated.name}</strong> επιλέχθηκε τυχαία, αλλά δεν αποχώρησε τελικά.</p>
-			`;
+	});
+
+	let eliminated;
+	let didDie;
+
+	if (candidates.length === 1) {
+		eliminated = candidates[0];
+		didDie = eliminatePlayer(eliminated);
+		eliminatedPlayer = didDie ? eliminated : null;
+
+		if (didDie) {
+			if (
+				eliminated.role === "Lovers" &&
+				eliminated.linkedPartner &&
+				eliminated.linkedPartner.isAlive === false
+			) {
+				votingDiv.innerHTML = `<p>Ο παίκτης <strong>${eliminated.name}</strong> ήταν ερωτευμένος με τον/την <strong>${eliminated.linkedPartner.name}</strong>, επομένως αποχωρεί και το ταίρι του.</p>`;
+			} else {
+				votingDiv.innerHTML = `<p>Ο παίκτης <strong>${eliminated.name}</strong> αποχωρεί από το παιχνίδι!</p>`;
+			}
 		} else {
-			votingDiv.innerHTML = `
-				<p>Ο παίκτης <strong>${eliminated.name}</strong> ψηφίστηκε, αλλά δεν αποχώρησε τελικά.</p>
-			`;
+			votingDiv.innerHTML = `<p>Ο παίκτης <strong>${eliminated.name}</strong> ήταν Αλεξίσφαιρος και επέζησε από την απόπειρα ψηφοφορίας! Του απομένει άλλη μία ζωή.</p>`;
+		}
+	} else {
+		const randomIndex = Math.floor(Math.random() * candidates.length);
+		eliminated = candidates[randomIndex];
+		didDie = eliminatePlayer(eliminated);
+		eliminatedPlayer = didDie ? eliminated : null;
+
+		if (didDie) {
+			if (
+				eliminated.role === "Lovers" &&
+				eliminated.linkedPartner &&
+				eliminated.linkedPartner.isAlive === false
+			) {
+				votingDiv.innerHTML = `<p>Υπήρξε ισοψηφία! Ο παίκτης <strong>${eliminated.name}</strong> επιλέχθηκε τυχαία, ήταν ερωτευμένος με τον/την <strong>${eliminated.linkedPartner.name}</strong>, επομένως αποχωρεί και το ταίρι του.</p>`;
+			} else {
+				votingDiv.innerHTML = `<p>Υπήρξε ισοψηφία! Ο παίκτης <strong>${eliminated.name}</strong> επιλέχθηκε τυχαία και αποχωρεί από το παιχνίδι.</p>`;
+			}
+		} else {
+			votingDiv.innerHTML = `<p>Υπήρξε ισοψηφία! Ο παίκτης <strong>${eliminated.name}</strong> επιλέχθηκε τυχαία, αλλά ήταν Αλεξίσφαιρος και επέζησε από την απόπειρα ψηφοφορίας! Του απομένει άλλη μία ζωή.</p>`;
 		}
 	}
-
-	// Μετάβαση στην επόμενη φάση
-	const delay = (eliminated && eliminated.role === "MotherTeresa") ? 9000 : 4500; 
-	// ↑ π.χ. 8 δευτερόλεπτα αν είναι Μητέρα Τερέζα, αλλιώς default 4.5s
 
 	setTimeout(() => {
 		if (checkForGameEnd()) return;
-		if (noMoreNights) {
-			// Μετά τον θάνατο της Μητέρας Τερέζας, παραμένουμε σε ημέρες
-			startDay();
-		} else {
-			startSecondNight();
-		}
-	}, delay);
-
+		startSecondNight();
+	}, 4500);
 }
-
 
 // ==========================
 // ΔΕΥΤΕΡΗ ΝΥΧΤΑ (fixed + extended)
@@ -1411,6 +1337,9 @@ function startSecondNight() {
 }
 
 
+
+
+
 function showKillChoiceMenu() {
 	const container = document.getElementById("killSelectionArea");
 	container.innerHTML = "";
@@ -1427,82 +1356,32 @@ function showKillChoiceMenu() {
 		btn.innerText = p.name;
 
 		btn.onclick = () => {
-			// 🔁 κάθε νέα επιλογή καθαρίζει τυχόν παλιό timer
-			clearInterval(countdownTimeout);
+			// Κλείσε το overlay «Δολοφονία» και γύρνα στην οθόνη νύχτας (μόνο τώρα)
+			document.getElementById("nightKillChoice").style.display = "none";
+			if (nightPhase) nightPhase.style.display = "block";
 
-			// 3″ αντίστροφη μέτρηση με Ακύρωση
-			let seconds = 3;
-			const countdownDiv = document.getElementById("voteCountdown") || (() => {
-				const d = document.createElement("div");
-				d.id = "voteCountdown";
-				container.appendChild(d);
-				return d;
-			})();
+			// Εξόντωση θύματος
+			const survived = !eliminatePlayer(p, "δολοφονίας");
 
-			const render = () => {
-				countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds} `;
-				countdownDiv.appendChild(cancelBtn);
-			};
+			// Μήνυμα μετά τη δολοφονία
+			const nightTextDiv = document.getElementById("nightText");
+			nightTextDiv.innerHTML = "<br><em>Οι δολοφόνοι αποφάσισαν ποιον θέλουν να σκοτώσουν.</em><br>";
 
-			const cancelBtn = document.createElement("button");
-			cancelBtn.textContent = "Ακύρωση";
-			cancelBtn.className = "cancel-vote-button";
-			cancelBtn.onclick = () => {
-				clearInterval(countdownTimeout);
-				countdownDiv.innerHTML = "";
-			};
+			// 👉 Αν είναι Bulletproof και γλίτωσε, καθυστέρησε την αφήγηση
+			const delay = (p.role === "Bulletproof" && survived) ? 2500 : 0;
 
-			render();
-
-			countdownTimeout = setInterval(() => {
-				seconds--;
-				if (seconds === 0) {
-					clearInterval(countdownTimeout);
-
-					// Κλείσε το overlay «Δολοφονία» και γύρνα στην οθόνη νύχτας
-					document.getElementById("nightKillChoice").style.display = "none";
-					if (nightPhase) nightPhase.style.display = "block";
-
-					// Εξόντωση θύματος
-					const survived = !eliminatePlayer(p, "δολοφονίας");
-
-					// Μήνυμα μετά τη δολοφονία
-					const nightTextDiv = document.getElementById("nightText");
-					nightTextDiv.innerHTML = "<br><em>Οι δολοφόνοι αποφάσισαν ποιον θέλουν να σκοτώσουν.</em><br>";
-
-					// 👉 Αν είναι Bulletproof και γλίτωσε, καθυστέρησε την αφήγηση
-					const delay = (p.role === "Bulletproof" && survived) ? 2500 : 0;
-
+			setTimeout(() => {
+				// 🔊 Παίξε ΜΟΝΟ το 3ο κομμάτι της 2ης νύχτας
+				playNarrationClip("second-night/night2_after_kill.wav", () => {
+					// Όταν τελειώσει το audio → μετάβαση στη μέρα
+					nightTextDiv.innerHTML +=
+						"Μια νέα μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...";
 					setTimeout(() => {
-						// 👉 Αν το θύμα ήταν η Μητέρα Τερέζα
-						if (p.role === "MotherTeresa") {
-							setTimeout(() => {
-								nightTextDiv.innerHTML +=
-									"Μια νέα μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...";
-								setTimeout(() => {
-									if (checkForGameEnd()) return;
-									startDay();
-								}, 2000);
-							}, 9000); // ⏳ 9s καθυστέρηση
-						} else {
-							// 🟢 Κανονική ροή για όλα τα άλλα θύματα
-							playNarrationClip("second-night/night2_after_kill.wav", () => {
-								nightTextDiv.innerHTML +=
-									"Μια νέα μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...";
-								setTimeout(() => {
-									if (checkForGameEnd()) return;
-									startDay();
-								}, 2000);
-							});
-						}
-					}, delay);
-
-					// καθάρισε UI countdown
-					countdownDiv.innerHTML = "";
-				} else {
-					render();
-				}
-			}, 1000);
+						if (checkForGameEnd()) return;
+						startDay();
+					}, 2000);
+				});
+			}, delay);
 		};
 
 		container.appendChild(btn);
@@ -1511,9 +1390,6 @@ function showKillChoiceMenu() {
 	// ✅ Εμφάνισε το overlay «Δολοφονία» μόνο του (η αφήγηση είναι κρυμμένη)
 	document.getElementById("nightKillChoice").style.display = "block";
 }
-
-
-
 
 function isKiller(p) {
 	return p.role === "Hidden Killer" || p.role === "Known Killer";
@@ -1880,16 +1756,8 @@ function revealRestartedRole() {
 }
 
 function nextRestartedPlayer() {
-	// 🛡️ αποφυγή πολλαπλών πατημάτων
-	if (nextPlayerBusy) return;
-	nextPlayerBusy = true;
-
 	const roleDiv = document.getElementById("roleReveal");
 	roleDiv.classList.add("fade-out");
-
-	// απενεργοποίησε αμέσως το κουμπί
-	const nextBtn = document.querySelector("#roleReveal button");
-	if (nextBtn) nextBtn.disabled = true;
 
 	setTimeout(() => {
 		currentPlayerIndex++;
@@ -1897,12 +1765,10 @@ function nextRestartedPlayer() {
 		if (currentPlayerIndex >= numPlayers) {
 			document.getElementById("nameInput").style.display = "none";
 			showResults();
-			nextPlayerBusy = false; // reset
 		} else {
 			const player = players[currentPlayerIndex];
 
-			document.getElementById("playerHeader").textContent =
-				`Player ${currentPlayerIndex + 1} - Επιβεβαίωσε ή άλλαξε το όνομά σου:`;
+			document.getElementById("playerHeader").textContent = `Player ${currentPlayerIndex + 1} - Επιβεβαίωσε ή άλλαξε το όνομά σου:`;
 
 			const nameInput = document.getElementById("playerName");
 			nameInput.value = player.name;
@@ -1914,12 +1780,9 @@ function nextRestartedPlayer() {
 
 			roleDiv.classList.remove("fade-out");
 			roleDiv.innerHTML = "";
-
-			nextPlayerBusy = false; // ✅ ξαναεπιτρέπεται νέο πάτημα
 		}
 	}, 400);
 }
-
 
 
 function disableAllAddButtons() {
@@ -2013,39 +1876,13 @@ function eliminatePlayer(player, source = "ψηφοφορίας") {
 	// ✅ Κανονικός θάνατος
 	player.isAlive = false;
 
-	// 💔 Lovers: αν ζει το ταίρι, πεθαίνει κι αυτό
+	// 💔 Αν είναι ερωτευμένος και ο/η άλλος/η ζει, πεθαίνει κι αυτός/ή
 	if (player.role === "Lovers" && player.linkedPartner && player.linkedPartner.isAlive) {
 		player.linkedPartner.isAlive = false;
 	}
 
-	// 🌟 Mother Teresa: από εδώ και πέρα ΔΕΝ ξαναπέφτει νύχτα
-	if (player.role === "MotherTeresa" && !noMoreNights) {
-		noMoreNights = true;
-
-		// ήχος αποκάλυψης
-		const mtAudio = new Audio(`audio/${selectedTrack}/reveal/motherteresa_reveal.wav`);
-		mtAudio.play().catch(() => {});
-
-		// μήνυμα στην ενεργή οθόνη (ημέρα ή νύχτα)
-		const msg = `
-			<div class="system-msg" style="margin-top:10px;">
-				<strong>Επιλέχθηκε να φύγει η μητερα Τερεζα.</strong><br>
-				Απο εδω και πέρα η νύχτα δεν θα ξαναπέσει και το παιχνιδι θα συνεχίσει με διαδοχικές ψηφοφορίες.
-			</div>
-		`;
-		const dayVisible = document.getElementById("dayPhase")?.style.display !== "none";
-		if (dayVisible) {
-			const votingDiv = document.getElementById("votingArea");
-			if (votingDiv) votingDiv.innerHTML += msg;
-		} else {
-			const nightTextDiv = document.getElementById("nightText");
-			if (nightTextDiv) nightTextDiv.innerHTML += msg;
-		}
-	}
-
 	return true;
 }
-
 
 
 
@@ -2066,7 +1903,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "29 Αυγούστου 2025 – 23:46"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "29 Αυγούστου 2025 – 23:48"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
