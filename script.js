@@ -15,7 +15,8 @@ let narrationAudio = null;
 let citizenCount = 0; // πόσοι Πολίτες επιλέχθηκαν από τον χρήστη
 let nextPlayerBusy = false;
 let noMoreNights = false; // όταν πεθάνει η Μητέρα Τερέζα, δεν ξαναπέφτει νύχτα
-
+let mayorRevealed = false;  // 👉 Δήμαρχος: αποκάλυψη για διπλή ψήφο
+let kamikazeRevealed = false;
 
 
 
@@ -142,6 +143,13 @@ function closeInGameMenu() {
 	}
 }
 
+function disableAndFade(el) {
+	if (!el) return;
+	el.disabled = true;
+	el.classList.add("btn-faded-disabled"); // CSS κάνει το fade & μπλοκάρει pointer-events
+}
+
+
 function clearOnFirstInteraction(input) {
 	if (!input) return;
 	const clear = () => { input.value = ""; };
@@ -150,7 +158,25 @@ function clearOnFirstInteraction(input) {
 	input.addEventListener("pointerdown", clear, { once: true });
 }
 
+function getAliveCount() {
+	return players.filter(p => p.isAlive).length;
+}
 
+function getMayor() {
+	return Array.isArray(players) ? players.find(p => p.role === "Mayor") : null;
+}
+
+function isMayorAlive() {
+	const m = getMayor();
+	return !!(m && m.isAlive);
+}
+
+// Πόσες ψήφοι απαιτούνται αυτόν τον γύρο
+function votesRequiredThisRound() {
+	let req = getAliveCount();
+	if (mayorRevealed && isMayorAlive()) req += 1;
+	return req;
+}
 
 
 function initVoteHeaderEvents() {
@@ -165,8 +191,43 @@ function initVoteHeaderEvents() {
 	if (backdrop) backdrop.onclick = closeInGameMenu;
 
 	// placeholders
-	if (mayorBtn) mayorBtn.onclick = () => { /* TODO */ };
-	if (kamikazeBtn) kamikazeBtn.onclick = () => { /* TODO */ };
+	if (mayorBtn) {
+		mayorBtn.onclick = () => {
+			// Παίζει ο δήμαρχος & ζει;
+			const mayor = getMayor();
+			if (!mayor || !mayor.isAlive || mayorRevealed) return;
+
+			// Αποκάλυψη
+			mayorRevealed = true;
+
+			// Voice line αποκάλυψης (π.χ. audio/track1/reveal/mayor_reveal.wav)
+			// Αν θες άλλο path/όνομα, άλλαξέ το εδώ.
+			playNarrationClip("reveal/mayor_reveal.wav");
+			disableAndFade(mayorBtn); // ⬅️ κλειδώνει & κάνει fade
+
+			// Αν είμαστε ήδη σε γύρο ψηφοφορίας και είχαμε «κλειδώσει» στο όριο,
+			// τώρα απαιτούνται +1 ψήφοι — φρόντισε να (ξανά)ενεργοποιηθούν τα + κουμπιά
+			const need = votesRequiredThisRound();
+			if (totalVotes < need) {
+				document.querySelectorAll("button").forEach(btn => {
+					if (btn.textContent === "+ Ψήφος") btn.disabled = false;
+				});
+			}
+		};
+	}
+
+	if (kamikazeBtn) {
+		kamikazeBtn.onclick = () => {
+			if (kamikazeRevealed) return;      // μία φορά μόνο
+			kamikazeRevealed = true;
+
+			// προσωρινά απλός ήχος/φωνητικό αποκάλυψης καμικάζι
+			playNarrationClip("reveal/kamikaze_reveal.wav");
+
+			disableAndFade(kamikazeBtn);   // ⬅️ κλειδώνει & κάνει fade
+		};
+	}
+
 
 	// ➕ νέα κουμπιά με ενέργειες τέλους παιχνιδιού
 	const samePlayersBtn = document.getElementById("menuSamePlayers");
@@ -210,12 +271,19 @@ function updateSpecialRoleButtonsVisibility() {
 	const kamikazeBtn = document.getElementById("btnKamikaze");
 
 	if (mayorBtn) {
-		mayorBtn.style.display = roleInCurrentGame("Mayor") ? "inline-flex" : "none";
+		const show = roleInCurrentGame("Mayor");
+		mayorBtn.style.display = show ? "inline-flex" : "none";
+		mayorBtn.disabled = mayorRevealed;
+		mayorBtn.classList.toggle("btn-faded-disabled", mayorRevealed);
 	}
 	if (kamikazeBtn) {
-		kamikazeBtn.style.display = roleInCurrentGame("Kamikaze") ? "inline-flex" : "none";
+		const show = roleInCurrentGame("Kamikaze");
+		kamikazeBtn.style.display = show ? "inline-flex" : "none";
+		kamikazeBtn.disabled = kamikazeRevealed;
+		kamikazeBtn.classList.toggle("btn-faded-disabled", kamikazeRevealed);
 	}
 }
+
 
 
 
@@ -276,10 +344,21 @@ function resetGameState(keepNames = false) {
 	// καθάρισε UI
 	hideAllPhases();
 
+	mayorRevealed = false;
+	kamikazeRevealed = false;
+
 	const mayorBtn = document.getElementById("btnMayor");
 	const kamikazeBtn = document.getElementById("btnKamikaze");
-	if (mayorBtn) mayorBtn.style.display = "none";
-	if (kamikazeBtn) kamikazeBtn.style.display = "none";
+	if (mayorBtn) {
+		mayorBtn.style.display = "none";
+		mayorBtn.disabled = false;
+		mayorBtn.classList.remove("btn-faded-disabled","active-mayor");
+	}
+	if (kamikazeBtn) {
+		kamikazeBtn.style.display = "none";
+		kamikazeBtn.disabled = false;
+		kamikazeBtn.classList.remove("btn-faded-disabled");
+	}
 
 	// reset βασικών state
 	totalVotes = 0;
@@ -1159,19 +1238,20 @@ function renderVotingInterface() {
 
 function handleAddVote(index) {
 	const p = players[index];
-	const alive = players.filter(p => p.isAlive).length;
-	if (totalVotes >= alive) return;
+	const need = votesRequiredThisRound();
+	if (totalVotes >= need) return;
 
 	p.votes++;
 	totalVotes++;
 	playSFX("vote.mp3");
 	updateVotesDisplay(index, p.votes);
 
-	if (totalVotes === alive) {
+	if (totalVotes === need) {
 		disableAllAddButtons();
 	}
 	checkIfVotingComplete();
 }
+
 
 function handleRemoveVote(index) {
 	const p = players[index];
@@ -1191,11 +1271,12 @@ function updateVotesDisplay(index, votes) {
 }
 
 function checkIfVotingComplete() {
-	const alive = players.filter(p => p.isAlive).length;
-	if (totalVotes === alive) {
+	const need = votesRequiredThisRound();
+	if (totalVotes === need) {
 		startCountdown();
 	}
 }
+
 
 function startCountdown() {
 	clearInterval(countdownTimeout);
@@ -2101,7 +2182,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "29 Αυγούστου 2025 – 00:47"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "29 Αυγούστου 2025 – 20:37"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
