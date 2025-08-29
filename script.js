@@ -9,10 +9,6 @@ let discussionTimerRemaining = 0;
 let selectedTrack = "track1";
 let wakeLock = null;
 let defaultVibrationType = "short";
-let narrationPaused = false;
-let narrationTimeout = null;
-let narrationAudio = null;
-
 
 const musicTracks = [
     "music/Curse_of_the_worgen.mp3",
@@ -108,201 +104,6 @@ document.addEventListener("DOMContentLoaded", () => {
 	playNextMusicTrack(); // 🎵 Ξεκινά η μουσική μόλις φορτώσει η σελίδα
 });
 
-function openInGameMenu() {
-	const modal = document.getElementById("inGameMenu");
-	if (modal) {
-		modal.classList.add("show");
-		modal.style.removeProperty("display");	// καθάρισε inline display αν έχει μείνει
-		document.body.classList.add("menu-open");
-		if (narrationAudio && !narrationAudio.paused) {
-			narrationAudio.pause();
-			narrationPaused = true;
-		}
-		if (narrationTimeout) {
-			clearTimeout(narrationTimeout);
-			narrationTimeout = null;
-		}
-	}
-}
-
-function closeInGameMenu() {
-	const modal = document.getElementById("inGameMenu");
-	if (modal) {
-		modal.classList.remove("show");
-		document.body.classList.remove("menu-open");
-		if (narrationPaused && narrationAudio) {
-			narrationAudio.play().catch(()=>{});
-			narrationPaused = false;
-		}
-	}
-}
-
-
-
-
-function initVoteHeaderEvents() {
-	const menuBtn = document.getElementById("btnMenu");
-	const mayorBtn = document.getElementById("btnMayor");
-	const kamikazeBtn = document.getElementById("btnKamikaze");
-	const closeBtn = document.getElementById("closeMenuBtn");
-	const backdrop = document.querySelector("#inGameMenu .modal-backdrop");
-
-	if (menuBtn) menuBtn.onclick = openInGameMenu;
-	if (closeBtn) closeBtn.onclick = closeInGameMenu;
-	if (backdrop) backdrop.onclick = closeInGameMenu;
-
-	// placeholders
-	if (mayorBtn) mayorBtn.onclick = () => { /* TODO */ };
-	if (kamikazeBtn) kamikazeBtn.onclick = () => { /* TODO */ };
-
-	// ➕ νέα κουμπιά με ενέργειες τέλους παιχνιδιού
-	const samePlayersBtn = document.getElementById("menuSamePlayers");
-	const newPlayersBtn = document.getElementById("menuNewPlayers");
-
-	if (samePlayersBtn) {
-		samePlayersBtn.onclick = () => {
-			resetGameState(true);		// stop παλιά παρτίδα, κράτα ονόματα
-			restartSamePlayers();		// ίδιοι παίκτες, νέα μοιρασιά ρόλων
-		};
-	}
-
-	if (newPlayersBtn) {
-		newPlayersBtn.onclick = () => {
-			resetGameState(false);		// stop παλιά παρτίδα, χωρίς ονόματα
-			restartNewNames();			// full reset (παραμένει ίδια συνάρτηση)
-		};
-	}
-
-	// 👉 menu buttons και στη φάση αφήγησης/δολοφονίας
-	const menuNight = document.getElementById("btnMenuNight");
-	const menuKill = document.getElementById("btnMenuKill");
-	if (menuNight) menuNight.onclick = openInGameMenu;
-	if (menuKill) menuKill.onclick = openInGameMenu;
-}
-
-// ===== Hard reset helpers =====
-function stopAllTimersAndAudio() {
-	// timers
-	if (countdownTimeout) {
-		clearInterval(countdownTimeout);
-		countdownTimeout = null;
-	}
-	if (discussionTimerInterval) {
-		clearInterval(discussionTimerInterval);
-		discussionTimerInterval = null;
-	}
-	if (narrationTimeout) {
-		clearTimeout(narrationTimeout);
-		narrationTimeout = null;
-	}
-
-	// audio
-	try {
-		if (narrationAudio) {
-			narrationAudio.pause();
-			narrationAudio.currentTime = 0;
-			narrationAudio = null;
-		}
-	} catch {}
-	try {
-		if (bgMusic) {
-			bgMusic.pause();
-			bgMusic = null;
-		}
-	} catch {}
-}
-
-function hideAllPhases() {
-	const ids = ["result","nightPhase","dayPhase","nightKillChoice","roleSelection","nameInput"];
-	ids.forEach(id => {
-		const el = document.getElementById(id);
-		if (el) el.style.display = "none";
-	});
-	const vc = document.getElementById("voteCountdown");
-	if (vc) vc.innerHTML = "";
-	const killArea = document.getElementById("killSelectionArea");
-	if (killArea) killArea.innerHTML = "";
-}
-
-function resetGameState(keepNames = false) {
-	// κλείσε το menu (αν είναι ανοιχτό)
-	closeInGameMenu();
-
-	// σταμάτα τα πάντα
-	stopAllTimersAndAudio();
-	releaseWakeLock();	// θα ζητηθεί ξανά όταν ξεκινήσει η νέα παρτίδα
-
-	// καθάρισε UI
-	hideAllPhases();
-
-	// reset βασικών state
-	totalVotes = 0;
-	eliminatedPlayer = null;
-	currentPlayerIndex = 0;
-
-	// αν ΔΕΝ κρατάμε τα ονόματα, καθάρισε και τους παίκτες/μέτρηση
-	if (!keepNames) {
-		players = [];
-		numPlayers = 0;
-	}
-
-	// μικρό safety: άδειασε τυχόν disabled +Ψήφος κουμπιά
-	const buttons = document.querySelectorAll("button");
-	buttons.forEach(btn => {
-		if (btn.textContent === "+ Ψήφος") btn.disabled = false;
-	});
-}
-
-function playNarrationClip(relPath, onEnd) {
-	const url = `audio/${selectedTrack}/${relPath}`;
-	narrationAudio = new Audio(url);
-	narrationAudio.onended = () => {
-		narrationTimeout = setTimeout(() => {
-			narrationTimeout = null;
-			if (onEnd) onEnd();
-		}, 800);
-	};
-	const tryPlay = () => {
-		if (!narrationPaused) {
-			narrationAudio.load();
-			narrationAudio.play().catch(() => onEnd && onEnd());
-		} else {
-			setTimeout(tryPlay, 300);
-		}
-	};
-	tryPlay();
-}
-
-function updateVotingScroll() {
-	const voting = document.getElementById("votingArea");
-	if (!voting) return;
-
-	const count = Array.isArray(players) ? players.length : 0;
-
-	if (count > 10) {
-		// βάλε κλάση αν θες για styling, αλλά το βασικό είναι τα inline styles
-		document.body.classList.add("scroll-votes");
-
-		// Υπολόγισε δυναμικά ένα max-height ώστε να ΥΠΑΡΧΕΙ scroll πάντα
-		const rect = voting.getBoundingClientRect();
-		const viewportH = window.innerHeight || document.documentElement.clientHeight;
-		const padBottom = 16; // μικρό οπτικό περιθώριο να μη «κολλάει» κάτω
-		const maxH = Math.max(240, Math.floor(viewportH - rect.top - padBottom));
-
-		voting.style.maxHeight = maxH + "px";
-		voting.style.overflowY = "scroll"; // δείξε scroll bar/gesture ΠΑΝΤΑ
-		voting.style.webkitOverflowScrolling = "touch";
-	} else {
-		document.body.classList.remove("scroll-votes");
-		// επαναφορά defaults
-		voting.style.maxHeight = "";
-		voting.style.overflowY = "hidden";
-		voting.style.webkitOverflowScrolling = "";
-	}
-}
-
-
-
 class Player {
 	constructor(name) {
 		this.name = name;
@@ -316,23 +117,11 @@ class Player {
 		this.role = role;
 		this.isAlive = true;
 		this.votes = 0;
-		this.lives = 1; // default
+		this.lives = (role === "Bulletproof") ? 2 : 1;
 	}
 }
 
-const roleNames = [
-	"Citizen",
-	"Hidden Killer",
-	"Known Killer",
-	"Police officer",
-	"Snitch",
-	"Bulletproof",
-	"Lovers",
-	"Kamikaze",
-	"Madman",
-	"MotherTeresa",
-	"Mayor"
-];
+const roleNames = ["Citizen", "Hidden Killer", "Known Killer", "Police officer", "Snitch", "Bulletproof", "Lovers"];
 const requiredRoles = ["Citizen", "Citizen", "Hidden Killer", "Known Killer"];
 
 let numPlayers = 0;
@@ -360,8 +149,8 @@ function startRoleSelection() {
 		alert("You need at least 5 players!");
 		return;
 	}
-	if (numPlayers > 15) {
-		alert("Μέγιστος αριθμός παικτών: 15.");
+	if (numPlayers > 10) {
+		alert("Μέγιστος αριθμός παικτών: 10.");
 		return;
 	}
 
@@ -564,8 +353,7 @@ function nextPlayer() {
 function showResults() {
 	const resultDiv = document.getElementById("result");
 	resultDiv.innerHTML = "<h3>Όλοι οι παίκτες έχουν καταχωρηθεί.</h3><p>Μπορείτε τώρα να ξεκινήσετε το παιχνίδι!</p>";
-	// Ξεκινάμε με την εισαγωγική αφήγηση
-	resultDiv.innerHTML += `<br><button onclick="startIntroduction()">Ξεκινάμε!</button>`;
+	resultDiv.innerHTML += `<br><button onclick="startNight()">Η Νύχτα Πέφτει...</button>`;
 	resultDiv.style.display = "block";
 
 	// 💘 Σύνδεση ερωτευμένων
@@ -593,137 +381,9 @@ function shuffleArray(array) {
 	return array;
 }
 
-
-
-function startIntroduction() {
-	if (bgMusic) {
-		const step = 50;
-		const fadeOutInterval = setInterval(() => {
-			if (bgMusic.volume > 0.05) {
-				bgMusic.volume -= 0.05;
-			} else {
-				clearInterval(fadeOutInterval);
-				bgMusic.pause();
-			}
-		}, step);
-	}
-
-	setBackground("night");
-	document.getElementById("result").style.display = "none";
-	document.getElementById("nightPhase").style.display = "block";
-
-	const nightTextDiv = document.getElementById("nightText");
-	nightTextDiv.innerHTML = "";
-	nightTextDiv.style.opacity = 0;
-
-	const scriptLines = [];
-	const audioLines = [];
-
-	// ➤ Εισαγωγή
-	scriptLines.push("Μια νύχτα στο Παλέρμο.");
-	audioLines.push("intro/intro_palermo1.wav");
-
-	// ➤ Καλή ομάδα
-	scriptLines.push("Η ομάδα των καλών αποτελείται από:");
-	audioLines.push("intro/intro_good_team_1.wav");
-
-	const goodRoles = [];
-	if (chosenRoles.includes("Citizen")) goodRoles.push(["τους Πολίτες,", "intro/intro_citizens_1.wav"]);
-	if (chosenRoles.includes("Police officer")) goodRoles.push(["τον Αστυνομικό,", "intro/intro_police.wav"]);
-	if (chosenRoles.includes("Kamikaze")) goodRoles.push(["τον Καμικάζι,", "intro/intro_kamikaze.wav"]);
-	if (chosenRoles.filter(r => r === "Lovers").length === 2) goodRoles.push(["τους Ερωτευμένους,", "intro/intro_lovers.wav"]);
-	if (chosenRoles.includes("Mayor")) goodRoles.push(["τον Δήμαρχο,", "intro/intro_mayor.wav"]);
-	if (chosenRoles.includes("Bulletproof")) goodRoles.push(["τον Αλεξίσφαιρο,", "intro/intro_bulletproof.wav"]);
-	if (chosenRoles.includes("MotherTeresa")) goodRoles.push(["τη Μητέρα Τερέζα.", "intro/intro_motherteresa.wav"]);
-
-	if (goodRoles.length > 0) {
-		for (let i = 0; i < goodRoles.length; i++) {
-			// βάλε "και" πριν από τον τελευταίο ρόλο (αν υπάρχουν πάνω από 1)
-			if (i === goodRoles.length - 1 && goodRoles.length > 1) {
-				scriptLines.push("και");
-				audioLines.push("intro/word_and.wav");
-			}
-			scriptLines.push(goodRoles[i][0]);
-			audioLines.push(goodRoles[i][1]);
-		}
-	}
-
-	// ➤ Κακή ομάδα
-	scriptLines.push("Η ομάδα των κακών αποτελείται από:");
-	audioLines.push("intro/intro_bad_team.wav");
-
-	const badRoles = [];
-	if (chosenRoles.includes("Hidden Killer") || chosenRoles.includes("Known Killer")) {
-		badRoles.push(["τους δύο Δολοφόνους,", "intro/intro_two_killers.wav"]);
-	}
-	if (chosenRoles.includes("Snitch")) {
-		badRoles.push(["τον Ρουφιάνο.", "intro/intro_snitch.wav"]);
-	}
-
-	if (badRoles.length > 0) {
-		for (let i = 0; i < badRoles.length; i++) {
-			if (i === badRoles.length - 1 && badRoles.length > 1) {
-				scriptLines.push("και");
-				audioLines.push("intro/word_and.wav");
-			}
-			scriptLines.push(badRoles[i][0]);
-			audioLines.push(badRoles[i][1]);
-		}
-	}
-
-	// ➤ Extra ρόλοι (Madman)
-	if (chosenRoles.includes("Madman")) {
-		scriptLines.push("Επίσης, παίζει και η Τρέλα.");
-		audioLines.push("intro/intro_madman.wav");
-	}
-
-	// ➤ Κλείσιμο
-	scriptLines.push("Καλή επιτυχία σε όλους!");
-	audioLines.push("intro/intro_goodluck.wav");
-
-	// --- Προβολή / Αναπαραγωγή ---
-	let index = 0;
-	function nextLine() {
-		if (index >= audioLines.length) {
-			// όταν τελειώσει η εισαγωγή → ξεκινάει νύχτα
-			setTimeout(() => startNight(), 1000);
-			return;
-		}
-
-		if (index < scriptLines.length) {
-			nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
-			nightTextDiv.style.opacity = 1;
-		}
-
-		const url = `audio/${selectedTrack}/${audioLines[index]}`;
-		narrationAudio = new Audio(url);
-		narrationAudio.onended = () => {
-			narrationTimeout = setTimeout(() => {
-				narrationTimeout = null;
-				index++;
-				nextLine();
-			}, 800);
-		};
-
-		// ✅ χειρισμός pause/resume όπως στη νύχτα
-		const playIfNotPaused = () => {
-			if (!narrationPaused) {
-				narrationAudio.load();
-				narrationAudio.play().catch(() => { index++; nextLine(); });
-			} else {
-				setTimeout(playIfNotPaused, 300);
-			}
-		};
-		playIfNotPaused();
-	}
-
-	initVoteHeaderEvents();
-	nextLine();
-}
-
-
 function startNight() {
 	if (bgMusic) {
+		const fadeDuration = 2000; // 2 δευτερόλεπτα
 		const step = 50;
 		const fadeOutInterval = setInterval(() => {
 			if (bgMusic.volume > 0.05) {
@@ -743,11 +403,8 @@ function startNight() {
 	nightTextDiv.innerHTML = "";
 	nightTextDiv.style.opacity = 0;
 
-	// ✅ Flags
-	const hasSnitch = players.some(p => p.role === "Snitch" && p.isAlive);
-	const loversAlive = players.filter(p => p.role === "Lovers" && p.isAlive).length === 2;
+	const hasSnitch = chosenRoles.includes("Snitch");
 
-	// ✅ Κείμενα στην οθόνη
 	const scriptLines = [
 		"Μια νύχτα πέφτει στο Παλέρμο κι όλοι κλείνουν τα μάτια τους...",
 		"Οι 2 δολοφόνοι ανοίγουν τα μάτια τους και γνωρίζουν ο ένας τον άλλον",
@@ -756,16 +413,14 @@ function startNight() {
 		"Τώρα που ο αστυνομικός έχει δει τον φανερό δολοφόνο, κλείνει τα μάτια του"
 	];
 
-	// ✅ Νέα αρχεία ήχου (.wav)
-	let audioLines = [
-		"night/night_start.wav",
-		"night/night_killers_open.wav",
-		"night/night_police_phase.wav",
-		"night/night_police_sees.wav",
-		"night/night_police_close.wav"
+	const audioLines = [
+		"line1.mp3",
+		"line2.mp3",
+		"line3.mp3",
+		"line4.mp3",
+		"line5.mp3"
 	];
 
-	// --- Snitch section ---
 	if (hasSnitch) {
 		scriptLines.push(
 			"Στη συνέχεια σηκώνει το χέρι του και ο κρυφός δολοφόνος",
@@ -774,77 +429,65 @@ function startNight() {
 			"Οι 2 δολοφόνοι κατεβάζουν τα χέρια τους"
 		);
 		audioLines.push(
-			"night/night_snitch_phase.wav",
-			// Αν έχεις ξεχωριστό knows clip, βάλ’ το εδώ:
-			// "night/night_snitch_knows.wav",
-			"night/night_snitch_end.wav",
-			"night/night_snitch_end.wav"
+			"line6.mp3",
+			"line7.mp3",
+			"line8.mp3",
+			"line9.mp3"
 		);
+	} else {
+		scriptLines.push("Ο δολοφόνος κατεβάζει το χέρι του");
+		audioLines.push("line10.mp3");
 	}
-	// ❗ Αν δεν υπάρχει Snitch → δεν προσθέτουμε τίποτα εδώ
 
-	// --- Lovers section ---
-	if (loversAlive) {
+	// 💘 Αν υπάρχουν και οι 2 Lovers ζωντανοί, προσθέτουμε ειδική αφήγηση
+	const lovers = players.filter(p => p.role === "Lovers" && p.isAlive);
+	if (lovers.length === 2) {
 		scriptLines.push(
 			"Τέλος ανοίγουν τα μάτια τους και οι ερωτευμένοι για να γνωριστούν.",
-			"Αφού ερωτεύτηκαν κεραυνοβόλα μπορούν να κλείσουν τα μάτια τους."
+            "Αφού ερωτεύτηκαν κεραυνοβόλα μπορούν να κλείσουν τα μάτια τους."
 		);
-		audioLines.push("night/lovers_open.wav", "night/lovers_close.wav");
+		audioLines.push("lovers1.mp3", "lovers2.mp3");
 	}
 
-	// --- Day start ---
 	scriptLines.push("Μια μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...");
-	audioLines.push("day/day_start.wav");
+	audioLines.push("line11.mp3");
 
-	// --- Επιπλέον μόνο ήχος (χωρίς κείμενο) για την ψηφοφορία ---
-	audioLines.push("day/vote_start.wav");
-
-	// --- Προβολή / Αναπαραγωγή ---
 	let index = 0;
+
 	function nextLine() {
-		if (index >= audioLines.length) {   // ✅ σταματάμε με βάση τα audio
-			setTimeout(() => startDay(), 1000);
+		if (index >= scriptLines.length) {
+			setTimeout(() => {
+				startDay();
+			}, 1000);
 			return;
 		}
 
-		// εμφανίζουμε κείμενο μόνο αν υπάρχει
-		if (index < scriptLines.length) {
-			nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
-			nightTextDiv.style.opacity = 1;
-		}
+		nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
+		const audio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
+		audio.load();
+		audio.oncanplaythrough = () => audio.play();
 
-		const url = `audio/${selectedTrack}/${audioLines[index]}`;
-		narrationAudio = new Audio(url);
-		narrationAudio.onended = () => {
-			narrationTimeout = setTimeout(() => {
-				narrationTimeout = null;
-				index++;
-				nextLine();
-			}, 800);
-		};
-		narrationAudio.load();
-		narrationAudio.play().catch(() => { index++; nextLine(); });
+		nightTextDiv.style.opacity = 1;
+		setTimeout(() => {
+			index++;
+			nextLine();
+		}, 7500);
 	}
 
-	initVoteHeaderEvents();
 	nextLine();
 }
 
 
+
+// 3. Επέκταση startDay για αλλαγή background
 function startDay() {
-	setBackground("day");
-	document.getElementById("nightPhase").style.display = "none";
-	document.getElementById("dayPhase").style.display = "block";
-	players.forEach(p => p.votes = 0);
-
-	updateVotingScroll();	// ✅ ενεργοποιεί/απενεργοποιεί το scroll
-
-	updateVotingScroll();
-	renderVotingInterface();
-	initVoteHeaderEvents();
-	startDiscussionTimer();
+    setBackground("day");
+    document.getElementById("nightPhase").style.display = "none";
+    document.getElementById("dayPhase").style.display = "block";
+    players.forEach(p => p.votes = 0);
+    renderVotingInterface();
+    startDiscussionTimer();
 }
-
 
 function startDiscussionTimer() {
 	const countdownDiv = document.getElementById("voteCountdown");
@@ -891,8 +534,6 @@ function startDiscussionTimer() {
 function renderVotingInterface() {
 	const votingDiv = document.getElementById("votingArea");
 	votingDiv.innerHTML = ""; // Καθαρίζει προηγούμενα μηνύματα
-
-	updateVotingScroll();	// ✅ αν αλλάξει κάτι on-the-fly
 
 	totalVotes = 0;
 
@@ -955,6 +596,7 @@ function handleRemoveVote(index) {
 		cancelCountdown();
 	}
 }
+
 
 
 function updateVotesDisplay(index, votes) {
@@ -1080,157 +722,141 @@ function finishVoting() {
 
 
 function startSecondNight() {
-	// ✅ Early-win: αν μένουν 2 ζωντανοί = 1 δολοφόνος + 1 καλός → κερδίζουν οι κακοί
-	{
-		const alive = players.filter(p => p.isAlive);
-		const killers = alive.filter(isKiller).length;
-		const goods	= alive.filter(p => !isKiller(p) && p.role !== "Snitch").length; // ο ρουφιάνος δεν μετράει ως «καλός»
-
-		if (alive.length === 2 && killers === 1 && goods === 1) {
-			showEndMessage("ΟΙ ΚΑΚΟΙ ΚΕΡΔΙΣΑΝ!", "bad");
-			return; // μην μπαίνεις στη φάση δολοφονίας
-		}
-	}
-
-	// καθάρισε ό,τι έπαιζε πριν
-	stopAllTimersAndAudio?.();
-	narrationPaused = false;
-
-	// UI setup
-	const killOverlay = document.getElementById("nightKillChoice");
-	if (killOverlay) killOverlay.style.display = "none";
 	document.getElementById("dayPhase").style.display = "none";
-	setBackground("night");
 	document.getElementById("nightPhase").style.display = "block";
 
 	const nightTextDiv = document.getElementById("nightText");
 	nightTextDiv.innerHTML = "";
-	nightTextDiv.style.opacity = 0;
 
-	// … (όπως το έχεις: scriptLines, audioParts, showNextLine, playNextPart)
-	initVoteHeaderEvents();
-	showNextLine();
-	playNextPart();
+	const scriptLines = [
+		"Μια νύχτα πέφτει στο Παλέρμο κι όλοι κλείνουν τα μάτια τους...",
+		"Οι 2 δολοφόνοι ανοίγουν τα μάτια τους και δείχνουν στον παίκτη εκτός παιχνιδιού ποιον παίκτη θέλουν να σκοτώσουν."
+	];
+
+	const audioLines = [
+		"night2_1.mp3",
+		"night2_2.mp3"
+	];
+
+	let index = 0;
+
+	function nextLine() {
+		if (index >= scriptLines.length) {
+			setTimeout(() => {
+				showKillChoiceMenu();
+			}, 1000);
+			return;
+		}
+
+		nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
+
+		const audio = new Audio(`audio/${selectedTrack}/${audioLines[index]}`);
+		audio.load();
+		audio.oncanplaythrough = () => {
+			audio.play();
+		};
+
+		setTimeout(() => {
+			index++;
+			nextLine();
+		}, 7000);
+	}
+
+	nextLine();
 }
 
 
-
-
-
 function showKillChoiceMenu() {
+	document.getElementById("nightPhase").style.display = "none";
+	document.getElementById("nightKillChoice").style.display = "block";
+
 	const container = document.getElementById("killSelectionArea");
 	container.innerHTML = "";
+	container.style.display = "grid";                 // ➕ Grid layout
+	container.style.gridTemplateColumns = "1fr 1fr";  // ➕ Δύο στήλες ίσου πλάτους
+	container.style.gap = "10px";                     // ➕ Απόσταση ανάμεσα στα κουμπιά
+	container.style.justifyItems = "center";          // ➕ Κεντράρισμα περιεχομένου
 
-	// ✅ Κρύψε την οθόνη αφήγησης για να μην συνυπάρχει με τη «Δολοφονία»
-	const nightPhase = document.getElementById("nightPhase");
-	if (nightPhase) nightPhase.style.display = "none";
-
-	players.forEach((p) => {
-		if (!p.isAlive) return;
-
+	players.forEach((p, index) => {
 		const btn = document.createElement("button");
-		btn.className = "kill-choice-btn";
-		btn.innerText = p.name;
+		btn.textContent = p.name;
 
-		btn.onclick = () => {
-			// Κλείσε το overlay «Δολοφονία» και γύρνα στην οθόνη νύχτας (μόνο τώρα)
-			document.getElementById("nightKillChoice").style.display = "none";
-			if (nightPhase) nightPhase.style.display = "block";
+		if (!p.isAlive || p === eliminatedPlayer) {
+			btn.disabled = true;
+			btn.style.opacity = "0.5";
+		} else {
+			btn.onclick = () => {
+				let seconds = 3;
+				const countdownDiv = document.getElementById("voteCountdown");
+				countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds} `;
 
-			// Εξόντωση θύματος
-			const survived = !eliminatePlayer(p, "δολοφονίας");
+				const cancelBtn = document.createElement("button");
+				cancelBtn.textContent = "Ακύρωση";
+				cancelBtn.className = "cancel-vote-button";
+				cancelBtn.onclick = () => {
+					clearInterval(countdownTimeout);
+					countdownDiv.innerHTML = "";
+				};
+				countdownDiv.appendChild(cancelBtn);
 
-			// Μήνυμα μετά τη δολοφονία
-			const nightTextDiv = document.getElementById("nightText");
-			nightTextDiv.innerHTML = "<br><em>Οι δολοφόνοι αποφάσισαν ποιον θέλουν να σκοτώσουν.</em><br>";
+				countdownTimeout = setInterval(() => {
+					seconds--;
+					if (seconds === 0) {
+						clearInterval(countdownTimeout);
+						eliminatePlayer(p, "δολοφονίας");
+						document.getElementById("nightKillChoice").style.display = "none";
+						document.getElementById("nightPhase").style.display = "block";
 
-			// 👉 Αν είναι Bulletproof και γλίτωσε, καθυστέρησε την αφήγηση
-			const delay = (p.role === "Bulletproof" && survived) ? 2500 : 0;
-
-			setTimeout(() => {
-				// 🔊 Παίξε ΜΟΝΟ το 3ο κομμάτι της 2ης νύχτας
-				playNarrationClip("second-night/night2_after_kill.wav", () => {
-					// Όταν τελειώσει το audio → μετάβαση στη μέρα
-					nightTextDiv.innerHTML +=
-						"Μια νέα μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...";
-					setTimeout(() => {
-						if (checkForGameEnd()) return;
-						startDay();
-					}, 2000);
-				});
-			}, delay);
-		};
+						const nightTextDiv = document.getElementById("nightText");
+						nightTextDiv.innerHTML = "<br><em>Οι δολοφόνοι αποφάσισαν ποιον θέλουν να σκοτώσουν.</em><br>";
+						setTimeout(() => {
+							nightTextDiv.innerHTML += "Μια νέα μέρα ξημερώνει στο Παλέρμο και όλοι ανοίγουν τα μάτια τους...";
+							setTimeout(() => {
+								if (checkForGameEnd()) return;
+								startDay();
+							}, 2000);
+						}, 1500);
+					} else {
+						countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds} `;
+						countdownDiv.appendChild(cancelBtn);
+					}
+				}, 1000);
+			};
+		}
 
 		container.appendChild(btn);
 	});
 
-	// ✅ Εμφάνισε το overlay «Δολοφονία» μόνο του (η αφήγηση είναι κρυμμένη)
-	document.getElementById("nightKillChoice").style.display = "block";
-}
-
-function isKiller(p) {
-	return p.role === "Hidden Killer" || p.role === "Known Killer";
+	const countdownDiv = document.createElement("div");
+	countdownDiv.id = "voteCountdown";
+	countdownDiv.style.gridColumn = "1 / -1"; // ➕ Το countdown πιάνει όλο το πλάτος
+	countdownDiv.style.marginTop = "20px";
+	container.appendChild(countdownDiv);
 }
 
 
 function checkForGameEnd() {
-	const alive = players.filter(p => p.isAlive);
-	if (alive.length === 0) return false;	// safety
+	const alivePlayers = players.filter(p => p.isAlive);
+	if (alivePlayers.length === 0) return false; // ασφαλιστική δικλείδα
 
-	// 🤪 Τρέλα: αν έχει πεθάνει → νίκη τρέλας
-	const madman = players.find(p => p.role === "Madman");
-	if (madman && !madman.isAlive) {
-		showEndMessage("Η Τρέλα ΚΕΡΔΙΣΕ!", "madman");
-		return true;
-	}
-
-	const killersAlive = alive.filter(isKiller).length;
-	const snitchAlive	= alive.some(p => p.role === "Snitch");
-	const othersAlive	= alive.filter(p => !isKiller(p) && p.role !== "Snitch").length;
-
-	// ✅ ΝΕΟ: Αν ζουν ΜΟΝΟ δολοφόνοι (>=1) + ρουφιάνος (>=1) και κανένας άλλος → win κακοί
-	if (killersAlive >= 1 && snitchAlive && othersAlive === 0) {
-		showEndMessage("ΟΙ ΚΑΚΟΙ ΚΕΡΔΙΣΑΝ!", "bad");
-		return true;
-	}
-
-	// Υφιστάμενα rules
-	const allBad  = alive.every(isKiller);
-	const allGood = alive.every(p => !isKiller(p));
+	const allBad = alivePlayers.every(p => p.role === "Hidden Killer" || p.role === "Known Killer");
+	const allGood = alivePlayers.every(p => p.role !== "Hidden Killer" && p.role !== "Known Killer");
 
 	if (allBad) {
-		showEndMessage("ΟΙ ΚΑΚΟΙ ΚΕΡΔΙΣΑΝ!", "bad");
+		showEndMessage("ΟΙ ΚΑΚΟΙ ΚΕΡΔΙΣΑΝ!");
 		return true;
 	}
 	if (allGood) {
-		showEndMessage("ΟΙ ΚΑΛΟΙ ΚΕΡΔΙΣΑΝ!", "good");
+		showEndMessage("ΟΙ ΚΑΛΟΙ ΚΕΡΔΙΣΑΝ!");
 		return true;
 	}
+
 	return false;
 }
 
-
-
-
-function showEndMessage(message, winnerType = null) {
-	releaseWakeLock();
+function showEndMessage(message) {
+	releaseWakeLock(); // 👉 Η οθόνη επιτρέπεται να σβήσει τώρα
 	currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
-
-	// 🔊 Παίξε ήχο νίκης ανάλογα με τον τύπο
-	let winSound = null;
-	if (winnerType === "madman") {
-		winSound = "win/madman_win.wav";
-	} else if (winnerType === "bad") {
-		winSound = "win/bad_win.wav";
-	} else {
-		winSound = "win/good_win.wav";
-	}
-
-	if (winSound) {
-		const audio = new Audio(`audio/${selectedTrack}/${winSound}`);
-		audio.play().catch(() => {});
-	}
-
 	playNextMusicTrack();
 
 	const nightDiv = document.getElementById("nightPhase");
@@ -1242,24 +868,10 @@ function showEndMessage(message, winnerType = null) {
 	resultDiv.style.display = "block";
 
 	let playerListHTML = "<h3>Ρόλοι όλων των παικτών:</h3><ul>";
-	players.forEach((p) => {
-		let isWinner = false;
-
-		if (winnerType === "madman") {
-			isWinner = (p.role === "Madman");
-		} else {
-			const goodWin = message.toLowerCase()
-				.normalize("NFD")
-				.replace(/[\u0300-\u036f]/g, "")
-				.includes("οι καλοι");
-
-			const killersAlive = players.some(x => x.isAlive && (x.role === "Hidden Killer" || x.role === "Known Killer"));
-
-			isWinner = goodWin
-				? (p.role !== "Hidden Killer" && p.role !== "Known Killer" && p.role !== "Snitch" && p.role !== "Madman")
-				: ((p.role === "Hidden Killer" || p.role === "Known Killer") ||
-				   (p.role === "Snitch" && killersAlive));
-		}
+	players.forEach((p, i) => {
+		const isWinner = message.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes("οι καλοι")
+			? (p.role !== "Hidden Killer" && p.role !== "Known Killer")
+			: (p.role === "Hidden Killer" || p.role === "Known Killer");
 
 		const isDead = !p.isAlive;
 		const crown = isWinner ? '<span class="crown-icon">👑</span>' : '';
@@ -1268,6 +880,7 @@ function showEndMessage(message, winnerType = null) {
 		const playerClass = isWinner ? "winner-player" : "loser-player";
 		playerListHTML += `<li class="${playerClass}">${crown}<strong>${p.name}</strong>: ${translateRole(p.role)} ${tombstone}</li>`;
 	});
+
 	playerListHTML += "</ul>";
 
 	resultDiv.innerHTML = `
@@ -1278,111 +891,11 @@ function showEndMessage(message, winnerType = null) {
 	setTimeout(() => {
 		resultDiv.innerHTML += `
 			<br><br>
-			<button onclick="startNewGameSamePlayers()">Νέο παιχνίδι με ίδιους παίκτες</button>
-			<button onclick="startNewGameNewPlayers()">Νέο παιχνίδι με νέους παίκτες</button>
+			<button onclick="restartSameNames()">Νέο παιχνίδι με ίδια ονόματα</button>
+			<button onclick="restartNewNames()">Νέο παιχνίδι με νέα ονόματα</button>
 		`;
 	}, 3000);
 }
-
-
-
-function startNewGameSamePlayers() {
-	resetGameState(true);   // κρύψε τελική οθόνη, σταμάτα timers/audio, κράτα ονόματα
-	restartSamePlayers();   // ίδιοι παίκτες, νέα μοιρασιά
-}
-
-function startNewGameNewPlayers() {
-	resetGameState(false);  // full reset
-	restartNewNames();      // νέα ονόματα
-}
-
-function restartSamePlayers() {
-	// εδώ μπαίνουμε ΑΦΟΥ έγινε resetGameState(true)
-	document.getElementById("pageTitle").textContent = "ΠΑΛΕΡΜΟ";
-
-	const roleDiv = document.getElementById("roleSelection");
-	roleDiv.innerHTML = `
-		<h3>Έχεις επιλέξει:</h3>
-		<ul id="chosenRolesList"></ul>
-		<h3 id="extraRolesHeader">Επίλεξε ${numPlayers - 4} επιπλέον ρόλους:</h3>
-	`;
-
-	roleDiv.innerHTML += `
-		<label>
-			Πολίτης
-			<input type="number" id="extraCitizenCount" value="${chosenRoles.filter(r => r==='Citizen').length - 2}" 
-				min="0" max="${numPlayers - 4}" onchange="updateCitizenSelection()">
-		</label><br>
-	`;
-
-	for (let i = 3; i < roleNames.length; i++) {
-		if (roleNames[i] === "Citizen") continue;
-
-		if (roleNames[i] === "Lovers") {
-			const checked = chosenRoles.filter(r => r==="Lovers").length === 2 ? "checked" : "";
-			roleDiv.innerHTML += `
-				<label>
-					<input type="checkbox" id="addLovers" onchange="toggleLovers(this)" ${checked}>
-					${translateRole("Lovers")} (2 άτομα)
-				</label><br>`;
-			continue;
-		}
-
-		const checked = chosenRoles.includes(roleNames[i]) ? "checked" : "";
-		roleDiv.innerHTML += `
-			<label>
-				<input type="checkbox" value="${roleNames[i]}" onchange="updateRoleSelection(this)" ${checked}>
-				${translateRole(roleNames[i])}
-			</label><br>`;
-	}
-
-	roleDiv.innerHTML += `<br><button onclick="applyRolesToSamePlayers()">Continue</button>`;
-
-	updateRemainingRolesText();
-	updateChosenRolesList();
-	roleDiv.style.display = "block";
-}
-
-function restartNewNames() {
-	// αν δεν θέλεις reload, κάν' το «in-app»:
-	resetGameState(false);
-	document.getElementById("pageTitle").textContent = "ΠΑΛΕΡΜΟ";
-	openNewGame();
-	// ή, αν θες σκληρό reset assets/event listeners:
-	// location.reload();
-}
-
-
-
-function applyRolesToSamePlayers() {
-	if (chosenRoles.length !== numPlayers) {
-		alert(`You need exactly ${numPlayers} roles!`);
-		return;
-	}
-
-	// Ανακάτεμα ρόλων
-	chosenRoles = shuffleArray(chosenRoles);
-
-	// Εφαρμογή νέων ρόλων στους ίδιους παίκτες (ίδια ονόματα)
-	players.forEach((p, i) => {
-		p.assignRole(chosenRoles[i]);	// reset isAlive, votes, lives γίνεται μέσα στο assignRole
-	});
-
-	// Σύνδεση Lovers ξανά αν υπάρχουν
-	const lovers = players.filter(p => p.role === "Lovers");
-	if (lovers.length === 2) {
-		lovers[0].linkedPartner = lovers[1];
-		lovers[1].linkedPartner = lovers[0];
-	}
-
-	// 👉 Αντί να πάμε κατευθείαν στο αποτέλεσμα,
-	// κλείνουμε την επιλογή ρόλων και ξεκινάμε το flow αποκάλυψης ρόλων
-	document.getElementById("roleSelection").style.display = "none";
-
-	currentPlayerIndex = 0;				// από τον πρώτο παίκτη
-	showNextPlayerRole();				// εμφανίζει "Δες τον νέο ρόλο σου" για κάθε παίκτη με τη σειρά
-}
-
 
 
 function restartSameNames() {
@@ -1472,6 +985,10 @@ function revealRestartedRole() {
 
 	nameInput.disabled = true;
 	if (button) button.disabled = true;
+}
+
+function restartNewNames() {
+	location.reload();
 }
 
 function nextRestartedPlayer() {
@@ -1575,37 +1092,20 @@ function updateCitizenSelection() {
 }
 
 function eliminatePlayer(player, source = "ψηφοφορίας") {
-	// 👉 Ειδική λογική για Αλεξίσφαιρο
-	if (player.role === "Bulletproof" && source === "δολοφονίας") {
-		if (player.lives > 0) {
-			player.lives = 0; // καίει την ασπίδα του
-			const audio = new Audio(`audio/${selectedTrack}/reveal/bulletproof_reveal.wav`);
-			audio.play().catch(() => {});
-			
-			const nightTextDiv = document.getElementById("nightText");
-			if (nightTextDiv) {
-				nightTextDiv.innerHTML = `
-					<p>🛡️ Ο Αλεξίσφαιρος <strong>${player.name}</strong> γλίτωσε από την απόπειρα δολοφονίας!</p>
-				`;
-			}
-			return false; // ❌ δεν πεθαίνει αυτή τη φορά
+	if (player.lives > 1) {
+		player.lives--;
+		return false;
+	} else {
+		player.isAlive = false;
+
+		// 💔 Αν είναι ερωτευμένος και ο/η άλλος/η ζει, πεθαίνει κι αυτός/ή
+		if (player.role === "Lovers" && player.linkedPartner && player.linkedPartner.isAlive) {
+			player.linkedPartner.isAlive = false;
 		}
+
+		return true;
 	}
-
-	// ✅ Κανονικός θάνατος
-	player.isAlive = false;
-
-	// 💔 Αν είναι ερωτευμένος και ο/η άλλος/η ζει, πεθαίνει κι αυτός/ή
-	if (player.role === "Lovers" && player.linkedPartner && player.linkedPartner.isAlive) {
-		player.linkedPartner.isAlive = false;
-	}
-
-	return true;
 }
-
-
-
-
 
 
 function openNewGame() {
@@ -1622,7 +1122,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "29 Αυγούστου 2025 – 23:55"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "5 Ιουλίου 2025 – 03:25"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
@@ -1674,20 +1174,16 @@ function setBackground(phase) {
 // 4. Προσθήκη εικονιδίου στον ρόλο (μέσα στο showRole και revealRestartedRole)
 // Παράδειγμα μόνο:
 function getRoleIcon(role) {
-	const map = {
-		"Citizen": "🧍‍♂️",
-		"Hidden Killer": "🗡️",
-		"Known Killer": "🔪",
-		"Police officer": "👮",
-		"Snitch": "👀",
-		"Bulletproof": "🛡️",
-		"Lovers": "💑",
-		"Kamikaze": "🧨",
-		"Madman": "🤪",
-		"MotherTeresa": "🙏",
-		"Mayor": "👔"
-	};
-	return map[role] || "❓";
+    const map = {
+        "Citizen": "🧍‍♂️",
+        "Hidden Killer": "🗡️",
+        "Known Killer": "🔪",
+        "Police officer": "👮",
+        "Snitch": "👀",
+        "Bulletproof": "🛡️",
+		"Lovers": "💑"
+    };
+    return map[role] || "❓";
 }
 
 if ('serviceWorker' in navigator) {
@@ -1704,32 +1200,16 @@ function translateRole(role) {
 		"Police officer": "Αστυνομικός",
 		"Snitch": "Ρουφιάνος",
 		"Bulletproof": "Αλεξίσφαιρος",
-		"Lovers": "Ερωτευμένος/η",
-		"Kamikaze": "Καμικάζι",
-		"Madman": "Τρέλα",
-		"MotherTeresa": "Μητέρα Τερέζα",
-		"Mayor": "Δήμαρχος"
+		"Lovers": "Ερωτευμένος/η"
 	};
 	return translations[role] || role;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-	updateFooterVisibility();
-	playNextMusicTrack(); // 🎵 Ξεκινά η μουσική μόλις φορτώσει η σελίδα
-
-	// 👉 Scroll update on resize
-	window.addEventListener("resize", () => {
-		updateVotingScroll();
-	});
-
-	// 👉 Επαναφορά δόνησης σε όλα τα κουμπιά
-	document.body.addEventListener("click", (e) => {
-		if (e.target.tagName === "BUTTON") {
-			vibratePattern(); // short vibration
-		}
-	});
+document.body.addEventListener("click", (e) => {
+	if (e.target.tagName === "BUTTON") {
+		vibratePattern();
+	}
 });
-
 
 function toggleLovers(checkbox) {
 	if (checkbox.checked) {

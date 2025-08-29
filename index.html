@@ -23,8 +23,8 @@
 	</div>
 
 	<div id="setup" style="display:none;">
-		<label>Αριθμός παικτών (min 5, max 15):</label>
-		<input type="number" id="numPlayers" min="5" max="15" value="5">
+		<label>Αριθμός παικτών (min 5, max 10):</label>
+		<input type="number" id="numPlayers" min="5" value="5">
 		<button onclick="startRoleSelection()">Next</button>
 	</div>
 
@@ -33,42 +33,19 @@
 	<div id="result" style="display:none;"></div>
 
 	<div id="nightPhase" style="display:none;">
-		<div class="phase-header">
-			<h3 class="phase-title">Αφήγηση</h3>
-			<div class="phase-tools">
-				<button id="btnMenuNight" class="icon-btn text-btn">Menu</button>
-			</div>
-		</div>
-		<div id="nightText"></div>
+		<h3>Η νύχτα πέφτει στο Παλέρμο...</h3>
+		<div id="nightText" style="margin-top:20px; font-style:italic;"></div>
 	</div>
 
-
 	<div id="dayPhase" style="display:none;">
-		<div class="vote-header">
-			<div class="left-tools">
-				<button id="btnMayor" class="icon-btn" title="Δήμαρχος">👔</button>
-				<button id="btnKamikaze" class="icon-btn" title="Καμικάζι">🧨</button>
-			</div>
-			<h3 class="vote-title">Ψηφοφορία</h3>
-			<div class="right-tools">
-				<button id="btnMenu" class="icon-btn text-btn" title="Μενού">Menu</button>
-			</div>
-		</div>
-
+		<h3>Ψηφοφορία</h3>
 		<div id="votingArea"></div>
 	</div>
 
-
 	<div id="nightKillChoice" style="display:none;">
-		<div class="phase-header">
-			<h3 class="phase-title">Δολοφονία</h3>
-			<div class="phase-tools">
-				<button id="btnMenuKill" class="icon-btn text-btn">Menu</button>
-			</div>
-		</div>
+		<h3>Οι δολοφόνοι επιλέγουν ποιον θα σκοτώσουν:</h3>
 		<div id="killSelectionArea"></div>
 	</div>
-
 
 	<div id="settingsMenu" style="display:none;">
 		<h2>ΡΥΘΜΙΣΕΙΣ</h2>
@@ -117,19 +94,6 @@
 			<span style="font-size:18px; color:#e4e4ff; vertical-align:middle;">dim-andro21</span>
 		</a>
 	</footer>
-
-	<!-- In-Game Menu Modal -->
-	<div id="inGameMenu" class="modal">
-		<div class="modal-backdrop"></div>
-		<div class="role-card menu-card">
-			<h3 style="margin-top:0;">Μενού</h3>
-			<div class="menu-buttons">
-				<button class="menu-action" id="menuSamePlayers">Νέο παιχνίδι με ίδιους παίκτες</button>
-				<button class="menu-action" id="menuNewPlayers">Νέο παιχνίδι με νέους παίκτες</button>
-			</div>
-			<button class="close-modal" id="closeMenuBtn">Κλείσιμο</button>
-		</div>
-	</div>
 
 	<!-- ✅ ΣΩΣΤΗ θέση του script -->
 	<script src="script.js"></script>
