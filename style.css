@@ -314,7 +314,7 @@ strong {
 
 .vote-line {
 	display: grid;
-	grid-template-columns: 2.5fr 0.2fr 120px auto;
+	grid-template-columns: 2.5fr 0.3fr 120px auto;
 	gap: 0.5px;
 	align-items: center;
 	margin-bottom: 2px;
@@ -400,4 +400,499 @@ strong {
   font-size: 14px;
   cursor: pointer;
   z-index: 1000;
+}
+
+/* ----- Vote header: centered title + safe gutters ----- */
+.vote-header {
+	position: relative;
+	min-height: 48px;
+	margin: 6px 0 12px 0;
+	--center-gap: 96px;	/* “μαξιλάρι” γύρω από τον τίτλο */
+}
+
+.vote-title {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	margin: 0;
+	text-align: center;
+	white-space: nowrap;
+	pointer-events: none;
+	z-index: 1;
+}
+
+/* Τα groups δεν επιτρέπεται να μπουν στο κεντρικό “μαξιλάρι” */
+.left-tools,
+.right-tools {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	gap: 0;
+	height: 40px;
+}
+
+.left-tools {
+	left: 14px;	/* λίγο πιο μέσα από την άκρη */
+	width: calc(50% - var(--center-gap));
+	justify-content: flex-end;	/* πλησιάζουν προς τον τίτλο χωρίς να τον ακουμπούν */
+}
+
+/* 🔧 Σφίξιμο απόστασης Δήμαρχος ↔ Καμικάζι στη ψηφοφορία */
+.left-tools .icon-btn {
+	margin: 0 7px;        /* από 8px → 2px μόνο για αυτά τα δύο */
+	padding: 0 11px;      /* λίγο μικρότερο οριζόντιο padding για να έρθουν πιο κοντά */
+}
+
+/* (προαιρετικό) ακόμη πιο κοντά:
+#btnKamikaze { margin-left: -2px; }  */
+
+
+.right-tools {
+	right: 8px; /* λίγο πιο μέσα από την άκρη */
+	width: calc(50% - var(--center-gap));
+	justify-content: flex-start;
+}
+
+/* Βασικό icon button (👔, 🧨, Menu) */
+.icon-btn {
+	background: #222;
+	border: 2px solid #72a6fa;
+	color: #e4e4ff;
+	min-width: 38px;	/* ➕ λίγο μεγαλύτερο μήκος */
+	height: 30px;		/* ➕ ελαφρώς πιο ψηλό */
+	border-radius: 10px;
+	font-size: 18px;	/* ελαφρώς μικρότερο για να ισορροπεί */
+	line-height: 1;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	padding: 0 12px;	/* ➕ extra padding για κείμενο όπως το "Menu" */
+	transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+	background: #72a6fa;
+	color: #111;
+	box-shadow: 0 0 12px #72a6fa88;
+}
+
+
+/* Κουμπί με κείμενο (Menu) — πιο “στενό” για να χωράει πάντα */
+.text-btn {
+	width: auto;
+	min-width: 80px;	/* μικρό αλλά ευανάγνωστο */
+	height: 40px;
+	border-radius: 10px;
+	font-size: 14px;	/* μικρότερο κείμενο για να μη μπουκάρει στο κέντρο */
+	padding: 0 10px;
+}
+
+/* 🎛️ Fancy Menu style (δουλεύει και για #btnMenu & #btnMenuKill) */
+.text-btn{
+	background: linear-gradient(180deg, #101a3f 0%, #0f1636 100%);
+	border: 2px solid #7fb3ff;
+	color: #e9eeff;
+	backdrop-filter: saturate(140%) blur(2px);
+	box-shadow:
+		0 6px 18px rgba(114,166,250,0.22),
+		inset 0 0 0 1px rgba(255,255,255,0.10);
+	border-radius: 14px;
+	letter-spacing: .3px;
+	font-weight: 600;
+	/* 🔧 πιο άνετο padding */
+	padding: 9px 14px;   
+	transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+}
+
+/* Override Menu button spacing */
+#btnMenu, 
+#btnMenuKill {
+	padding: 9px 14px !important;   /* πιο άνετο padding */
+}
+
+/* 👔🧨 Δήμαρχος & Καμικάζι κουμπιά με παρόμοιο στυλ με Menu */
+#btnMayor,
+#btnKamikaze {
+	background: linear-gradient(180deg, #101a3f 0%, #0f1636 100%);
+	border: 2px solid #7fb3ff;
+	color: #e9eeff;
+	backdrop-filter: saturate(140%) blur(2px);
+	box-shadow:
+		0 6px 18px rgba(114,166,250,0.22),
+		inset 0 0 0 1px rgba(255,255,255,0.10);
+	border-radius: 12px;
+	font-size: 18px;        /* ώστε να φαίνονται πιο “γεμάτα” τα εικονίδια */
+	padding: 6px 10px;      /* περισσότερο αέρα γύρω από τα emoji */
+	transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+}
+
+/* Hover/Active εφέ όπως στο Menu */
+#btnMayor:hover,
+#btnKamikaze:hover {
+	transform: translateY(-1px);
+	box-shadow:
+		0 10px 24px rgba(114,166,250,0.28),
+		inset 0 0 0 1px rgba(255,255,255,0.14);
+	background: linear-gradient(180deg, #132153 0%, #101a45 100%);
+}
+
+#btnMayor:active,
+#btnKamikaze:active {
+	transform: translateY(0);
+	filter: brightness(.96);
+	box-shadow:
+		0 4px 14px rgba(114,166,250,0.18),
+		inset 0 0 0 1px rgba(255,255,255,0.08);
+}
+
+
+
+/* Προσθέτουμε “hamburger” εικονίδιο χωρίς αλλαγή HTML */
+.text-btn::before{
+	content: "☰";
+	display: inline-block;
+	margin-right: 8px;
+	font-size: 16px;
+	line-height: 1;
+	transform: translateY(-1px);
+	opacity: .95;
+}
+
+/* Hover/Active/Focus states */
+.text-btn:hover{
+	transform: translateY(-1px);
+	box-shadow:
+		0 10px 24px rgba(114,166,250,0.28),
+		inset 0 0 0 1px rgba(255,255,255,0.14);
+	background: linear-gradient(180deg, #132153 0%, #101a45 100%);
+}
+
+.text-btn:active{
+	transform: translateY(0);
+	filter: brightness(.96);
+	box-shadow:
+		0 4px 14px rgba(114,166,250,0.18),
+		inset 0 0 0 1px rgba(255,255,255,0.08);
+}
+
+.text-btn:focus-visible{
+	outline: none;
+	box-shadow:
+		0 0 0 3px rgba(30,80,180,0.55),
+		0 8px 22px rgba(114,166,250,0.25);
+}
+
+
+/* responsive προσαρμογές */
+@media (max-width: 420px) {
+	.vote-header { --center-gap: 84px; }	/* ελαφρώς πιο στενό “μαξιλάρι” */
+	.text-btn { min-width: 52px; font-size: 13px; padding: 0 8px; }
+}
+@media (max-width: 360px) {
+	.vote-header { --center-gap: 76px; }
+	.icon-btn { width: 36px; height: 36px; font-size: 18px; }
+	.text-btn { min-width: 70px; height: 36px; font-size: 12.5px; }
+	.vote-header { min-height: 44px; }
+}
+
+/* === Modal για το In-Game Menu === */
+.modal {
+	position: fixed;
+	inset: 0;
+	display: none;			/* αρχικά κρυφό */
+	z-index: 5000;
+	align-items: center;	/* κεντράρισμα κατακόρυφα */
+	justify-content: center;/* κεντράρισμα οριζόντια */
+}
+
+.modal.show {				/* θα το ανοίγουμε με class από JS */
+	display: flex;
+}
+
+.menu-card {
+	position: relative;
+	max-width: 320px;
+	width: min(92vw, 320px);
+	max-height: 70vh;
+	overflow: auto;
+	background: rgba(0,0,0,0.85);
+	border: 2px solid #72a6fa;
+	border-radius: 20px;
+	padding: 24px 16px;
+	/* 🔥 ίδιο glow με την κάρτα ρόλου */
+	box-shadow: 0 0 20px #6fa4f8, 0 0 40px #6fa4f866;
+	animation: fadeIn 0.4s ease;
+}
+
+
+
+.modal-backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.65); /* πιο σκοτεινό */
+	backdrop-filter: blur(4px);       /* θόλωμα φόντου */
+}
+
+/* Σιγουρεύουμε ότι δεν γίνεται scroll στο body όσο είναι ανοιχτό το menu */
+body.menu-open {
+	overflow: hidden;
+	touch-action: none;
+}
+
+.phase-header {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 10px;
+}
+
+.phase-title {
+	margin: 0;
+}
+
+.phase-tools {
+	position: absolute;
+	right: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+/* === Ψηφοφορία: fixed header + scroll μόνο όταν το ζητήσει το JS === */
+#dayPhase{
+	display:flex;
+	flex-direction:column;
+	height:100vh;
+	overflow:hidden;
+}
+
+#votingArea{
+	flex:1;
+	min-height:0;
+	overflow-y:hidden; /* default: ΟΧΙ scroll, το βάζει το JS όταν >10 */
+}
+
+/* Δομή λίστας ρόλων (αριστερά σύμβολο/έλεγχος – δεξιά όνομα) */
+#extraRolesContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  max-height: none;     /* ⛔ χωρίς περιορισμό ύψους */
+  overflow: visible;    /* ⛔ χωρίς scroll */
+  padding-right: 0;
+}
+
+
+.role-row {
+	display: grid;
+	grid-template-columns: 56px 1fr; /* αριστερά έλεγχος, δεξιά όνομα */
+	align-items: center;
+	min-height: 34px;
+}
+
+.role-ctrl {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 6px;
+}
+
+.count-badge {
+	min-width: 28px;
+	text-align: center;
+	border: 1px solid rgba(255,255,255,.25);
+	border-radius: 8px;
+	padding: 2px 6px;
+}
+
+.stepper {
+	min-width: 28px;
+	height: 28px;
+	border-radius: 8px;
+}
+
+.role-name .hint {
+	opacity: .8;
+	font-size: .9em;
+	margin-left: 6px;
+}
+
+.bullet-list {
+	margin-left: 0;
+	padding-left: 18px; /* τελίτσες */
+}
+
+/* Ειδικό στυλ για το input των πολιτών */
+#citizenInput {
+  width: 26px;        /* σταθερό πλάτος */
+  height: 26px;       /* ίδιο ύψος = τετράγωνο */
+  text-align: center; /* το νούμερο στο κέντρο */
+  border-radius: 6px; /* κρατάμε λίγο στρογγυλάδα */
+  padding: 0;         /* χωρίς extra padding */
+  font-size: 15.5px;    /* λίγο πιο μεγάλο νούμερο */
+  background-color: #121212;
+  border: 2px solid #72a6fa;
+}
+
+/* === Custom checkbox style === */
+input[type="checkbox"] {
+  appearance: none;           /* αφαιρεί το default browser style */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  width: 26px;                /* μέγεθος κουτιού */
+  height: 26px;
+  border: 2px solid #4a90e2;  /* μπλε περίγραμμα */
+  border-radius: 4px;         /* λίγο στρογγυλό (προαιρετικό) */
+  background-color: #111;     /* σκούρο background για contrast */
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+/* Όταν το checkbox είναι τσεκαρισμένο */
+input[type="checkbox"]:checked {
+  background-color: #4a90e2;  /* γεμίζει μπλε */
+  border-color: #4a90e2;
+}
+
+/* Το ✓ */
+input[type="checkbox"]:checked::after {
+  content: "✓";
+  color: white;
+  font-size: 16px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -60%); /* κεντράρει το σύμβολο */
+}
+
+.bullet::before {
+  content: "✦";          /* αστεράκι */
+  font-size: 25px;
+  opacity: 0.7;
+  color: #d6d1f8;        /* χρυσό */
+}
+
+/* Input για τον αριθμό παικτών */
+#numPlayers {
+  width: 28px;        /* φαρδύτερο */
+  height: 12px;       /* πιο ψηλό */
+  font-size: 15.5px;    /* μεγαλύτερη γραμματοσειρά */
+  text-align: center; /* κέντρο το νούμερο */
+  border-radius: 6px; /* λίγο στρογγυλεμένο */
+  
+  border: 2px solid #72a6fa;  /* πιο χοντρό μπλε περίγραμμα */
+  background-color: #121212;     /* σκουρόχρωμο background */
+  color: #fff;                /* λευκό το νούμερο */
+}
+
+.end-buttons {
+	position: fixed;
+	left: 50%;
+	transform: translateX(-50%);
+	bottom: max(30px, env(safe-area-inset-bottom));
+	display: flex;
+	flex-direction: row;    /* ➡️ τώρα πάνε οριζόντια */
+	gap: 12px;              /* κενό ανάμεσά τους */
+	z-index: 3000;
+
+	/* background: rgba(10,15,40,0.35);
+	border: 1px solid rgba(127,179,255,0.35);
+	border-radius: 14px;
+	padding: 10px 14px;
+	backdrop-filter: saturate(140%) blur(2px); */
+}
+
+.end-buttons button {
+	margin: 0;
+	flex: 1;                /* παίρνουν ίδιο πλάτος */
+	white-space: nowrap;    /* για να μη σπάνε οι γραμμές */
+}
+
+.end-buttons button {
+	white-space: normal !important; /* επιτρέπει σπάσιμο γραμμής */
+	line-height: 1.1;
+	text-align: center;             /* κέντρο και στις 2 σειρές */
+	padding: 6px 6px;
+	min-width: 150px;               /* λίγο σταθερό πλάτος για ομοιομορφία */
+    font-size: 15.5px;
+}
+
+.btn-faded-disabled {
+	opacity: 0.45;
+	pointer-events: none; /* δεν «πατιέται» καν */
+	filter: grayscale(0.15);
+	transition: opacity 200ms ease;
+}
+
+/* 🔴 Vignette overlay για την οθόνη επιλογής Καμικάζι */
+#kamikazeVignette {
+	position: fixed;
+	inset: 0;
+	pointer-events: none; /* να μην εμποδίζει τα κλικ */
+	background: radial-gradient(ellipse at center, rgba(139,0,0,0.40) 0%, rgba(0,0,0,0.85) 100%);
+	opacity: 0;
+	transition: opacity 0.5s ease;
+	z-index: 999; /* πάνω απ' όλα τα UI */
+}
+#kamikazeVignette.active {
+	opacity: 1;
+}
+
+/* ♨️ Οπτικό fade/disable για ειδικά κουμπιά (Mayor/Kamikaze) */
+.btn-faded-disabled {
+	opacity: 0.45;
+	pointer-events: none;
+	filter: grayscale(0.15);
+	transition: opacity 200ms ease;
+}
+
+/* 🎯 Κουμπιά επιλογής στόχου Καμικάζι */
+.kamikaze-choice-btn {
+	display: inline-block;
+	margin:  10px 8px;
+	padding: 8px 14px;
+	border-radius: 10px;
+	background: #5a0c0c;
+	border: 2px solid #8a1717;
+	color: #bab6d1;
+	font-weight: 700;
+}
+.kamikaze-choice-btn:hover {
+	background: #8a1717;
+    box-shadow: 0 0 12px #5a0c0c;
+}
+
+/* ▶️ Overlay για resume αφήγησης */
+#resumeOverlay{
+	position: fixed;
+	inset: 0;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	z-index: 3000;
+	background: rgba(0,0,0,0.55);
+	backdrop-filter: blur(2px);
+}
+#resumeOverlay.show{ display: flex; }
+
+#resumeOverlay .resume-card{
+	background: #0f1636;
+	border: 2px solid #7fb3ff;
+	color: #e9eeff;
+	box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+	border-radius: 16px;
+	padding: 16px 18px;
+	min-width: 240px;
+	text-align: center;
+}
+#resumeOverlay .resume-card p{
+	margin: 0 0 10px 0;
+	font-weight: 700;
 }
