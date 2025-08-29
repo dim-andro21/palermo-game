@@ -191,7 +191,33 @@ function initVoteHeaderEvents() {
 	const menuKill = document.getElementById("btnMenuKill");
 	if (menuNight) menuNight.onclick = openInGameMenu;
 	if (menuKill) menuKill.onclick = openInGameMenu;
+
+	if (menuNight) menuNight.onclick = openInGameMenu;
+	if (menuKill) menuKill.onclick = openInGameMenu;
+
+	// ➕ ενημέρωσε ορατότητα ειδικών ρόλων
+	updateSpecialRoleButtonsVisibility();
 }
+
+
+// Δείξε τα ειδικά κουμπιά μόνο αν οι ρόλοι υπάρχουν στην τρέχουσα παρτίδα
+function roleInCurrentGame(role) {
+	return Array.isArray(players) && players.some(p => p.role === role);
+}
+
+function updateSpecialRoleButtonsVisibility() {
+	const mayorBtn = document.getElementById("btnMayor");
+	const kamikazeBtn = document.getElementById("btnKamikaze");
+
+	if (mayorBtn) {
+		mayorBtn.style.display = roleInCurrentGame("Mayor") ? "inline-flex" : "none";
+	}
+	if (kamikazeBtn) {
+		kamikazeBtn.style.display = roleInCurrentGame("Kamikaze") ? "inline-flex" : "none";
+	}
+}
+
+
 
 // ===== Hard reset helpers =====
 function stopAllTimersAndAudio() {
@@ -249,6 +275,11 @@ function resetGameState(keepNames = false) {
 
 	// καθάρισε UI
 	hideAllPhases();
+
+	const mayorBtn = document.getElementById("btnMayor");
+	const kamikazeBtn = document.getElementById("btnKamikaze");
+	if (mayorBtn) mayorBtn.style.display = "none";
+	if (kamikazeBtn) kamikazeBtn.style.display = "none";
 
 	// reset βασικών state
 	totalVotes = 0;
@@ -1011,6 +1042,9 @@ function startDay() {
 	document.getElementById("dayPhase").style.display = "block";
 	players.forEach(p => p.votes = 0);
 
+	// ➕ ανανέωση ορατότητας κουμπιών Δήμαρχου/Καμικάζι
+	updateSpecialRoleButtonsVisibility();
+
 	const votingDiv = document.getElementById("votingArea");
 
 	if (noMoreNights) {
@@ -1082,6 +1116,7 @@ function startDiscussionTimer() {
 
 
 function renderVotingInterface() {
+	updateSpecialRoleButtonsVisibility(); // ➕
 	const votingDiv = document.getElementById("votingArea");
 	votingDiv.innerHTML = ""; // Καθαρίζει προηγούμενα μηνύματα
 
