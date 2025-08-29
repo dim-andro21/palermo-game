@@ -504,14 +504,14 @@ strong {
 	letter-spacing: .3px;
 	font-weight: 600;
 	/* 🔧 πιο άνετο padding */
-	padding: 60px 180px;   
+	padding: 9px 14px;   
 	transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
 }
 
 /* Override Menu button spacing */
 #btnMenu, 
 #btnMenuKill {
-	padding: 9px 35px !important;   /* πιο άνετο padding */
+	padding: 9px 14px !important;   /* πιο άνετο padding */
 }
 
 /* 👔🧨 Δήμαρχος & Καμικάζι κουμπιά με παρόμοιο στυλ με Menu */
@@ -869,3 +869,30 @@ input[type="checkbox"]:checked::after {
     box-shadow: 0 0 12px #5a0c0c;
 }
 
+/* ▶️ Overlay για resume αφήγησης */
+#resumeOverlay{
+	position: fixed;
+	inset: 0;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	z-index: 3000;
+	background: rgba(0,0,0,0.55);
+	backdrop-filter: blur(2px);
+}
+#resumeOverlay.show{ display: flex; }
+
+#resumeOverlay .resume-card{
+	background: #0f1636;
+	border: 2px solid #7fb3ff;
+	color: #e9eeff;
+	box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+	border-radius: 16px;
+	padding: 16px 18px;
+	min-width: 240px;
+	text-align: center;
+}
+#resumeOverlay .resume-card p{
+	margin: 0 0 10px 0;
+	font-weight: 700;
+}

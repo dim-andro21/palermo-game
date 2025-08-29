@@ -17,6 +17,8 @@ let nextPlayerBusy = false;
 let noMoreNights = false; // όταν πεθάνει η Μητέρα Τερέζα, δεν ξαναπέφτει νύχτα
 let mayorRevealed = false;  // 👉 Δήμαρχος: αποκάλυψη για διπλή ψήφο
 let kamikazeRevealed = false;
+let lastNarrationTime = 0;
+let narrationInterruptedByOS = false; // π.χ. κλείδωμα οθόνης, app switch, ακουστικά
 
 
 
@@ -51,6 +53,66 @@ function playNextMusicTrack() {
 	bgMusic.play().catch((err) => {
 		console.warn("🔇 Δεν επιτράπηκε autoplay:", err);
 	});
+}
+
+
+function showResumeOverlay(){
+	const ov = document.getElementById("resumeOverlay");
+	if (ov) ov.classList.add("show");
+}
+function hideResumeOverlay(){
+	const ov = document.getElementById("resumeOverlay");
+	if (ov) ov.classList.remove("show");
+}
+
+// Προσπάθησε αυτόματο resume αν επιτρέπεται, αλλιώς δείξε overlay
+function tryAutoResumeNarration(){
+	if (!narrationAudio) return;
+	if (!narrationInterruptedByOS) return;
+
+	// γύρνα λίγο πίσω για ασφαλές resume (π.χ. 0.15s)
+	const t = Math.max(0, lastNarrationTime - 0.15);
+	narrationAudio.currentTime = t;
+
+	narrationAudio.play()
+		.then(() => {
+			narrationInterruptedByOS = false;
+			hideResumeOverlay();
+		})
+		.catch(() => {
+			// απαιτεί gesture → δείξε overlay
+			showResumeOverlay();
+		});
+}
+
+function initRobustAudioHandlers(){
+	// Κουμπί resume στο overlay
+	const btn = document.getElementById("resumeBtn");
+	if (btn) {
+		btn.onclick = () => {
+			tryAutoResumeNarration();
+		};
+	}
+
+	// Όταν η σελίδα ξαναγίνει ορατή ή το window πάρει focus, προσπάθησε auto-resume
+	document.addEventListener("visibilitychange", () => {
+		if (document.visibilityState === "visible") {
+			tryAutoResumeNarration();
+		}
+	});
+	window.addEventListener("focus", tryAutoResumeNarration);
+
+	// Αλλαγή συσκευής ήχου (plug/unplug ακουστικά) → σημείωσε διακοπή
+	if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+		navigator.mediaDevices.addEventListener("devicechange", () => {
+			if (narrationAudio) {
+				// Σημείωσε “εξωτερική” διακοπή ώστε να κάνουμε resume
+				lastNarrationTime = narrationAudio.currentTime || 0;
+				narrationInterruptedByOS = true;
+				showResumeOverlay();
+			}
+		});
+	}
 }
 
 
@@ -112,6 +174,7 @@ function playSFX(filename) {
 document.addEventListener("DOMContentLoaded", () => {
 	updateFooterVisibility();
 	playNextMusicTrack(); // 🎵 Ξεκινά η μουσική μόλις φορτώσει η σελίδα
+	initRobustAudioHandlers(); // ⬅️ νέο
 });
 
 function openInGameMenu() {
@@ -490,6 +553,17 @@ function playNarrationClip(relPath, onEnd) {
 			if (onEnd) onEnd();
 		}, 800);
 	};
+
+	narrationAudio.addEventListener("pause", () => {
+		// αν έκανε pause ΧΩΡΙΣ να είναι paused λόγω in-game menu (narrationPaused)
+		// και χωρίς να έχει τελειώσει φυσιολογικά
+		if (!narrationAudio.ended && !narrationPaused) {
+			lastNarrationTime = narrationAudio.currentTime || 0;
+			narrationInterruptedByOS = true;
+			showResumeOverlay();
+		}
+	});
+
 	const tryPlay = () => {
 		if (!narrationPaused) {
 			narrationAudio.load();
@@ -1092,6 +1166,15 @@ function startIntroduction() {
 			}, 800);
 		};
 
+		narrationAudio.addEventListener("pause", () => {
+			if (!narrationAudio.ended && !narrationPaused) {
+				lastNarrationTime = narrationAudio.currentTime || 0;
+				narrationInterruptedByOS = true;
+				showResumeOverlay();
+			}
+		});
+
+
 		// ✅ χειρισμός pause/resume όπως στη νύχτα
 		const playIfNotPaused = () => {
 			if (!narrationPaused) {
@@ -1209,6 +1292,16 @@ function startNight() {
 				nextLine();
 			}, 800);
 		};
+
+		narrationAudio.addEventListener("pause", () => {
+			if (!narrationAudio.ended && !narrationPaused) {
+				lastNarrationTime = narrationAudio.currentTime || 0;
+				narrationInterruptedByOS = true;
+				showResumeOverlay();
+			}
+		});
+
+
 		narrationAudio.load();
 		narrationAudio.play().catch(() => { index++; nextLine(); });
 	}
@@ -2286,7 +2379,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "29 Αυγούστου 2025 – 22:31 Version 2.0"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "29 Αυγούστου 2025 – 22:51 Version 2.0"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
