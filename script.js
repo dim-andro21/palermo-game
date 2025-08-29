@@ -12,10 +12,6 @@ let defaultVibrationType = "short";
 let narrationPaused = false;
 let narrationTimeout = null;
 let narrationAudio = null;
-let citizenCount = 0; // πόσοι Πολίτες επιλέχθηκαν από τον χρήστη
-let nextPlayerBusy = false;
-
-
 
 
 const musicTracks = [
@@ -139,14 +135,6 @@ function closeInGameMenu() {
 			narrationPaused = false;
 		}
 	}
-}
-
-function clearOnFirstInteraction(input) {
-	if (!input) return;
-	const clear = () => { input.value = ""; };
-	// Μια φορά μόνο, είτε σε focus είτε σε πρώτο tap/click (mobile/desktop)
-	input.addEventListener("focus", clear, { once: true });
-	input.addEventListener("pointerdown", clear, { once: true });
 }
 
 
@@ -345,10 +333,7 @@ const roleNames = [
 	"MotherTeresa",
 	"Mayor"
 ];
-
-// ΠΑΛΙΑ: ["Citizen","Citizen","Hidden Killer","Known Killer"]
-// ΝΕΑ λίστα υποχρεωτικών:
-const requiredRoles = ["Hidden Killer", "Known Killer", "Police officer"];
+const requiredRoles = ["Citizen", "Citizen", "Hidden Killer", "Known Killer"];
 
 let numPlayers = 0;
 let chosenRoles = [];
@@ -356,45 +341,22 @@ let players = [];
 
 let currentPlayerIndex = 0;
 
-function renderRequiredRoles() {
-	const container = document.getElementById("extraRolesContainer");
-	if (!container) return;
-
-	// αφαίρεσε παλιές required-γραμμές (αν ξαναμπαίνεις στη σελίδα)
-	container.querySelectorAll(".role-row[data-kind='required']").forEach(el => el.remove());
-
-	// βάλε τους required ΠΡΙΝ από τη γραμμή Πολίτη
-	const citizenRow = container.querySelector(".role-row[data-fixed='citizen']");
-
-	requiredRoles.forEach(role => {
-		const row = document.createElement("div");
-		row.className = "role-row";
-		row.dataset.kind = "required";            // ώστε να μπορούμε να τα καθαρίζουμε
-		row.innerHTML = `
-			<div class="role-ctrl"><span class="bullet"></span></div>
-			<div class="role-name">${translateRole(role)}</div>
-		`;
-		container.insertBefore(row, citizenRow);   // εμφάνιση πάνω από «Πολίτης»
-	});
-}
-
-
 // Save selected setting when starting game
 function startRoleSelection() {
 	requestWakeLock();
 
 	const trackSelect = document.getElementById("trackSelect");
-	if (trackSelect) selectedTrack = trackSelect.value;
+	if (trackSelect) {
+		selectedTrack = trackSelect.value;
+	}
 
 	const select = document.getElementById("discussionTime");
-	if (select) discussionDuration = parseInt(select.value, 10);
+	if (select) {
+		discussionDuration = parseInt(select.value);
+	}
 
-	// ✅ robust ανάγνωση παικτών: κενό => NaN => ίδιο alert με <5
-	const numInput = document.getElementById("numPlayers");
-	const raw = (numInput?.value ?? "").trim();
-	numPlayers = parseInt(raw, 10);
-
-	if (!Number.isInteger(numPlayers) || numPlayers < 5) {
+	numPlayers = parseInt(document.getElementById("numPlayers").value);
+	if (numPlayers < 5) {
 		alert("You need at least 5 players!");
 		return;
 	}
@@ -403,138 +365,62 @@ function startRoleSelection() {
 		return;
 	}
 
-	// κρύψε το setup
 	document.getElementById("setup").style.display = "none";
 
-	// reset επιλογών
-	chosenRoles = [];        // προαιρετικοί ρόλοι (Lovers προσθέτει 2)
-	citizenCount = 0;        // μετρητής Πολίτων
-
-	// === ΜΟΝΟ ο τίτλος "Επίλεξε Χ επιπλέον ρόλους" + λίστα ρόλων ===
 	const roleDiv = document.getElementById("roleSelection");
 	roleDiv.innerHTML = `
-		<h3 id="extraRolesHeader"></h3>
-
-		<div id="extraRolesContainer">
-			<!-- Πολίτης: ΑΠΛΟ number input -->
-			<div class="role-row">
-				<div class="role-ctrl">
-					<input id="citizenInput" type="number" value="2" min="0" step="1" />
-				</div>
-				<div class="role-name">Πολίτης</div>
-			</div>
-		</div>
-
-		<br><button onclick="startNameInput()">Continue</button>
+		<h3>Έχεις επιλέξει:</h3>
+		<ul id="chosenRolesList">
+			<li>Citizen ×2</li>
+			<li>Hidden Killer</li>
+			<li>Known Killer</li>
+		</ul>
+		<h3 id="extraRolesHeader">Επίλεξε ${numPlayers - 4} επιπλέον ρόλους:</h3>
 	`;
+
+	// Input για πολλαπλούς Citizen
+	roleDiv.innerHTML += `
+		<label>
+			Πολίτης
+			<input type="number" id="extraCitizenCount" value="0" min="0" max="${numPlayers - 4}" onchange="updateCitizenSelection()">
+		</label><br>
+	`;
+
+	// Checkboxes για άλλους ρόλους
+	for (let i = 3; i < roleNames.length; i++) {
+		if (roleNames[i] === "Citizen") continue;
+
+		if (roleNames[i] === "Lovers") {
+			roleDiv.innerHTML += `
+				<label>
+					<input type="checkbox" id="addLovers" onchange="toggleLovers(this)">
+					${translateRole("Lovers")} (2 άτομα)
+				</label><br>`;
+			continue;
+		}
+
+		roleDiv.innerHTML += `
+			<label>
+				<input type="checkbox" value="${roleNames[i]}" onchange="updateRoleSelection(this)">
+				${translateRole(roleNames[i])}
+			</label><br>`;
+	}
+
+	roleDiv.innerHTML += `<br><button onclick="startNameInput()">Continue</button>`;
 	roleDiv.style.display = "block";
 
-	// citizen: αρχικοποίηση + listener
-	citizenCount = 2;
-	const citizenInput = document.getElementById("citizenInput");
-	citizenInput.addEventListener("input", refreshCitizenMax);
-	clearOnFirstInteraction(citizenInput);    // ✅ αδειάζει με το πάτημα, μία φορά
-	refreshCitizenMax();
+	chosenRoles = [...requiredRoles];
+	updateChosenRolesList();
 
-	// container της λίστας
-	const container = document.getElementById("extraRolesContainer");
-
-	// ➤ ΥΠΟΧΡΕΩΤΙΚΟΙ ρόλοι (πάνω από τον «Πολίτη»)
-	requiredRoles.forEach(role => {
-		const row = document.createElement("div");
-		row.className = "role-row";
-		row.innerHTML = `
-			<div class="role-ctrl"><span class="bullet"></span></div>
-			<div class="role-name">${translateRole(role)}</div>
-		`;
-		container.insertBefore(row, container.firstChild);
-	});
-
-	// ➤ ΠΡΟΑΙΡΕΤΙΚΟΙ ρόλοι (κάτω από τον «Πολίτη»)
-	const extras = roleNames.filter(r => r !== "Citizen" && !requiredRoles.includes(r));
-	extras.forEach(role => {
-		const id = `role_${role.replace(/\s+/g, "_")}`;
-		const row = document.createElement("div");
-		row.className = "role-row";
-		row.innerHTML = `
-			<div class="role-ctrl">
-				<input type="checkbox" id="${id}" onchange="toggleExtraRole('${role}', this.checked)">
-			</div>
-			<label class="role-name" for="${id}">
-				${translateRole(role)}${role === "Lovers" ? " <span class='hint'>(2 άτομα)</span>" : ""}
-			</label>
-		`;
-		container.appendChild(row);
-	});
-
-	// ενημέρωσε το "Επίλεξε Χ επιπλέον ρόλους"
-	updateRemainingRolesText();
-
-}
-
-
-
-function currentSlotsUsed() {
-	// slots που έχουν δεσμευτεί: υποχρεωτικοί + πολίτες + προαιρετικοί
-	// (οι Lovers έχουν μπει δύο φορές στη chosenRoles, οπότε μετριούνται ως 2)
-	return requiredRoles.length + citizenCount + chosenRoles.length;
-}
-
-// function changeCitizen(delta) {
-// 	const badge = document.getElementById("citizenCountBadge");
-// 	if (!badge) return;
-
-// 	const proposed = Math.max(0, citizenCount + delta); // ✅ min 0
-// 	const deltaNeeded = proposed - citizenCount;
-
-// 	// Χώρος για την αλλαγή;
-// 	const spaceLeft = numPlayers - (requiredRoles.length + chosenRoles.length + citizenCount);
-// 	if (deltaNeeded > 0 && deltaNeeded > spaceLeft) return;
-
-// 	citizenCount = proposed;
-// 	badge.textContent = String(citizenCount);
-// 	updateRemainingRolesText();
-// 	refreshCitizenMax();
-// }
-
-
-
-
-function toggleExtraRole(role, checked) {
-	if (role === "Lovers") {
-		if (checked) {
-			// χρειάζονται 2 slots
-			if (numPlayers - currentSlotsUsed() < 2) {
-				// όχι αρκετός χώρος → ξε-τσεκάρισμα
-				const id = `role_${role.replace(/\s+/g, "_")}`;
-				document.getElementById(id).checked = false;
-				return;
-			}
-			chosenRoles.push("Lovers", "Lovers");
-		} else {
-			// αφαίρεσε ΟΛΑ τα "Lovers"
-			chosenRoles = chosenRoles.filter(r => r !== "Lovers");
-		}
-	} else {
-		if (checked) {
-			if (numPlayers - currentSlotsUsed() <= 0) {
-				const id = `role_${role.replace(/\s+/g, "_")}`;
-				document.getElementById(id).checked = false;
-				return;
-			}
-			chosenRoles.push(role);
-		} else {
-			const i = chosenRoles.indexOf(role);
-			if (i !== -1) chosenRoles.splice(i, 1);
-		}
-	}
-	updateRemainingRolesText();
-	refreshCitizenMax();
+	// Προκαθορισμένη ανακατεύθυνση ρόλων πριν την είσοδο ονομάτων
+	chosenRoles = shuffleArray(chosenRoles);
 }
 
 function updateRemainingRolesText() {
 	const header = document.getElementById("extraRolesHeader");
-	const remaining = numPlayers - currentSlotsUsed();
+	if (!header) return;
+
+	const remaining = numPlayers - chosenRoles.length;
 	header.textContent = `Επίλεξε ${remaining} επιπλέον ρόλους:`;
 }
 
@@ -564,52 +450,14 @@ function updateRoleSelection(checkbox) {
 	updateChosenRolesList();
 }
 
-function refreshCitizenMax() {
-	const input = document.getElementById("citizenInput");
-	if (!input) return;
-
-	// πόσα slots απομένουν συνολικά;
-	const max = Math.max(0, numPlayers - (requiredRoles.length + chosenRoles.length));
-	input.min = "0";			// ✅ όχι υποχρεωτικά 2
-	input.step = "1";
-	input.max = String(max);
-
-	// clamp τιμή input και sync με citizenCount
-	let val = parseInt(input.value, 10);
-	if (isNaN(val) || val < 0) val = 0;	// ✅ min = 0
-	if (val > max) val = max;
-	input.value = String(val);
-	citizenCount = val;
-
-	updateRemainingRolesText();
-}
-
-
-
-function buildFinalRoleList() {
-	// requiredRoles: ["Hidden Killer","Known Killer","Police officer"]
-	// citizenCount: πόσοι πολίτες επέλεξε ο χρήστης
-	const final = [...requiredRoles];
-	for (let i = 0; i < citizenCount; i++) final.push("Citizen");
-	return final.concat(chosenRoles);
-}
 
 function startNameInput() {
-	const finalRoles = buildFinalRoleList();
-
-	if (finalRoles.length !== numPlayers) {
-		const remaining = numPlayers - finalRoles.length;
-		alert(
-			remaining > 0
-				? `Χρειάζεσαι ακόμα ${remaining} ρόλο/ρόλους!`
-				: `Έχεις επιλέξει παραπάνω ρόλους από όσους χρειάζονται.`
-		);
+	if (chosenRoles.length !== numPlayers) {
+		alert(`You need exactly ${numPlayers} roles!`);
 		return;
 	}
 
-	// Τελική λίστα που θα μοιραστεί στους παίκτες
-	chosenRoles = shuffleArray(finalRoles);
-
+	chosenRoles = shuffleArray(chosenRoles);
 	document.getElementById("roleSelection").style.display = "none";
 	document.getElementById("nameInput").style.display = "block";
 
@@ -618,7 +466,6 @@ function startNameInput() {
 
 	renderNameInputStep();
 }
-
 
 function renderNameInputStep() {
 	const nameDiv = document.getElementById("nameInput");
@@ -687,14 +534,6 @@ function showRole() {
 }
 
 function nextPlayer() {
-	// 🛡️ αγνόησε έξτρα πατήματα
-	if (nextPlayerBusy) return;
-	nextPlayerBusy = true;
-
-	// απενεργοποίησε αμέσως το κουμπί για οπτικό feedback
-	const nextBtn = document.querySelector("#roleReveal button");
-	if (nextBtn) nextBtn.disabled = true;
-
 	const roleDiv = document.getElementById("roleReveal");
 	roleDiv.classList.add("fade-out");
 
@@ -702,35 +541,25 @@ function nextPlayer() {
 		currentPlayerIndex++;
 
 		if (currentPlayerIndex >= numPlayers) {
-			// Τελευταίος παίκτης → πάμε στα αποτελέσματα
 			document.getElementById("nameInput").style.display = "none";
 			showResults();
-			nextPlayerBusy = false; // ασφαλές reset
-			return;
+		} else {
+			// Αλλάζουμε μόνο το κείμενο και καθαρίζουμε
+			document.getElementById("playerHeader").textContent = `Παίκτη ${currentPlayerIndex + 1} - Γράψε το όνομα σου:`;
+			const input = document.getElementById("playerName");
+			input.value = "";
+			input.disabled = false;
+
+			const button = document.querySelector("#nameInput button");
+			button.disabled = false;
+			button.textContent = "Δες τον ρόλο σου";
+
+			const roleDiv = document.getElementById("roleReveal");
+			roleDiv.classList.remove("fade-out");
+			roleDiv.innerHTML = "";
 		}
-
-		// Επόμενος παίκτης: καθάρισμα / reset UI
-		document.getElementById("playerHeader").textContent =
-			`Παίκτη ${currentPlayerIndex + 1} - Γράψε το όνομα σου:`;
-
-		const input = document.getElementById("playerName");
-		input.value = "";
-		input.disabled = false;
-
-		// ξαναενεργοποίησε το "Δες τον ρόλο σου" (το πρώτο κουμπί στη φόρμα ονομάτων)
-		const showRoleBtn = document.querySelector("#nameInput > button, #nameInput button");
-		if (showRoleBtn) {
-			showRoleBtn.disabled = false;
-			showRoleBtn.textContent = "Δες τον ρόλο σου";
-		}
-
-		roleDiv.classList.remove("fade-out");
-		roleDiv.innerHTML = "";
-
-		nextPlayerBusy = false; // ✅ τώρα επιτρέπεται νέο πάτημα
 	}, 400);
 }
-
 
 function showResults() {
 	const resultDiv = document.getElementById("result");
@@ -1248,29 +1077,28 @@ function finishVoting() {
 	}, 4500);
 }
 
-// ==========================
-// ΔΕΥΤΕΡΗ ΝΥΧΤΑ (fixed + extended)
-// ==========================
+
+
 function startSecondNight() {
-	// ✅ Early-win: 2 ζωντανοί = 1 δολοφόνος + 1 καλός (ο ρουφιάνος δεν μετράει ως «καλός»)
+	// ✅ Early-win: αν μένουν 2 ζωντανοί = 1 δολοφόνος + 1 καλός → κερδίζουν οι κακοί
 	{
 		const alive = players.filter(p => p.isAlive);
-		const killers = alive.filter(p => isKiller(p)).length;
-		const goods = alive.filter(p => !isKiller(p) && p.role !== "Snitch").length;
+		const killers = alive.filter(isKiller).length;
+		const goods	= alive.filter(p => !isKiller(p) && p.role !== "Snitch").length; // ο ρουφιάνος δεν μετράει ως «καλός»
 
 		if (alive.length === 2 && killers === 1 && goods === 1) {
 			showEndMessage("ΟΙ ΚΑΚΟΙ ΚΕΡΔΙΣΑΝ!", "bad");
-			return; // μην συνεχίσεις στη φάση δολοφονίας
+			return; // μην μπαίνεις στη φάση δολοφονίας
 		}
 	}
-	
+
 	// καθάρισε ό,τι έπαιζε πριν
 	stopAllTimersAndAudio?.();
 	narrationPaused = false;
 
 	// UI setup
 	const killOverlay = document.getElementById("nightKillChoice");
-	if (killOverlay) killOverlay.style.display = "none"; // κρύψε «Δολοφονία»
+	if (killOverlay) killOverlay.style.display = "none";
 	document.getElementById("dayPhase").style.display = "none";
 	setBackground("night");
 	document.getElementById("nightPhase").style.display = "block";
@@ -1279,58 +1107,7 @@ function startSecondNight() {
 	nightTextDiv.innerHTML = "";
 	nightTextDiv.style.opacity = 0;
 
-	// Γραμμές μέχρι και «…ο παίκτης ανακοινώνει ποιον σκότωσαν οι δολοφόνοι.»
-	const scriptLines = [
-		"Η ψηφοφορία ολοκληρώθηκε.",
-		"Έτσι λοιπόν ο ένοχος βρίσκεται εκτός παιχνιδιού.",
-		"Μια νύχτα πέφτει στο Παλέρμο κι οι παίκτες κλείνουν τα μάτια τους.",
-		"Ήρθε η σειρά των δολοφόνων να επιλέξουν το πρώτο τους θύμα.",
-		"Ο παίκτης που κρίθηκε ένοχος κι οι δύο δολοφόνοι ανοίγουν τα μάτια τους.",
-		"Οι δολοφόνοι συνεννοούνται και δείχνουν στον παίκτη εκτός παιχνιδιού ποιο είναι το θύμα τους.",
-		"Στη συνέχεια οι δολοφόνοι κλείνουν τα μάτια τους και ο παίκτης ανακοινώνει ποιον σκότωσαν οι δολοφόνοι."
-	];
-
-	// Τα 2 audio parts της 2ης νύχτας (στον φάκελο second-night/)
-	const audioParts = [
-		"second-night/night2_vote_end.wav",
-		"second-night/night2_core.wav"
-	];
-
-	// ---- Εμφάνιση κειμένων σταδιακά ----
-	let textIndex = 0;
-	let textTimer = null;
-	let showTextActive = true;
-
-	function showNextLine() {
-		if (!showTextActive) return;
-		if (textIndex >= scriptLines.length) return;
-
-		nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[textIndex]}</div>`;
-		nightTextDiv.style.opacity = 1;
-
-		textIndex++;
-		textTimer = setTimeout(showNextLine, 3500); // ρυθμός εμφάνισης
-	}
-
-	// ---- Αναπαραγωγή των 2 clips στη σειρά (με pause/resume) ----
-	let partIndex = 0;
-
-	function playNextPart() {
-		if (partIndex >= audioParts.length) {
-			// Τέλος 2ου clip → σταμάτα τα κείμενα & άνοιξε τη «Δολοφονία»
-			showTextActive = false;
-			if (textTimer) { clearTimeout(textTimer); textTimer = null; }
-			showKillChoiceMenu(); // αυτή κρύβει το nightPhase και δείχνει μόνο την «Δολοφονία»
-			return;
-		}
-
-		// παίζει ένα clip και στο τέλος του πάμε στο επόμενο
-		playNarrationClip(audioParts[partIndex], () => {
-			partIndex++;
-			playNextPart();
-		});
-	}
-
+	// … (όπως το έχεις: scriptLines, audioParts, showNextLine, playNextPart)
 	initVoteHeaderEvents();
 	showNextLine();
 	playNextPart();
@@ -1499,12 +1276,11 @@ function showEndMessage(message, winnerType = null) {
 	`;
 
 	setTimeout(() => {
-	resultDiv.innerHTML += `
-		<div class="end-buttons" id="endButtons">
+		resultDiv.innerHTML += `
+			<br><br>
 			<button onclick="startNewGameSamePlayers()">Νέο παιχνίδι με ίδιους παίκτες</button>
 			<button onclick="startNewGameNewPlayers()">Νέο παιχνίδι με νέους παίκτες</button>
-		</div>
-	`;
+		`;
 	}, 3000);
 }
 
@@ -1521,101 +1297,51 @@ function startNewGameNewPlayers() {
 }
 
 function restartSamePlayers() {
-	// Μπαίνουμε εδώ ΑΦΟΥ έχει κληθεί resetGameState(true)
-	requestWakeLock();
-
-	// Ίδιοι παίκτες (κρατάμε ονόματα)
-	numPlayers = players.length;
-
-	// --- Ανακατασκευή προηγούμενης σύνθεσης από το chosenRoles της προηγούμενης παρτίδας ---
-	// Προηγούμενοι Πολίτες:
-	const previousCitizens = (Array.isArray(chosenRoles) ? chosenRoles : []).filter(r => r === "Citizen").length;
-
-	// Προηγούμενα extras (ΧΩΡΙΣ Citizens και ΧΩΡΙΣ τους required ρόλους)
-	const previousExtras = (Array.isArray(chosenRoles) ? chosenRoles : []).filter(r => {
-		return r !== "Citizen" && !(requiredRoles || []).includes(r);
-	});
-
-	// ΤΩΡΑ ορίζουμε τη νέα "πηγή αλήθειας":
-	// - citizenCount = #Citizens που έπαιξαν πριν
-	// - chosenRoles   = ΜΟΝΟ τα extras (Lovers μένουν 2 φορές, όπως παλιά)
-	citizenCount = previousCitizens;
-	chosenRoles = [...previousExtras];
-
-	// --- UI setup ---
-	const result = document.getElementById("result");
-	if (result) result.style.display = "none";
-	const setup = document.getElementById("setup");
-	if (setup) setup.style.display = "none";
+	// εδώ μπαίνουμε ΑΦΟΥ έγινε resetGameState(true)
+	document.getElementById("pageTitle").textContent = "ΠΑΛΕΡΜΟ";
 
 	const roleDiv = document.getElementById("roleSelection");
 	roleDiv.innerHTML = `
-		<h3 id="extraRolesHeader"></h3>
-
-		<div id="extraRolesContainer">
-			<!-- Πολίτης: απλό number input (όχι υποχρεωτικοί) -->
-			<div class="role-row">
-				<div class="role-ctrl">
-					<input id="citizenInput" type="number" value="${citizenCount}" min="0" step="1" />
-				</div>
-				<div class="role-name">Πολίτης</div>
-			</div>
-		</div>
-
-		<br><button onclick="applyRolesToSamePlayers()">Continue</button>
+		<h3>Έχεις επιλέξει:</h3>
+		<ul id="chosenRolesList"></ul>
+		<h3 id="extraRolesHeader">Επίλεξε ${numPlayers - 4} επιπλέον ρόλους:</h3>
 	`;
-	roleDiv.style.display = "block";
 
-	const container = document.getElementById("extraRolesContainer");
+	roleDiv.innerHTML += `
+		<label>
+			Πολίτης
+			<input type="number" id="extraCitizenCount" value="${chosenRoles.filter(r => r==='Citizen').length - 2}" 
+				min="0" max="${numPlayers - 4}" onchange="updateCitizenSelection()">
+		</label><br>
+	`;
 
-	// ΥΠΟΧΡΕΩΤΙΚΟΙ (μόνο προβολή)
-	if (typeof requiredRoles !== "undefined" && Array.isArray(requiredRoles)) {
-		const uniqueRequired = [...new Set(requiredRoles)];
-		uniqueRequired.reverse().forEach(role => {
-			const row = document.createElement("div");
-			row.className = "role-row";
-			row.innerHTML = `
-				<div class="role-ctrl"><span class="bullet"></span></div>
-				<div class="role-name">${translateRole(role)}</div>
-			`;
-			container.insertBefore(row, container.firstChild);
-		});
+	for (let i = 3; i < roleNames.length; i++) {
+		if (roleNames[i] === "Citizen") continue;
+
+		if (roleNames[i] === "Lovers") {
+			const checked = chosenRoles.filter(r => r==="Lovers").length === 2 ? "checked" : "";
+			roleDiv.innerHTML += `
+				<label>
+					<input type="checkbox" id="addLovers" onchange="toggleLovers(this)" ${checked}>
+					${translateRole("Lovers")} (2 άτομα)
+				</label><br>`;
+			continue;
+		}
+
+		const checked = chosenRoles.includes(roleNames[i]) ? "checked" : "";
+		roleDiv.innerHTML += `
+			<label>
+				<input type="checkbox" value="${roleNames[i]}" onchange="updateRoleSelection(this)" ${checked}>
+				${translateRole(roleNames[i])}
+			</label><br>`;
 	}
 
-	// ΠΡΟΑΙΡΕΤΙΚΟΙ ρόλοι (checkboxes)
-	const extras = roleNames.filter(r => r !== "Citizen" && !(requiredRoles || []).includes(r));
-	extras.forEach(role => {
-		const id = `role_${role.replace(/\s+/g, "_")}`;
-		const alreadySelected = (role === "Lovers")
-			? (chosenRoles.filter(r => r === "Lovers").length >= 2)
-			: chosenRoles.includes(role);
+	roleDiv.innerHTML += `<br><button onclick="applyRolesToSamePlayers()">Continue</button>`;
 
-		const row = document.createElement("div");
-		row.className = "role-row";
-		row.innerHTML = `
-			<div class="role-ctrl">
-				<input type="checkbox" id="${id}" ${alreadySelected ? "checked" : ""}
-					onchange="toggleExtraRole('${role}', this.checked)">
-			</div>
-			<label class="role-name" for="${id}">
-				${translateRole(role)}${role === "Lovers" ? " <span class='hint'>(2 άτομα)</span>" : ""}
-			</label>
-		`;
-		container.appendChild(row);
-	});
-
-	// Πολίτες: listeners + UX
-	const citizenInput = document.getElementById("citizenInput");
-	citizenInput.addEventListener("input", refreshCitizenMax);
-	clearOnFirstInteraction(citizenInput);
-
-	// Ενημέρωσε όρια και header με βάση το νέο state (citizenCount + extras)
-	refreshCitizenMax();
 	updateRemainingRolesText();
+	updateChosenRolesList();
+	roleDiv.style.display = "block";
 }
-
-
-
 
 function restartNewNames() {
 	// αν δεν θέλεις reload, κάν' το «in-app»:
@@ -1629,40 +1355,33 @@ function restartNewNames() {
 
 
 function applyRolesToSamePlayers() {
-	// Φτιάξε την πλήρη λίστα ρόλων (required + citizens + extras)
-	const finalRoles = buildFinalRoleList();
-
-	if (finalRoles.length !== numPlayers) {
-		const remaining = numPlayers - finalRoles.length;
-		alert(
-			remaining > 0
-				? `Χρειάζεσαι ακόμα ${remaining} ρόλο/ρόλους!`
-				: `Έχεις επιλέξει παραπάνω ρόλους από όσους χρειάζονται.`
-		);
+	if (chosenRoles.length !== numPlayers) {
+		alert(`You need exactly ${numPlayers} roles!`);
 		return;
 	}
 
-	// Ανακάτεμα και ανάθεση στους ΙΔΙΟΥΣ παίκτες (ίδια ονόματα)
-	chosenRoles = shuffleArray(finalRoles);
+	// Ανακάτεμα ρόλων
+	chosenRoles = shuffleArray(chosenRoles);
+
+	// Εφαρμογή νέων ρόλων στους ίδιους παίκτες (ίδια ονόματα)
 	players.forEach((p, i) => {
-		p.assignRole(chosenRoles[i]);
+		p.assignRole(chosenRoles[i]);	// reset isAlive, votes, lives γίνεται μέσα στο assignRole
 	});
 
-	// Επανασύνδεση Lovers
+	// Σύνδεση Lovers ξανά αν υπάρχουν
 	const lovers = players.filter(p => p.role === "Lovers");
 	if (lovers.length === 2) {
 		lovers[0].linkedPartner = lovers[1];
 		lovers[1].linkedPartner = lovers[0];
 	}
 
-	// Συνέχεια στο flow αποκάλυψης ρόλων για τους ίδιους παίκτες
-	const roleDiv = document.getElementById("roleSelection");
-	roleDiv.style.display = "none";
-	const nameDiv = document.getElementById("nameInput");
-	nameDiv.style.display = "block";
-	showNextPlayerRole(); // όπως πριν, αποκαλύπτει ρόλο σειριακά
-}
+	// 👉 Αντί να πάμε κατευθείαν στο αποτέλεσμα,
+	// κλείνουμε την επιλογή ρόλων και ξεκινάμε το flow αποκάλυψης ρόλων
+	document.getElementById("roleSelection").style.display = "none";
 
+	currentPlayerIndex = 0;				// από τον πρώτο παίκτη
+	showNextPlayerRole();				// εμφανίζει "Δες τον νέο ρόλο σου" για κάθε παίκτη με τη σειρά
+}
 
 
 
@@ -1903,7 +1622,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "29 Αυγούστου 2025 – 23:48"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "29 Αυγούστου 2025 – 23:50"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
@@ -2005,13 +1724,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	// 👉 Επαναφορά δόνησης σε όλα τα κουμπιά
 	document.body.addEventListener("click", (e) => {
-		if (e.target.tagName === "BUTTON" || e.target.type === "checkbox") {
+		if (e.target.tagName === "BUTTON") {
 			vibratePattern(); // short vibration
 		}
 	});
-
-	const numPlayersInput = document.getElementById("numPlayers");
-	clearOnFirstInteraction(numPlayersInput);   // ✅ αδειάζει με το πάτημα, μία φορά
 });
 
 
