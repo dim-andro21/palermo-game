@@ -175,6 +175,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	updateFooterVisibility();
 	playNextMusicTrack(); // 🎵 Ξεκινά η μουσική μόλις φορτώσει η σελίδα
 	initRobustAudioHandlers(); // ⬅️ νέο
+
+	// 👉 Επαναφορά δόνησης σε όλα τα κουμπιά
+	document.body.addEventListener("click", (e) => {
+		if (e.target.tagName === "BUTTON" || e.target.type === "checkbox") {
+			vibratePattern(); // short vibration
+		}
+	});
 });
 
 function openInGameMenu() {
