@@ -15,8 +15,7 @@ let narrationAudio = null;
 let citizenCount = 0; // πόσοι Πολίτες επιλέχθηκαν από τον χρήστη
 let nextPlayerBusy = false;
 let noMoreNights = false; // όταν πεθάνει η Μητέρα Τερέζα, δεν ξαναπέφτει νύχτα
-let mayorRevealed = false;  // 👉 Δήμαρχος: αποκάλυψη για διπλή ψήφο
-let kamikazeRevealed = false;
+
 
 
 
@@ -143,13 +142,6 @@ function closeInGameMenu() {
 	}
 }
 
-function disableAndFade(el) {
-	if (!el) return;
-	el.disabled = true;
-	el.classList.add("btn-faded-disabled"); // CSS κάνει το fade & μπλοκάρει pointer-events
-}
-
-
 function clearOnFirstInteraction(input) {
 	if (!input) return;
 	const clear = () => { input.value = ""; };
@@ -158,118 +150,6 @@ function clearOnFirstInteraction(input) {
 	input.addEventListener("pointerdown", clear, { once: true });
 }
 
-function getAliveCount() {
-	return players.filter(p => p.isAlive).length;
-}
-
-function getMayor() {
-	return Array.isArray(players) ? players.find(p => p.role === "Mayor") : null;
-}
-
-function isMayorAlive() {
-	const m = getMayor();
-	return !!(m && m.isAlive);
-}
-
-// Πόσες ψήφοι απαιτούνται αυτόν τον γύρο
-function votesRequiredThisRound() {
-	let req = getAliveCount();
-	if (mayorRevealed && isMayorAlive()) req += 1;
-	return req;
-}
-
-function showKamikazeChoice(kamikaze) {
-	const votingDiv = document.getElementById("votingArea");
-	if (!votingDiv) return;
-
-	// ➕ Ενεργοποίησε vignette
-	const vignette = document.getElementById("kamikazeVignette");
-	if (vignette) vignette.classList.add("active");
-
-	// UI header
-	votingDiv.innerHTML = "<p><strong>Ο Καμικάζι αποκαλύφθηκε!</strong><br>Διάλεξε ποιον θα πάρει μαζί του.</p>";
-
-	// container για τα κουμπιά + το countdown
-	const listDiv = document.createElement("div");
-	votingDiv.appendChild(listDiv);
-
-	const countdownDiv = document.createElement("div");
-	countdownDiv.id = "voteCountdown"; // ίδιο id όπως στο voting/kill για ομοιομορφία
-	countdownDiv.style.marginTop = "12px";
-	votingDiv.appendChild(countdownDiv);
-
-	// helper: καθάρισε τυχόν ενεργό countdown και UI
-	function clearCountdownUI() {
-		clearInterval(countdownTimeout);
-		countdownTimeout = null;
-		countdownDiv.innerHTML = "";
-	}
-
-	// φτιάξε τα κουμπιά-στόχους
-	players.forEach((p) => {
-		if (!p.isAlive || p === kamikaze) return;
-
-		const btn = document.createElement("button");
-		btn.textContent = p.name;
-		btn.className = "kamikaze-choice-btn";
-
-		btn.onclick = () => {
-			// κάθε νέα επιλογή καθαρίζει παλιό timer
-			clearCountdownUI();
-
-			// 3″ αντίστροφη μέτρηση με Ακύρωση
-			let seconds = 3;
-
-			// κουμπί ακύρωσης (επαναφορά στην επιλογή στόχου)
-			const cancelBtn = document.createElement("button");
-			cancelBtn.textContent = "Ακύρωση";
-			cancelBtn.className = "cancel-vote-button";
-			cancelBtn.onclick = () => {
-				clearCountdownUI();
-				// αφήνουμε το vignette ενεργό για να συνεχίσει η επιλογή
-			};
-
-			// renderer
-			const render = () => {
-				countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds} `;
-				countdownDiv.appendChild(cancelBtn);
-			};
-			render();
-
-			// ξεκίνα το countdown
-			countdownTimeout = setInterval(() => {
-				seconds--;
-				if (seconds === 0) {
-					clearCountdownUI();
-
-					// Εκτέλεση: σκοτώνει στόχο + τον εαυτό του
-					eliminatePlayer(p, "Καμικάζι");
-					eliminatePlayer(kamikaze, "Καμικάζι");
-
-					// Reset ψήφων
-					players.forEach(x => x.votes = 0);
-					totalVotes = 0;
-
-					// Μήνυμα
-					votingDiv.innerHTML = `<p>💥 Ο Καμικάζι <strong>${kamikaze.name}</strong> πήρε μαζί του τον <strong>${p.name}</strong>!</p>`;
-
-					// Σβήσε το vignette
-					if (vignette) vignette.classList.remove("active");
-
-					// Συνέχισε τη ροή της μέρας
-					setTimeout(() => {
-						if (checkForGameEnd()) return;
-						renderVotingInterface();
-					}, 3000);
-				} else {
-					render();
-				}
-			}, 1000);
-		};
-
-		listDiv.appendChild(btn);
-	});
-}
 
 
 
@@ -285,47 +165,8 @@ function initVoteHeaderEvents() {
 	if (backdrop) backdrop.onclick = closeInGameMenu;
 
 	// placeholders
-	if (mayorBtn) {
-		mayorBtn.onclick = () => {
-			// Παίζει ο δήμαρχος & ζει;
-			const mayor = getMayor();
-			if (!mayor || !mayor.isAlive || mayorRevealed) return;
-
-			// Αποκάλυψη
-			mayorRevealed = true;
-
-			// Voice line αποκάλυψης (π.χ. audio/track1/reveal/mayor_reveal.wav)
-			// Αν θες άλλο path/όνομα, άλλαξέ το εδώ.
-			playNarrationClip("reveal/mayor_reveal.wav");
-			disableAndFade(mayorBtn); // ⬅️ κλειδώνει & κάνει fade
-
-			// Αν είμαστε ήδη σε γύρο ψηφοφορίας και είχαμε «κλειδώσει» στο όριο,
-			// τώρα απαιτούνται +1 ψήφοι — φρόντισε να (ξανά)ενεργοποιηθούν τα + κουμπιά
-			const need = votesRequiredThisRound();
-			if (totalVotes < need) {
-				document.querySelectorAll("button").forEach(btn => {
-					if (btn.textContent === "+ Ψήφος") btn.disabled = false;
-				});
-			}
-		};
-	}
-
-	if (kamikazeBtn) {
-		kamikazeBtn.onclick = () => {
-			if (kamikazeRevealed) return; // μία φορά μόνο
-			const kamikaze = players.find(p => p.role === "Kamikaze" && p.isAlive);
-			if (!kamikaze) return;
-
-			kamikazeRevealed = true;
-			playNarrationClip("reveal/kamikaze_reveal.wav");
-			disableAndFade(kamikazeBtn);
-
-			// ➕ Δείξε overlay για επιλογή θύματος
-			showKamikazeChoice(kamikaze);
-		};
-	}
-
-
+	if (mayorBtn) mayorBtn.onclick = () => { /* TODO */ };
+	if (kamikazeBtn) kamikazeBtn.onclick = () => { /* TODO */ };
 
 	// ➕ νέα κουμπιά με ενέργειες τέλους παιχνιδιού
 	const samePlayersBtn = document.getElementById("menuSamePlayers");
@@ -350,40 +191,7 @@ function initVoteHeaderEvents() {
 	const menuKill = document.getElementById("btnMenuKill");
 	if (menuNight) menuNight.onclick = openInGameMenu;
 	if (menuKill) menuKill.onclick = openInGameMenu;
-
-	if (menuNight) menuNight.onclick = openInGameMenu;
-	if (menuKill) menuKill.onclick = openInGameMenu;
-
-	// ➕ ενημέρωσε ορατότητα ειδικών ρόλων
-	updateSpecialRoleButtonsVisibility();
 }
-
-
-// Δείξε τα ειδικά κουμπιά μόνο αν οι ρόλοι υπάρχουν στην τρέχουσα παρτίδα
-function roleInCurrentGame(role) {
-	return Array.isArray(players) && players.some(p => p.role === role);
-}
-
-function updateSpecialRoleButtonsVisibility() {
-	const mayorBtn = document.getElementById("btnMayor");
-	const kamikazeBtn = document.getElementById("btnKamikaze");
-
-	if (mayorBtn) {
-		const show = roleInCurrentGame("Mayor");
-		mayorBtn.style.display = show ? "inline-flex" : "none";
-		mayorBtn.disabled = mayorRevealed;
-		mayorBtn.classList.toggle("btn-faded-disabled", mayorRevealed);
-	}
-	if (kamikazeBtn) {
-		const show = roleInCurrentGame("Kamikaze");
-		kamikazeBtn.style.display = show ? "inline-flex" : "none";
-		kamikazeBtn.disabled = kamikazeRevealed;
-		kamikazeBtn.classList.toggle("btn-faded-disabled", kamikazeRevealed);
-	}
-}
-
-
-
 
 // ===== Hard reset helpers =====
 function stopAllTimersAndAudio() {
@@ -441,27 +249,6 @@ function resetGameState(keepNames = false) {
 
 	// καθάρισε UI
 	hideAllPhases();
-
-	// ➖ Σβήσε το vignette αν έμεινε
-	const kv = document.getElementById("kamikazeVignette");
-	if (kv) kv.classList.remove("active");
-
-
-	mayorRevealed = false;
-	kamikazeRevealed = false;
-
-	const mayorBtn = document.getElementById("btnMayor");
-	const kamikazeBtn = document.getElementById("btnKamikaze");
-	if (mayorBtn) {
-		mayorBtn.style.display = "none";
-		mayorBtn.disabled = false;
-		mayorBtn.classList.remove("btn-faded-disabled","active-mayor");
-	}
-	if (kamikazeBtn) {
-		kamikazeBtn.style.display = "none";
-		kamikazeBtn.disabled = false;
-		kamikazeBtn.classList.remove("btn-faded-disabled");
-	}
 
 	// reset βασικών state
 	totalVotes = 0;
@@ -1224,9 +1011,6 @@ function startDay() {
 	document.getElementById("dayPhase").style.display = "block";
 	players.forEach(p => p.votes = 0);
 
-	// ➕ ανανέωση ορατότητας κουμπιών Δήμαρχου/Καμικάζι
-	updateSpecialRoleButtonsVisibility();
-
 	const votingDiv = document.getElementById("votingArea");
 
 	if (noMoreNights) {
@@ -1298,7 +1082,6 @@ function startDiscussionTimer() {
 
 
 function renderVotingInterface() {
-	updateSpecialRoleButtonsVisibility(); // ➕
 	const votingDiv = document.getElementById("votingArea");
 	votingDiv.innerHTML = ""; // Καθαρίζει προηγούμενα μηνύματα
 
@@ -1341,20 +1124,19 @@ function renderVotingInterface() {
 
 function handleAddVote(index) {
 	const p = players[index];
-	const need = votesRequiredThisRound();
-	if (totalVotes >= need) return;
+	const alive = players.filter(p => p.isAlive).length;
+	if (totalVotes >= alive) return;
 
 	p.votes++;
 	totalVotes++;
 	playSFX("vote.mp3");
 	updateVotesDisplay(index, p.votes);
 
-	if (totalVotes === need) {
+	if (totalVotes === alive) {
 		disableAllAddButtons();
 	}
 	checkIfVotingComplete();
 }
-
 
 function handleRemoveVote(index) {
 	const p = players[index];
@@ -1374,12 +1156,11 @@ function updateVotesDisplay(index, votes) {
 }
 
 function checkIfVotingComplete() {
-	const need = votesRequiredThisRound();
-	if (totalVotes === need) {
+	const alive = players.filter(p => p.isAlive).length;
+	if (totalVotes === alive) {
 		startCountdown();
 	}
 }
-
 
 function startCountdown() {
 	clearInterval(countdownTimeout);
@@ -1648,7 +1429,6 @@ function showKillChoiceMenu() {
 		btn.onclick = () => {
 			// 🔁 κάθε νέα επιλογή καθαρίζει τυχόν παλιό timer
 			clearInterval(countdownTimeout);
-			playSFX("pistol_sound.mp3")
 
 			// 3″ αντίστροφη μέτρηση με Ακύρωση
 			let seconds = 3;
@@ -2286,7 +2066,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "29 Αυγούστου 2025 – 22:43 Version 2.0"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "29 Αυγούστου 2025 – 23:46"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
