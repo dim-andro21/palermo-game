@@ -379,6 +379,11 @@ function initVoteHeaderEvents() {
 			const kamikaze = players.find(p => p.role === "Kamikaze" && p.isAlive);
 			if (!kamikaze) return;
 
+			// ⬇️ ΝΕΟ: αν έτρεχε το 3" timer της ψηφοφορίας, κάνε "Ακύρωση"
+			if (countdownTimeout) {
+				cancelCountdown();
+			}
+
 			kamikazeRevealed = true;
 			playNarrationClip("reveal/kamikaze_reveal.wav");
 			disableAndFade(kamikazeBtn);
@@ -1151,6 +1156,13 @@ function startIntroduction() {
 			return;
 		}
 
+		// 👇 νέο: παύση inline
+		const cur = audioLines[index];
+		if (typeof cur === "object" && cur && typeof cur.pause === "number") {
+			setTimeout(() => { index++; nextLine(); }, cur.pause);
+			return;
+		}
+
 		if (index < scriptLines.length) {
 			nightTextDiv.innerHTML += `<div class="fade-line">${scriptLines[index]}</div>`;
 			nightTextDiv.style.opacity = 1;
@@ -1230,8 +1242,10 @@ function startNight() {
 	let audioLines = [
 		"night/night_start.wav",
 		"night/night_killers_open.wav",
+		{ pause: 5000 },
 		"night/night_police_phase.wav",
 		"night/night_police_sees.wav",
+		{ pause: 5000 },
 		"night/night_police_close.wav"
 	];
 
@@ -1245,9 +1259,7 @@ function startNight() {
 		);
 		audioLines.push(
 			"night/night_snitch_phase.wav",
-			// Αν έχεις ξεχωριστό knows clip, βάλ’ το εδώ:
-			// "night/night_snitch_knows.wav",
-			"night/night_snitch_end.wav",
+			{ pause: 5000 },
 			"night/night_snitch_end.wav"
 		);
 	}
@@ -1259,7 +1271,7 @@ function startNight() {
 			"Τέλος ανοίγουν τα μάτια τους και οι ερωτευμένοι για να γνωριστούν.",
 			"Αφού ερωτεύτηκαν κεραυνοβόλα μπορούν να κλείσουν τα μάτια τους."
 		);
-		audioLines.push("night/lovers_open.wav", "night/lovers_close.wav");
+		audioLines.push("night/lovers_open.wav", { pause: 5000 }, "night/lovers_close.wav");
 	}
 
 	// --- Day start ---
@@ -1274,6 +1286,13 @@ function startNight() {
 	function nextLine() {
 		if (index >= audioLines.length) {   // ✅ σταματάμε με βάση τα audio
 			setTimeout(() => startDay(), 1000);
+			return;
+		}
+
+		// 👇 νέο: αν το τρέχον στοιχείο είναι { pause: ms }, κάνε καθυστέρηση
+		const cur = audioLines[index];
+		if (typeof cur === "object" && cur && typeof cur.pause === "number") {
+			setTimeout(() => { index++; nextLine(); }, cur.pause);
 			return;
 		}
 
