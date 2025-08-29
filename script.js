@@ -1648,6 +1648,7 @@ function showKillChoiceMenu() {
 		btn.onclick = () => {
 			// 🔁 κάθε νέα επιλογή καθαρίζει τυχόν παλιό timer
 			clearInterval(countdownTimeout);
+			playSFX("pistol_sound.mp3")
 
 			// 3″ αντίστροφη μέτρηση με Ακύρωση
 			let seconds = 3;
@@ -2285,7 +2286,7 @@ function openSettings() {
     updateFooterVisibility();
 	const updatedEl = document.getElementById("lastUpdated");
 	if (updatedEl) {
-		const lastUpdate = "29 Αυγούστου 2025 – 22:16 Version 2.0"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
+		const lastUpdate = "29 Αυγούστου 2025 – 22:31 Version 2.0"; // 👉 άλλαξέ το χειροκίνητα όταν κάνεις νέα αλλαγή
 		updatedEl.textContent = `Τελευταία ενημέρωση: ${lastUpdate}`;
 	}
 
