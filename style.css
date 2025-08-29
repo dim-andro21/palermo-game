@@ -830,3 +830,42 @@ input[type="checkbox"]:checked::after {
 	filter: grayscale(0.15);
 	transition: opacity 200ms ease;
 }
+
+/* 🔴 Vignette overlay για την οθόνη επιλογής Καμικάζι */
+#kamikazeVignette {
+	position: fixed;
+	inset: 0;
+	pointer-events: none; /* να μην εμποδίζει τα κλικ */
+	background: radial-gradient(ellipse at center, rgba(139,0,0,0.40) 0%, rgba(0,0,0,0.85) 100%);
+	opacity: 0;
+	transition: opacity 0.5s ease;
+	z-index: 999; /* πάνω απ' όλα τα UI */
+}
+#kamikazeVignette.active {
+	opacity: 1;
+}
+
+/* ♨️ Οπτικό fade/disable για ειδικά κουμπιά (Mayor/Kamikaze) */
+.btn-faded-disabled {
+	opacity: 0.45;
+	pointer-events: none;
+	filter: grayscale(0.15);
+	transition: opacity 200ms ease;
+}
+
+/* 🎯 Κουμπιά επιλογής στόχου Καμικάζι */
+.kamikaze-choice-btn {
+	display: inline-block;
+	margin:  10px 8px;
+	padding: 8px 14px;
+	border-radius: 10px;
+	background: #5a0c0c;
+	border: 2px solid #8a1717;
+	color: #bab6d1;
+	font-weight: 700;
+}
+.kamikaze-choice-btn:hover {
+	background: #8a1717;
+    box-shadow: 0 0 12px #5a0c0c;
+}
+

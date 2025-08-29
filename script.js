@@ -178,6 +178,100 @@ function votesRequiredThisRound() {
 	return req;
 }
 
+function showKamikazeChoice(kamikaze) {
+	const votingDiv = document.getElementById("votingArea");
+	if (!votingDiv) return;
+
+	// ➕ Ενεργοποίησε vignette
+	const vignette = document.getElementById("kamikazeVignette");
+	if (vignette) vignette.classList.add("active");
+
+	// UI header
+	votingDiv.innerHTML = "<p><strong>Ο Καμικάζι αποκαλύφθηκε!</strong><br>Διάλεξε ποιον θα πάρει μαζί του.</p>";
+
+	// container για τα κουμπιά + το countdown
+	const listDiv = document.createElement("div");
+	votingDiv.appendChild(listDiv);
+
+	const countdownDiv = document.createElement("div");
+	countdownDiv.id = "voteCountdown"; // ίδιο id όπως στο voting/kill για ομοιομορφία
+	countdownDiv.style.marginTop = "12px";
+	votingDiv.appendChild(countdownDiv);
+
+	// helper: καθάρισε τυχόν ενεργό countdown και UI
+	function clearCountdownUI() {
+		clearInterval(countdownTimeout);
+		countdownTimeout = null;
+		countdownDiv.innerHTML = "";
+	}
+
+	// φτιάξε τα κουμπιά-στόχους
+	players.forEach((p) => {
+		if (!p.isAlive || p === kamikaze) return;
+
+		const btn = document.createElement("button");
+		btn.textContent = p.name;
+		btn.className = "kamikaze-choice-btn";
+
+		btn.onclick = () => {
+			// κάθε νέα επιλογή καθαρίζει παλιό timer
+			clearCountdownUI();
+
+			// 3″ αντίστροφη μέτρηση με Ακύρωση
+			let seconds = 3;
+
+			// κουμπί ακύρωσης (επαναφορά στην επιλογή στόχου)
+			const cancelBtn = document.createElement("button");
+			cancelBtn.textContent = "Ακύρωση";
+			cancelBtn.className = "cancel-vote-button";
+			cancelBtn.onclick = () => {
+				clearCountdownUI();
+				// αφήνουμε το vignette ενεργό για να συνεχίσει η επιλογή
+			};
+
+			// renderer
+			const render = () => {
+				countdownDiv.innerHTML = `Ολοκλήρωση σε ${seconds} `;
+				countdownDiv.appendChild(cancelBtn);
+			};
+			render();
+
+			// ξεκίνα το countdown
+			countdownTimeout = setInterval(() => {
+				seconds--;
+				if (seconds === 0) {
+					clearCountdownUI();
+
+					// Εκτέλεση: σκοτώνει στόχο + τον εαυτό του
+					eliminatePlayer(p, "Καμικάζι");
+					eliminatePlayer(kamikaze, "Καμικάζι");
+
+					// Reset ψήφων
+					players.forEach(x => x.votes = 0);
+					totalVotes = 0;
+
+					// Μήνυμα
+					votingDiv.innerHTML = `<p>💥 Ο Καμικάζι <strong>${kamikaze.name}</strong> πήρε μαζί του τον <strong>${p.name}</strong>!</p>`;
+
+					// Σβήσε το vignette
+					if (vignette) vignette.classList.remove("active");
+
+					// Συνέχισε τη ροή της μέρας
+					setTimeout(() => {
+						if (checkForGameEnd()) return;
+						renderVotingInterface();
+					}, 3000);
+				} else {
+					render();
+				}
+			}, 1000);
+		};
+
+		listDiv.appendChild(btn);
+	});
+}
+
+
 
 function initVoteHeaderEvents() {
 	const menuBtn = document.getElementById("btnMenu");
@@ -218,15 +312,19 @@ function initVoteHeaderEvents() {
 
 	if (kamikazeBtn) {
 		kamikazeBtn.onclick = () => {
-			if (kamikazeRevealed) return;      // μία φορά μόνο
+			if (kamikazeRevealed) return; // μία φορά μόνο
+			const kamikaze = players.find(p => p.role === "Kamikaze" && p.isAlive);
+			if (!kamikaze) return;
+
 			kamikazeRevealed = true;
-
-			// προσωρινά απλός ήχος/φωνητικό αποκάλυψης καμικάζι
 			playNarrationClip("reveal/kamikaze_reveal.wav");
+			disableAndFade(kamikazeBtn);
 
-			disableAndFade(kamikazeBtn);   // ⬅️ κλειδώνει & κάνει fade
+			// ➕ Δείξε overlay για επιλογή θύματος
+			showKamikazeChoice(kamikaze);
 		};
 	}
+
 
 
 	// ➕ νέα κουμπιά με ενέργειες τέλους παιχνιδιού
@@ -343,6 +441,11 @@ function resetGameState(keepNames = false) {
 
 	// καθάρισε UI
 	hideAllPhases();
+
+	// ➖ Σβήσε το vignette αν έμεινε
+	const kv = document.getElementById("kamikazeVignette");
+	if (kv) kv.classList.remove("active");
+
 
 	mayorRevealed = false;
 	kamikazeRevealed = false;
