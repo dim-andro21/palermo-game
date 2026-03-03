@@ -62,7 +62,7 @@ Built with **HTML + CSS + JavaScript**... and a lot of **AI magic** 🤖✨.
    ```
 3. Open [http://localhost:8080](http://localhost:8080) on your browser.
 4. Or simply play it directly via **GitHub Pages**:
-   👉 [Play Palermo Game](https://<your-username>.github.io/palermo-game/)
+   👉 [Play Palermo Game](https://dim-andro21.github.io/palermo-game/)
 
 ---
 
